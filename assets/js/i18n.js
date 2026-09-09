@@ -201,7 +201,17 @@
       'err.amountPos': 'Amount must be greater than 0.', 'err.badDate': 'Invalid meeting date.',
       'err.curPw': 'Current password is incorrect.', 'err.pwLen': 'New password must be at least 8 characters.',
       'err.sharesRange': 'Shares must be 0–20.', 'err.monthlyMin': 'Monthly due must be 0 or more.',
-      'err.accountNotFound': 'Account not found', 'err.enterEmailPw': 'Enter email and password (min 8 characters).'
+      'err.accountNotFound': 'Account not found', 'err.enterEmailPw': 'Enter email and password (min 8 characters).',
+
+      /* placeholders */
+      'ph.username': 'e.g. kazi.ibrahim', 'ph.password': 'Your password',
+      'ph.name': 'e.g. Kazi Rafiul Islam', 'ph.usernameReg': 'e.g. kazi.rafi (4-32 chars)',
+      'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
+      'ph.occupation': 'e.g. Service, Business, Student', 'ph.nominee': "Your nominee's full name",
+      'ph.address': 'Village / Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': 'Repeat password',
+      'ph.amount': 'e.g. 1000', 'ph.ref': 'e.g. 9F7DA23K1',
+      'ph.sender': 'The number or account you paid from', 'ph.note': 'e.g. August + September due',
+      'ph.setupName': 'e.g. Kazi Atiqur Rahman', 'ph.setupEmail': 'admin@example.com'
     },
 
     /* ================= BANGLA (বাংলা) ================= */
@@ -394,7 +404,17 @@
       'err.amountPos': 'পরিমাণ ০-এর বেশি হতে হবে।', 'err.badDate': 'সভার তারিখ সঠিক নয়।',
       'err.curPw': 'বর্তমান পাসওয়ার্ড সঠিক নয়।', 'err.pwLen': 'নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
       'err.sharesRange': 'শেয়ার ০–২০-এর মধ্যে হতে হবে।', 'err.monthlyMin': 'মাসিক বকেয়া ০ বা তার বেশি হতে হবে।',
-      'err.accountNotFound': 'অ্যাকাউন্ট পাওয়া যায়নি', 'err.enterEmailPw': 'ইমেইল ও পাসওয়ার্ড দিন (সর্বনিম্ন ৮ অক্ষর)।'
+      'err.accountNotFound': 'অ্যাকাউন্ট পাওয়া যায়নি', 'err.enterEmailPw': 'ইমেইল ও পাসওয়ার্ড দিন (সর্বনিম্ন ৮ অক্ষর)।',
+
+      /* placeholders */
+      'ph.username': 'যেমন: kazi.ibrahim', 'ph.password': 'আপনার পাসওয়ার্ড',
+      'ph.name': 'যেমন: কাজী রফিকুল ইসলাম', 'ph.usernameReg': 'যেমন: kazi.rafi (৪-৩২ অক্ষর)',
+      'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
+      'ph.occupation': 'যেমন: চাকরি, ব্যবসা, শিক্ষার্থী', 'ph.nominee': 'মনোনীত ব্যক্তির পূর্ণ নাম',
+      'ph.address': 'গ্রাম / রাস্তা, থানা, জেলা', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': 'আবার পাসওয়ার্ড লিখুন',
+      'ph.amount': 'যেমন: 1000', 'ph.ref': 'যেমন: 9F7DA23K1',
+      'ph.sender': 'যে নম্বর বা অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন', 'ph.note': 'যেমন: আগস্ট + সেপ্টেম্বরের বকেয়া',
+      'ph.setupName': 'যেমন: কাজী আতিকুর রহমান', 'ph.setupEmail': 'admin@example.com'
     }
   };
 

@@ -23,26 +23,26 @@
     <h2 data-i18n="reg.details"></h2>
     <div class="grid form2">
       <label class="f"><span data-i18n="reg.name"></span>
-        <input type="text" id="rg-name" autocomplete="name" required>
+        <input type="text" id="rg-name" autocomplete="name" placeholder="e.g. Kazi Rafiul Islam" data-i18n-ph="ph.name" required>
       </label>
       <label class="f"><span data-i18n="reg.username"></span>
-        <input type="text" id="rg-username" autocomplete="off" required>
+        <input type="text" id="rg-username" autocomplete="off" placeholder="e.g. kazi.rafi (4-32 chars)" data-i18n-ph="ph.usernameReg" required>
         <span class="hint" data-i18n="reg.userHint"></span>
       </label>
       <label class="f"><span data-i18n="reg.email"></span>
-        <input type="email" id="rg-email" autocomplete="email" required>
+        <input type="email" id="rg-email" autocomplete="email" placeholder="you@example.com" data-i18n-ph="ph.email" required>
       </label>
       <label class="f"><span data-i18n="reg.phone"></span>
-        <input type="tel" id="rg-phone" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+        <input type="tel" id="rg-phone" autocomplete="tel" placeholder="01XXXXXXXXX" data-i18n-ph="ph.phone" required>
       </label>
       <label class="f"><span data-i18n="reg.occupation"></span>
-        <input type="text" id="rg-occupation">
+        <input type="text" id="rg-occupation" placeholder="e.g. Service, Business, Student" data-i18n-ph="ph.occupation">
       </label>
       <label class="f"><span data-i18n="reg.nominee"></span>
-        <input type="text" id="rg-nominee">
+        <input type="text" id="rg-nominee" placeholder="Your nominee's full name" data-i18n-ph="ph.nominee">
       </label>
       <label class="f" style="grid-column:1/-1"><span data-i18n="reg.address"></span>
-        <input type="text" id="rg-address">
+        <input type="text" id="rg-address" placeholder="Village / Street, Thana, District" data-i18n-ph="ph.address">
       </label>
       <label class="f"><span data-i18n="reg.shares"></span>
         <select id="rg-shares">
@@ -55,10 +55,10 @@
         <span class="hint" data-i18n="reg.shareHint"></span>
       </label>
       <label class="f"><span data-i18n="reg.pass"></span>
-        <input type="password" id="rg-pass" autocomplete="new-password" required>
+        <input type="password" id="rg-pass" autocomplete="new-password" placeholder="Min 8 characters" data-i18n-ph="ph.passNew" required>
       </label>
       <label class="f" style="grid-column:1/-1"><span data-i18n="reg.pass2"></span>
-        <input type="password" id="rg-pass2" autocomplete="new-password" required>
+        <input type="password" id="rg-pass2" autocomplete="new-password" placeholder="Repeat password" data-i18n-ph="ph.passConfirm" required>
       </label>
     </div>
 

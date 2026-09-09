@@ -24,9 +24,9 @@
       (C.isDemo() ? U.esc(L.t('su.demoNote')) : U.esc(L.t('su.fbNote'))) + '</div>' +
       '<form id="su-form" class="card" novalidate>' +
       '<label class="f"><span>' + U.esc(L.t('su.user')) + '</span><input type="text" id="su-user" value="admin" autocomplete="username"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('su.name')) + '</span><input type="text" id="su-name"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('su.email')) + '</span><input type="email" id="su-email"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('su.pass')) + '</span><input type="password" id="su-pass" autocomplete="new-password"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('su.name')) + '</span><input type="text" id="su-name" placeholder="' + U.esc(L.t('ph.setupName')) + '"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('su.email')) + '</span><input type="email" id="su-email" placeholder="' + U.esc(L.t('ph.setupEmail')) + '"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('su.pass')) + '</span><input type="password" id="su-pass" autocomplete="new-password" placeholder="' + U.esc(L.t('ph.passNew')) + '"></label>' +
       '<div id="su-err" class="err" role="alert"></div>' +
       '<button class="btn" type="submit">' + U.esc(L.t('su.create')) + '</button>' +
       '</form>';

@@ -74,20 +74,20 @@
               </select>
             </label>
             <label class="f"><span data-i18n="por.amount"></span>
-              <input type="number" id="py-amount" min="1" step="1" inputmode="numeric" required>
+              <input type="number" id="py-amount" min="1" step="1" inputmode="numeric" placeholder="e.g. 1000" data-i18n-ph="ph.amount" required>
             </label>
             <label class="f"><span data-i18n="por.date"></span>
               <input type="date" id="py-date" required>
             </label>
             <label class="f"><span data-i18n="por.ref"></span>
-              <input type="text" id="py-ref">
+              <input type="text" id="py-ref" placeholder="e.g. 9F7DA23K1" data-i18n-ph="ph.ref">
               <span class="hint" id="py-ref-hint"></span>
             </label>
             <label class="f"><span data-i18n="por.sender"></span>
-              <input type="text" id="py-sender">
+              <input type="text" id="py-sender" placeholder="The number or account you paid from" data-i18n-ph="ph.sender">
             </label>
             <label class="f" style="grid-column:1/-1"><span data-i18n="por.note"></span>
-              <input type="text" id="py-note">
+              <input type="text" id="py-note" placeholder="e.g. August + September due" data-i18n-ph="ph.note">
             </label>
           </div>
           <div id="pay-err" class="err" role="alert"></div>

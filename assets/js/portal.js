@@ -93,6 +93,7 @@
     showNumber();
     function refHint() {
       document.getElementById('py-ref-hint').textContent = methodSel.value === 'cash' ? L.t('por.refHintCash') : L.t('por.refHint');
+      document.getElementById('py-ref').placeholder = methodSel.value === 'cash' ? '' : L.t('ph.ref');
     }
     methodSel.addEventListener('change', refHint); refHint();
     document.getElementById('py-date').value = U.todayISO();

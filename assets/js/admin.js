@@ -318,7 +318,7 @@
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stFundName')) + '</span><input type="text" id="st-name" value="' + U.esc(s.fundName || 'NextGen Fund') + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stMeeting')) + '</span><input type="date" id="st-meet" value="' + U.esc(s.nextMeeting || '') + '"></label>' +
-      '<label class="f" style="grid-column:1/-1"><span>' + U.esc(L.t('adm.stMeetingNote')) + '</span><input type="text" id="st-note" value="' + U.esc(s.meetingNote || '') + '"></label>' +
+      '<label class="f" style="grid-column:1/-1"><span>' + U.esc(L.t('adm.stMeetingNote')) + '</span><input type="text" id="st-note" placeholder="' + U.esc(L.t('adm.stMeetingNotePh')) + '" value="' + U.esc(s.meetingNote || '') + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stMps')) + '</span><input type="number" id="st-mps" min="1" value="' + (s.monthlyPerShare || 1000) + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stDocs')) + '</span><input type="text" id="st-docs" value="' + U.esc((s.docRequirements || []).join(' | ')) + '"><span class="hint">' + U.esc(L.t('adm.stDocsHint')) + '</span></label>' +
       '</div>' +
