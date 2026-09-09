@@ -1,0 +1,13 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# secrets & local env
+.env
+.env.*
+firebase-service-account*.json
+
+# node (not needed — the site has no build step)
+node_modules/

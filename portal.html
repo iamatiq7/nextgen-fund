@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Fund — NextGen Fund</title>
+<meta name="description" content="Your NextGen Fund member portal: total paid, current due, advance balance and payment history. English / বাংলা.">
+<link rel="icon" href="assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="site-header"></div>
+
+<main class="container" id="portal-main">
+  <div id="portal-blocked" class="hide"></div>
+
+  <div id="portal-content" class="hide">
+    <div class="spread" style="margin-bottom:14px">
+      <div>
+        <span class="k" data-i18n="por.kicker"></span>
+        <h1 style="margin:4px 0 2px" id="pf-hello"></h1>
+        <p class="footnote" style="margin:0" id="pf-sub"></p>
+      </div>
+      <div id="mode-badge" class="row-flex"></div>
+    </div>
+
+    <!-- balances -->
+    <section class="grid stats" style="margin-bottom:16px" aria-label="Your balance">
+      <div class="card stat navy">
+        <span class="k" data-i18n="por.paid"></span>
+        <span class="v num" id="bal-paid">—</span>
+        <span class="s" id="bal-paid-sub"></span>
+      </div>
+      <div class="card stat" id="bal-due-card">
+        <span class="k" data-i18n="por.due"></span>
+        <span class="v num" id="bal-due">—</span>
+        <span class="s" id="bal-due-sub"></span>
+      </div>
+      <div class="card stat pos">
+        <span class="k" data-i18n="por.advance"></span>
+        <span class="v num" id="bal-advance">—</span>
+        <span class="s" data-i18n="por.advanceSub"></span>
+      </div>
+      <div class="card stat">
+        <span class="k" data-i18n="por.monthly"></span>
+        <span class="v num" id="bal-monthly">—</span>
+        <span class="s" id="bal-shares"></span>
+      </div>
+    </section>
+
+    <div class="grid two">
+      <!-- payment form -->
+      <section class="card" id="pay-card" style="align-self:start">
+        <h2 data-i18n="por.payTitle"></h2>
+        <p class="footnote" style="margin-top:-4px" data-i18n="por.payText"></p>
+        <div class="notice" id="pay-numbers" style="display:none"></div>
+        <form id="pay-form" novalidate>
+          <div class="grid form2">
+            <label class="f"><span data-i18n="por.type"></span>
+              <select id="py-type">
+                <option value="due" data-i18n="por.typeDue"></option>
+                <option value="advance" data-i18n="por.typeAdvance"></option>
+              </select>
+            </label>
+            <label class="f"><span data-i18n="por.method"></span>
+              <select id="py-method">
+                <option value="bkash" data-i18n="m.bkash"></option>
+                <option value="nagad" data-i18n="m.nagad"></option>
+                <option value="rocket" data-i18n="m.rocket"></option>
+                <option value="upay" data-i18n="m.upay"></option>
+                <option value="bank" data-i18n="m.bank"></option>
+                <option value="cash" data-i18n="m.cash"></option>
+              </select>
+            </label>
+            <label class="f"><span data-i18n="por.amount"></span>
+              <input type="number" id="py-amount" min="1" step="1" inputmode="numeric" required>
+            </label>
+            <label class="f"><span data-i18n="por.date"></span>
+              <input type="date" id="py-date" required>
+            </label>
+            <label class="f"><span data-i18n="por.ref"></span>
+              <input type="text" id="py-ref">
+              <span class="hint" id="py-ref-hint"></span>
+            </label>
+            <label class="f"><span data-i18n="por.sender"></span>
+              <input type="text" id="py-sender">
+            </label>
+            <label class="f" style="grid-column:1/-1"><span data-i18n="por.note"></span>
+              <input type="text" id="py-note">
+            </label>
+          </div>
+          <div id="pay-err" class="err" role="alert"></div>
+          <button class="btn" type="submit" data-i18n="por.submit"></button>
+        </form>
+      </section>
+
+      <!-- history -->
+      <section class="card" id="history-card" style="align-self:start">
+        <h2 data-i18n="por.history"></h2>
+        <div class="tablewrap">
+          <table class="data" id="pay-table">
+            <thead><tr>
+              <th data-i18n="por.hDate"></th><th data-i18n="por.hType"></th><th data-i18n="por.hMethod"></th>
+              <th class="n" data-i18n="por.hAmount"></th><th data-i18n="por.hStatus"></th>
+            </tr></thead>
+            <tbody><tr><td colspan="5" class="loading" data-i18n="common.loading"></td></tr></tbody>
+          </table>
+        </div>
+        <p class="foot" id="history-foot"></p>
+      </section>
+    </div>
+
+    <!-- account -->
+    <section class="card" style="margin-top:16px">
+      <h2 data-i18n="por.account"></h2>
+      <div class="grid two">
+        <div>
+          <h3 data-i18n="por.profile"></h3>
+          <ul class="clean" id="profile-list"></ul>
+        </div>
+        <div>
+          <h3 data-i18n="por.pw"></h3>
+          <form id="pw-form" novalidate>
+            <label class="f"><span data-i18n="por.pwCur"></span>
+              <input type="password" id="pw-cur" autocomplete="current-password" required>
+            </label>
+            <label class="f"><span data-i18n="por.pwNew"></span>
+              <input type="password" id="pw-new" autocomplete="new-password" required>
+            </label>
+            <div id="pw-err" class="err" role="alert"></div>
+            <button class="btn ghost" type="submit" data-i18n="por.pwBtn"></button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="assets/js/util.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/seed-data.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/firebase-adapter.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/portal.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register — NextGen Fund</title>
+<meta name="description" content="Register as a NextGen Fund member: fill your details, upload the required documents, and wait for admin approval. English / বাংলা.">
+<link rel="icon" href="assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="site-header"></div>
+
+<main class="container narrow" id="register-main">
+  <span class="k" data-i18n="reg.kicker"></span>
+  <h1 data-i18n="reg.title"></h1>
+  <p class="footnote" data-i18n="reg.sub"></p>
+
+  <div class="notice" id="reg-intro" style="margin-top:14px"></div>
+
+  <form id="reg-form" class="card" novalidate>
+    <h2 data-i18n="reg.details"></h2>
+    <div class="grid form2">
+      <label class="f"><span data-i18n="reg.name"></span>
+        <input type="text" id="rg-name" autocomplete="name" required>
+      </label>
+      <label class="f"><span data-i18n="reg.username"></span>
+        <input type="text" id="rg-username" autocomplete="off" required>
+        <span class="hint" data-i18n="reg.userHint"></span>
+      </label>
+      <label class="f"><span data-i18n="reg.email"></span>
+        <input type="email" id="rg-email" autocomplete="email" required>
+      </label>
+      <label class="f"><span data-i18n="reg.phone"></span>
+        <input type="tel" id="rg-phone" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+      </label>
+      <label class="f"><span data-i18n="reg.occupation"></span>
+        <input type="text" id="rg-occupation">
+      </label>
+      <label class="f"><span data-i18n="reg.nominee"></span>
+        <input type="text" id="rg-nominee">
+      </label>
+      <label class="f" style="grid-column:1/-1"><span data-i18n="reg.address"></span>
+        <input type="text" id="rg-address">
+      </label>
+      <label class="f"><span data-i18n="reg.shares"></span>
+        <select id="rg-shares">
+          <option value="1"></option>
+          <option value="2"></option>
+          <option value="3"></option>
+          <option value="4"></option>
+          <option value="5"></option>
+        </select>
+        <span class="hint" data-i18n="reg.shareHint"></span>
+      </label>
+      <label class="f"><span data-i18n="reg.pass"></span>
+        <input type="password" id="rg-pass" autocomplete="new-password" required>
+      </label>
+      <label class="f" style="grid-column:1/-1"><span data-i18n="reg.pass2"></span>
+        <input type="password" id="rg-pass2" autocomplete="new-password" required>
+      </label>
+    </div>
+
+    <h2 style="margin-top:10px" data-i18n="reg.docsTitle"></h2>
+    <p class="footnote" data-i18n="reg.docsHint"></p>
+    <div id="doc-fields"></div>
+
+    <div id="reg-err" class="err" role="alert"></div>
+    <div class="btn-row">
+      <button class="btn" type="submit" id="reg-btn" data-i18n="reg.submit"></button>
+      <a class="btn subtle" href="login.html" data-i18n="reg.haveAccount"></a>
+    </div>
+  </form>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="assets/js/util.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/seed-data.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/firebase-adapter.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/register.js"></script>
+</body>
+</html>

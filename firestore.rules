@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// NextGen Fund — Firestore baseline rules.
+// Review before production use (see docs/FIREBASE_SETUP.md).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/settings/bootstrap) &&
+        get(/databases/$(database)/documents/settings/bootstrap).data.adminUid == request.auth.uid;
+    }
+
+    // Public settings: dashboard reads; only admin writes.
+    match /settings/public {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // One-time bootstrap slot: the first admin claims it; afterwards immutable.
+    match /settings/bootstrap {
+      allow get: if true;
+      allow create: if isSignedIn() && !exists(/databases/$(database)/documents/settings/bootstrap);
+      allow update, delete: if false; // immutable once claimed
+    }
+
+    // Public finance aggregates (funding / revenue / loss).
+    match /finance/{id} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users: readable by admins; members read/update only their own doc
+    // (and cannot change role/status).
+    match /users/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSelf(uid) &&
+        request.resource.data.role == 'member' &&
+        !exists(/databases/$(database)/documents/settings/bootstrap);
+      allow update: if (isSelf(uid) &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.status == resource.data.status) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Username → uid mapping: readable by all (login), created once by owner.
+    match /usernames/{name} {
+      allow get: if true;
+      allow create: if isSelf(request.resource.data.uid) || isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Registrations: anyone (before login) may submit; admins decide.
+    match /registrations/{id} {
+      allow create: if true;
+      allow get, list: if isSelf(resource.data.__ownerUid) || isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Payments: members create/see their own; admins manage everything.
+    match /payments/{id} {
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      allow get, list: if (isSignedIn() && resource.data.memberId == request.auth.uid) || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Audit log: admin only.
+    match /audit/{id} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+  }
+}

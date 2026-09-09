@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NextGen Fund — Family Fund Dashboard</title>
+<meta name="description" content="NextGen Fund public dashboard: next meeting date, total funding, total revenue, total loss and month-by-month figures. English / বাংলা.">
+<link rel="icon" href="assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="site-header"></div>
+
+<main class="container">
+  <div class="spread" style="margin-bottom:14px">
+    <div>
+      <span class="k" data-i18n="idx.kicker"></span>
+      <h1 style="margin:4px 0 2px" data-i18n="brand.name"></h1>
+      <p class="footnote" style="margin:0" id="idx-subtitle" data-i18n="idx.subtitle"></p>
+    </div>
+    <div id="mode-badge" class="row-flex"></div>
+  </div>
+
+  <div class="notice hide" id="idx-notice"></div>
+
+  <!-- Hero stats -->
+  <section class="grid stats" aria-label="Fund totals" style="margin-bottom:16px">
+    <div class="card stat navy" id="card-meeting">
+      <span class="k" data-i18n="idx.meeting"></span>
+      <span class="v num" id="stat-meeting">—</span>
+      <span class="s" id="stat-meeting-note"></span>
+    </div>
+    <div class="card stat">
+      <span class="k" data-i18n="idx.funding"></span>
+      <span class="v num" id="stat-funding">—</span>
+      <span class="s" data-i18n="idx.fundingSub"></span>
+    </div>
+    <div class="card stat pos">
+      <span class="k" data-i18n="idx.revenue"></span>
+      <span class="v num" id="stat-revenue">—</span>
+      <span class="s" data-i18n="idx.revenueSub"></span>
+    </div>
+    <div class="card stat neg">
+      <span class="k" data-i18n="idx.loss"></span>
+      <span class="v num" id="stat-loss">—</span>
+      <span class="s" data-i18n="idx.lossSub"></span>
+    </div>
+    <div class="card stat">
+      <span class="k" data-i18n="idx.net"></span>
+      <span class="v num" id="stat-net">—</span>
+      <span class="s" id="stat-members"></span>
+    </div>
+  </section>
+
+  <!-- Monthly chart -->
+  <section class="chart-wrap" style="margin-bottom:16px" aria-label="Monthly chart">
+    <div class="spread">
+      <h2 style="margin:0" data-i18n="idx.chart"></h2>
+      <div class="legend" id="chart-legend"></div>
+    </div>
+    <div id="chart" role="img" aria-label="Bar chart of monthly deposits, revenue and loss"></div>
+    <p class="foot" id="chart-source"></p>
+  </section>
+
+  <!-- Monthly table -->
+  <section style="margin-bottom:16px">
+    <div class="tablewrap">
+      <table class="data" id="month-table">
+        <thead><tr>
+          <th data-i18n="idx.thMonth"></th>
+          <th class="n" data-i18n="idx.thDeposits"></th>
+          <th class="n" data-i18n="idx.thRevenue"></th>
+          <th class="n" data-i18n="idx.thLoss"></th>
+          <th class="n" data-i18n="idx.thNet"></th>
+        </tr></thead>
+        <tbody><tr><td colspan="5" class="loading" data-i18n="common.loading"></td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Membership + methods -->
+  <section class="grid two" style="margin-bottom:16px">
+    <div class="card">
+      <h2 data-i18n="idx.memberTitle"></h2>
+      <p data-i18n="idx.memberText"></p>
+      <div class="btn-row">
+        <a class="btn" href="register.html" data-i18n="idx.btnRegister"></a>
+        <a class="btn ghost" href="login.html" data-i18n="idx.btnLogin"></a>
+      </div>
+      <p class="foot" id="share-info"></p>
+    </div>
+    <div class="card">
+      <h2 data-i18n="idx.payTitle"></h2>
+      <p class="footnote" style="margin-top:0" data-i18n="idx.payText"></p>
+      <div class="pay-methods" id="pay-methods">
+        <span class="pm" data-i18n="m.bkash"></span><span class="pm" data-i18n="m.nagad"></span><span class="pm" data-i18n="m.rocket"></span><span class="pm" data-i18n="m.upay"></span><span class="pm" data-i18n="m.bank"></span>
+      </div>
+      <p class="foot" data-i18n="idx.payFoot"></p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="card">
+    <h2 data-i18n="idx.howTitle"></h2>
+    <div class="grid two">
+      <ul class="clean">
+        <li><strong><span id="how-1"></span></strong></li>
+        <li><strong><span id="how-2"></span></strong></li>
+      </ul>
+      <ul class="clean">
+        <li><strong><span id="how-3"></span></strong></li>
+        <li><strong><span id="how-4"></span></strong></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="assets/js/util.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/seed-data.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/firebase-adapter.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/dashboard.js"></script>
+</body>
+</html>
