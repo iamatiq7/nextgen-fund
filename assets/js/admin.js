@@ -15,10 +15,10 @@
     var dueTotal = members.reduce(function (a, m) { return a + m.balance.due; }, 0);
     body.innerHTML =
       '<section class="grid stats" style="margin-bottom:16px">' +
-      stat('adm.ovPendingRegs', regs.length, 'adm.ovPendingRegsSub') +
-      stat('adm.ovPendingPays', pays.length, 'adm.ovPendingPaysSub') +
-      stat('adm.ovMembers', members.length, '') +
-      stat('adm.ovDueTotal', U.fmtBDT(dueTotal), 'adm.ovDueSub') +
+      stat('adm.ovPendingRegs', regs.length, 'adm.ovPendingRegsSub', 'blue') +
+      stat('adm.ovPendingPays', pays.length, 'adm.ovPendingPaysSub', 'red') +
+      stat('adm.ovMembers', members.length, '', 'green') +
+      stat('adm.ovDueTotal', U.fmtBDT(dueTotal), 'adm.ovDueSub', 'yellow') +
       '</section>' +
       '<div class="grid two">' +
       '<div class="card"><h2>' + U.esc(L.t('adm.ovDoNext')) + '</h2><ul class="clean">' +
@@ -38,8 +38,8 @@
       a.addEventListener('click', function (ev) { ev.preventDefault(); selectTab(a.getAttribute('data-go')); });
     });
   }
-  function stat(k, v, s) {
-    return '<div class="card stat navy"><span class="k">' + U.esc(L.t(k)) + '</span><span class="v num">' + v + '</span>' + (s ? '<span class="s">' + U.esc(L.t(s)) + '</span>' : '') + '</div>';
+  function stat(k, v, s, tone) {
+    return '<div class="card stat' + (tone ? ' tone-' + tone : '') + '"><span class="k">' + U.esc(L.t(k)) + '</span><span class="v num">' + v + '</span>' + (s ? '<span class="s">' + U.esc(L.t(s)) + '</span>' : '') + '</div>';
   }
 
   /* ---------------- registrations ---------------- */
@@ -130,7 +130,8 @@
         ['adm.pyMember', 'adm.pyType', 'adm.pyMethod', 'adm.pyAmount', 'adm.pyDate', 'adm.pyRef', 'adm.pyStatus', 'adm.pyActions'].map(function (k) { return '<th>' + U.esc(L.t(k)) + '</th>'; }).join('') +
         '</tr></thead><tbody>' +
         list.map(function (p) {
-          return '<tr><td><strong>' + U.esc(p.memberName) + '</strong></td><td>' + (p.type === 'advance' ? U.esc(L.t('st.advance')) : U.esc(L.t('st.due'))) + '</td>' +
+          var mem = members.find(function (m) { return m.id === p.memberId; });
+          return '<tr><td><strong>' + U.esc(p.memberName) + '</strong>' + (mem && mem.phone ? '<span class="sub"><br>' + U.esc(mem.phone) + '</span>' : '') + '</td><td>' + (p.type === 'advance' ? U.esc(L.t('st.advance')) : U.esc(L.t('st.due'))) + '</td>' +
             '<td>' + U.esc(C.methodLabel(p.method)) + '<span class="sub"><br>' + U.esc(p.senderNumber || '') + '</span></td>' +
             '<td class="n">' + U.fmtBDT(p.amount) + '</td><td class="num">' + U.fmtDate(p.date) + '</td>' +
             '<td class="mono">' + U.esc(p.ref || '—') + '</td><td>' + C.chip(p.status) +
@@ -263,7 +264,7 @@
       '<p class="foot">' + U.esc(L.t('adm.fiFoot')) + '</p></div>' +
       '<div class="card"><h2>' + U.esc(L.t('adm.fiEntries', { n: entries.length })) + '</h2><div class="tablewrap" style="max-height:420px;overflow:auto">' +
       '<table class="data"><thead><tr>' +
-      ['idx.thMonth', 'adm.fiKind', 'adm.fiAmount', 'adm.fiNote', ''].map(function (k) { return '<th>' + (k ? U.esc(L.t(k)) : '') + '</th>'; }).join('') +
+      ['idx.thMonth', 'adm.fiKind', 'adm.fiAmount', 'adm.fiNote', 'adm.fiActions'].map(function (k) { return '<th>' + (k ? U.esc(L.t(k)) : '') + '</th>'; }).join('') +
       '</tr></thead><tbody>' +
       (entries.length ? entries.map(function (f) {
         return '<tr><td class="num">' + U.fmtMonth(f.month) + '</td><td>' + U.esc(L.t(f.kind === 'funding' ? 'adm.fiKFunding' : f.kind === 'revenue' ? 'adm.fiKRevenue' : 'adm.fiKLoss')) + '</td><td class="n">' + U.fmtBDT(f.amount) + '</td>' +
@@ -322,7 +323,7 @@
       '<label class="f"><span>' + U.esc(L.t('adm.stMps')) + '</span><input type="number" id="st-mps" min="1" value="' + (s.monthlyPerShare || 1000) + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stDocs')) + '</span><input type="text" id="st-docs" value="' + U.esc((s.docRequirements || []).join(' | ')) + '"><span class="hint">' + U.esc(L.t('adm.stDocsHint')) + '</span></label>' +
       '</div>' +
-      '<h3 style="margin-top:8px">' + U.esc(L.t('adm.stNumbers')) + '</h3>' +
+      '<h2 style="margin-top:8px">' + U.esc(L.t('adm.stNumbers')) + '</h3>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stBkash')) + '</span><input type="text" id="st-bkash" value="' + U.esc(pn.bkash || '') + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stNagad')) + '</span><input type="text" id="st-nagad" value="' + U.esc(pn.nagad || '') + '"></label>' +
@@ -333,10 +334,10 @@
       '<label class="f"><span>' + U.esc(L.t('adm.stBankNo')) + '</span><input type="text" id="st-bankno" value="' + U.esc(bank.accountNumber || '') + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stBankBr')) + '</span><input type="text" id="st-bankbr" value="' + U.esc(bank.branch || '') + '"></label>' +
       '</div>' +
-      '<h3 style="margin-top:8px">' + U.esc(L.t('adm.stContent')) + '</h3>' +
+      '<h2 style="margin-top:8px">' + U.esc(L.t('adm.stContent')) + '</h3>' +
       '<p class="footnote">' + U.esc(L.t('adm.stContentHint')) + '</p>' +
       '<div class="grid two">' +
-      '<div><h4 class="k">English</h4>' +
+      '<div><h3 class="k">English</h4>' +
       cf('ct-en-sub', 'adm.stSub', en.sub) +
       cf('ct-en-notice', 'adm.stNotice', en.notice) +
       cf('ct-en-how1', 'adm.stHow1', en.how1) +
@@ -344,7 +345,7 @@
       cf('ct-en-how3', 'adm.stHow3', en.how3) +
       cf('ct-en-how4', 'adm.stHow4', en.how4) +
       '</div>' +
-      '<div><h4 class="k">বাংলা</h4>' +
+      '<div><h3 class="k">বাংলা</h4>' +
       cf('ct-bn-sub', 'adm.stSub', bn.sub) +
       cf('ct-bn-notice', 'adm.stNotice', bn.notice) +
       cf('ct-bn-how1', 'adm.stHow1', bn.how1) +
@@ -432,6 +433,8 @@
     var ctx = await C.requireRole(['admin'], 'login.html?next=admin.html');
     if (!ctx) return;
     C.renderHeader('admin.html');
+  C.renderFooter();
+  L.apply(document);
     document.getElementById('mode-badge').innerHTML = C.modeBadge();
     body = document.getElementById('tab-body');
     document.getElementById('admin-content').classList.remove('hide');

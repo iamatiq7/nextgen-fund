@@ -6,11 +6,15 @@
 <title>NextGen Fund — Family Fund Dashboard</title>
 <meta name="description" content="NextGen Fund public dashboard: next meeting date, total funding, total revenue, total loss and month-by-month figures. English / বাংলা.">
 <link rel="icon" href="assets/img/favicon.png" type="image/png">
+<meta property="og:title" content="NextGen Fund — Family Fund Dashboard">
+<meta property="og:description" content="Public dashboard of the NextGen Fund family savings group: monthly deposits, fund totals, next meeting date and payment channels.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextGen Fund">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="site-header"></div>
+<header class="site-header" id="site-header"></header>
 
 <main class="container">
   <div class="spread" style="margin-bottom:14px">
@@ -31,22 +35,22 @@
       <span class="v num" id="stat-meeting">—</span>
       <span class="s" id="stat-meeting-note"></span>
     </div>
-    <div class="card stat">
+    <div class="card stat tone-blue" id="card-funding">
       <span class="k" data-i18n="idx.funding"></span>
       <span class="v num" id="stat-funding">—</span>
       <span class="s" data-i18n="idx.fundingSub"></span>
     </div>
-    <div class="card stat pos">
+    <div class="card stat tone-green" id="card-revenue">
       <span class="k" data-i18n="idx.revenue"></span>
       <span class="v num" id="stat-revenue">—</span>
       <span class="s" data-i18n="idx.revenueSub"></span>
     </div>
-    <div class="card stat neg">
+    <div class="card stat tone-red" id="card-loss">
       <span class="k" data-i18n="idx.loss"></span>
       <span class="v num" id="stat-loss">—</span>
       <span class="s" data-i18n="idx.lossSub"></span>
     </div>
-    <div class="card stat">
+    <div class="card stat tone-yellow" id="card-net">
       <span class="k" data-i18n="idx.net"></span>
       <span class="v num" id="stat-net">—</span>
       <span class="s" id="stat-members"></span>
@@ -81,7 +85,7 @@
 
   <!-- Membership + methods -->
   <section class="grid two" style="margin-bottom:16px">
-    <div class="card">
+    <div class="card sec-member">
       <h2 data-i18n="idx.memberTitle"></h2>
       <p data-i18n="idx.memberText"></p>
       <div class="btn-row">
@@ -90,7 +94,7 @@
       </div>
       <p class="foot" id="share-info"></p>
     </div>
-    <div class="card">
+    <div class="card sec-methods">
       <h2 data-i18n="idx.payTitle"></h2>
       <p class="footnote" style="margin-top:0" data-i18n="idx.payText"></p>
       <div class="pay-methods" id="pay-methods">
@@ -101,7 +105,7 @@
   </section>
 
   <!-- How it works -->
-  <section class="card">
+  <section class="card sec-how">
     <h2 data-i18n="idx.howTitle"></h2>
     <div class="grid two">
       <ul class="clean">

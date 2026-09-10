@@ -1,7 +1,7 @@
 /* NextGen Fund seed data - generated from D:\NextGen Fund\NextGen Fund.xlsx (as of 2026-09). Total deposit: BDT 162,000 */
 (function (root, factory) { if (typeof module !== 'undefined' && module.exports) { module.exports = factory(); } else { root.NGF_SEED = factory(); } })(typeof self !== 'undefined' ? self : this, function () {
 return {
- "seedVersion": 1,
+ "seedVersion": 2,
  "settings": {
   "fundName": "NextGen Fund",
   "currency": "BDT",

@@ -3,14 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Fund — NextGen Fund</title>
+<title>My Fund - NextGen Fund</title>
 <meta name="description" content="Your NextGen Fund member portal: total paid, current due, advance balance and payment history. English / বাংলা.">
 <link rel="icon" href="assets/img/favicon.png" type="image/png">
+<meta property="og:title" content="My Fund - NextGen Fund">
+<meta property="og:description" content="Your NextGen Fund member portal: total paid, current due, advance balance and payment history.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextGen Fund">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="site-header"></div>
+<header class="site-header" id="site-header"></header>
 
 <main class="container" id="portal-main">
   <div id="portal-blocked" class="hide"></div>
@@ -27,24 +31,24 @@
 
     <!-- balances -->
     <section class="grid stats" style="margin-bottom:16px" aria-label="Your balance">
-      <div class="card stat navy">
+      <div class="card stat tone-blue" id="card-paid">
         <span class="k" data-i18n="por.paid"></span>
-        <span class="v num" id="bal-paid">—</span>
+        <span class="v num" id="bal-paid">-</span>
         <span class="s" id="bal-paid-sub"></span>
       </div>
       <div class="card stat" id="bal-due-card">
         <span class="k" data-i18n="por.due"></span>
-        <span class="v num" id="bal-due">—</span>
+        <span class="v num" id="bal-due">-</span>
         <span class="s" id="bal-due-sub"></span>
       </div>
-      <div class="card stat pos">
+      <div class="card stat tone-yellow" id="bal-adv-card">
         <span class="k" data-i18n="por.advance"></span>
-        <span class="v num" id="bal-advance">—</span>
+        <span class="v num" id="bal-advance">-</span>
         <span class="s" data-i18n="por.advanceSub"></span>
       </div>
-      <div class="card stat">
+      <div class="card stat tone-black" id="bal-month-card">
         <span class="k" data-i18n="por.monthly"></span>
-        <span class="v num" id="bal-monthly">—</span>
+        <span class="v num" id="bal-monthly">-</span>
         <span class="s" id="bal-shares"></span>
       </div>
     </section>
@@ -54,6 +58,19 @@
       <section class="card" id="pay-card" style="align-self:start">
         <h2 data-i18n="por.payTitle"></h2>
         <p class="footnote" style="margin-top:-4px" data-i18n="por.payText"></p>
+
+        <!-- step guide -->
+        <div class="pay-guide" id="pay-guide">
+          <h3 data-i18n="pay.guideTitle"></h3>
+          <ol class="steps">
+            <li><strong data-i18n="pay.g1"></strong><span data-i18n="pay.g1t"></span></li>
+            <li><strong data-i18n="pay.g2"></strong><span data-i18n="pay.g2t"></span></li>
+            <li><strong data-i18n="pay.g3"></strong><span data-i18n="pay.g3t"></span></li>
+          </ol>
+        </div>
+
+        <div class="notice ok hide" id="pay-done"></div>
+
         <div class="notice" id="pay-numbers" style="display:none"></div>
         <form id="pay-form" novalidate>
           <div class="grid form2">
@@ -62,6 +79,7 @@
                 <option value="due" data-i18n="por.typeDue"></option>
                 <option value="advance" data-i18n="por.typeAdvance"></option>
               </select>
+              <span class="hint" data-i18n="pay.typeHint"></span>
             </label>
             <label class="f"><span data-i18n="por.method"></span>
               <select id="py-method">
@@ -74,10 +92,12 @@
               </select>
             </label>
             <label class="f"><span data-i18n="por.amount"></span>
-              <input type="number" id="py-amount" min="1" step="1" inputmode="numeric" placeholder="e.g. 1000" data-i18n-ph="ph.amount" required>
+              <input type="number" id="py-amount" min="1000" step="1000" inputmode="numeric" placeholder="e.g. 1000" data-i18n-ph="ph.amount" required>
+              <span class="hint" id="py-due-hint"></span>
             </label>
             <label class="f"><span data-i18n="por.date"></span>
               <input type="date" id="py-date" required>
+              <span class="hint" data-i18n="pay.dateHint"></span>
             </label>
             <label class="f"><span data-i18n="por.ref"></span>
               <input type="text" id="py-ref" placeholder="e.g. 9F7DA23K1" data-i18n-ph="ph.ref">
@@ -108,6 +128,7 @@
           </table>
         </div>
         <p class="foot" id="history-foot"></p>
+        <p class="footnote" id="pay-legend" style="border-top:1px solid var(--hairline-soft);padding-top:8px;margin-top:14px"></p>
       </section>
     </div>
 

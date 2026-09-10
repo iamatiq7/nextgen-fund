@@ -107,10 +107,10 @@ let acc = await Store.getMyAccount();
 ok('new member expected = 1 month × 1000', acc.balance.expected === 1000, 'got ' + acc.balance.expected);
 ok('due = 1000 before paying', acc.balance.due === 1000 && acc.balance.paid === 0);
 await Store.submitPayment({ type: 'due', method: 'bkash', amount: 1000, date: '2026-09-09', ref: 'TXN-A1', senderNumber: '01711111111', note: 'Sep due' });
-await Store.submitPayment({ type: 'advance', method: 'nagad', amount: 300, date: '2026-09-09', ref: 'TXN-A2' });
-await Store.submitPayment({ type: 'due', method: 'bank', amount: 500, date: '2026-09-09', ref: 'BNK-77' });
-await throws(() => Store.submitPayment({ type: 'due', method: 'bkash', amount: 10, date: '2026-09-09', ref: 'TXN-A1' }), 'already submitted', 'duplicate transaction ID rejected');
-await throws(() => Store.submitPayment({ type: 'due', method: 'bkash', amount: 10, date: '2026-09-09', ref: 'x' }), 'reference', 'short transaction ID rejected');
+await Store.submitPayment({ type: 'advance', method: 'nagad', amount: 3000, date: '2026-09-09', ref: 'TXN-A2' });
+await Store.submitPayment({ type: 'due', method: 'bank', amount: 1000, date: '2026-09-09', ref: 'BNK-77' });
+await throws(() => Store.submitPayment({ type: 'due', method: 'bkash', amount: 1000, date: '2026-09-09', ref: 'TXN-A1' }), 'already submitted', 'duplicate transaction ID rejected');
+await throws(() => Store.submitPayment({ type: 'due', method: 'bkash', amount: 1000, date: '2026-09-09', ref: 'x' }), 'reference', 'short transaction ID rejected');
 const myPays = await Store.getMyPayments();
 ok('member sees exactly own 3 payments', myPays.length === 3 && myPays.every((p) => p.memberName === 'Test Member One'));
 
@@ -125,17 +125,58 @@ await Store.verifyPayment(ids['TXN-A2']);
 await Store.login('test.member.one', 'testpass123');
 acc = await Store.getMyAccount();
 ok('verified due payment clears due (1000−1000=0)', acc.balance.due === 0, 'due=' + acc.balance.due);
-ok('verified advance = 300', acc.balance.advance === 300);
-ok('total paid = 1300 (due 1000 + advance 300)', acc.balance.paid === 1300, 'paid=' + acc.balance.paid);
+ok('verified advance = 3000', acc.balance.advance === 3000);
+ok('total paid = 4000 (due 1000 + advance 3000)', acc.balance.paid === 4000, 'paid=' + acc.balance.paid);
 ok('rejected payment not counted & reason stored', acc.payments.find((p) => p.ref === 'BNK-77').rejectReason.includes('bank'));
 
 console.log('== 9 · manual admin payment entry ==');
 await Store.login('admin', 'nextgen2026');
 const members = await Store.listMembers();
 const me = members.find((m) => m.username === 'test.member.one');
-await Store.addManualPayment({ memberId: me.id, type: 'due', method: 'cash', amount: 500, date: '2026-09-09', ref: 'CASH-1', note: 'collected at meeting' });
+await Store.addManualPayment({ memberId: me.id, type: 'due', method: 'cash', amount: 3000, date: '2026-09-09', ref: 'CASH-1', note: 'collected at meeting' });
 acc = await Store.getMemberDetail(me.id);
-ok('manual cash payment verified immediately', acc.balance.paid === 1800 && acc.balance.due === 0, 'paid=' + acc.balance.paid);
+ok('manual cash payment verified immediately', acc.balance.paid === 7000 && acc.balance.due === 0, 'paid=' + acc.balance.paid);
+
+console.log('== 9b · payment edge-case matrix (clarity audit evidence) ==');
+// E1: pending payments must NOT count in the balance until verified
+await Store.login('admin', 'nextgen2026');
+const memE = members.find((m) => m.username === 'test.member.one');
+const balBefore = (await Store.getMemberDetail(memE.id)).balance;
+await Store.login('test.member.one', 'testpass123');
+await Store.submitPayment({ type: 'due', method: 'rocket', amount: 1000, date: '2026-09-09', ref: 'RKT-E1' });
+const balPending = (await Store.getMyAccount()).balance;
+ok('E1 pending payment does not change balance', balPending.paid === balBefore.paid && balPending.due === balBefore.due, `paid ${balPending.paid}`);
+// E2: verifying it applies immediately
+await Store.login('admin', 'nextgen2026');
+const pend2 = await Store.listPayments({ status: 'pending' });
+const e1 = pend2.find((p) => p.ref === 'RKT-E1');
+await Store.verifyPayment(e1.id);
+const balE2 = (await Store.getMemberDetail(memE.id)).balance;
+ok('E2 verification applies amount immediately', balE2.paid === balBefore.paid + 1000, 'paid=' + balE2.paid);
+// E3: overpaying due floors at 0 and does not create advance
+await Store.login('test.member.one', 'testpass123');
+await Store.submitPayment({ type: 'due', method: 'upay', amount: 99000, date: '2026-09-09', ref: 'UPY-E3' });
+await Store.login('admin', 'nextgen2026');
+await Store.verifyPayment((await Store.listPayments({ status: 'pending' })).find((p) => p.ref === 'UPY-E3').id);
+const balE3 = (await Store.getMemberDetail(memE.id)).balance;
+ok('E3 overpay of due floors due at 0', balE3.due === 0, 'due=' + balE3.due);
+// E4: rejected submission allows resubmitting the same TrxID
+await Store.login('test.member.one', 'testpass123');
+await Store.submitPayment({ type: 'advance', method: 'bkash', amount: 1000, date: '2026-09-09', ref: 'BK-E4' });
+await Store.login('admin', 'nextgen2026');
+await Store.rejectPayment((await Store.listPayments({ status: 'pending' })).find((p) => p.ref === 'BK-E4').id, 'wrong amount');
+await Store.login('test.member.one', 'testpass123');
+await Store.submitPayment({ type: 'advance', method: 'bkash', amount: 2000, date: '2026-09-09', ref: 'BK-E4' });
+ok('E4 rejected TrxID can be resubmitted', true);
+// E5: every payment (incl. rejected) is traceable in the ledger
+const allPays = await (async () => { await Store.login('admin', 'nextgen2026'); return Store.listPayments(); })();
+ok('E5 ledger contains pending/verified/rejected records',
+  ['pending', 'verified', 'rejected'].every((s) => allPays.some((p) => p.status === s)),
+  `total ${allPays.length} records`);
+const csvLedger = await Store.exportPaymentsCSV();
+ok('E5b ledger CSV exportable with statuses', csvLedger.includes('RKT-E1') && csvLedger.includes('BK-E4'));
+await Store.login('test.member.one', 'testpass123'); // restore session for step 10
+
 
 console.log('== 10 · access isolation ==');
 await Store.login('test.member.one', 'testpass123');
@@ -160,10 +201,10 @@ await Store.login('admin', 'nextgen2026');
 const memCsv = await Store.exportMembersCSV();
 const payCsv = await Store.exportPaymentsCSV();
 const finCsv = await Store.exportFinanceCSV();
-ok('members CSV contains test member with balances', memCsv.includes('Test Member One') && memCsv.includes('1800'));
+ok('members CSV contains test member with balances', memCsv.includes('Test Member One') && memCsv.includes('107000'));
 ok('members CSV has 14 seeded + 1 new member rows', memCsv.trim().split('\n').length === 16, 'lines=' + memCsv.trim().split('\n').length);
 const payLines = payCsv.trim().split('\n');
-ok('payments CSV = 106 seeded + 4 new + header', payLines.length === 111, 'lines=' + payLines.length);
+ok('payments CSV = 106 seeded + 8 new + header', payLines.length === 115, 'lines=' + payLines.length);
 ok('payments CSV carries methods/refs/status', payCsv.includes('TXN-A1') && payCsv.includes('bkash') && payCsv.includes('verified') && payCsv.includes('rejected'));
 ok('finance CSV contains seeded funding + test revenue', finCsv.includes('funding,2026-01,21000') && finCsv.includes('revenue,2026-09,5000'));
 
@@ -175,3 +216,4 @@ ok('audit records submissions', audit.some((a) => a.action === 'payment-submitte
 console.log('\n================================');
 console.log('RESULT: ' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
+

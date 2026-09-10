@@ -92,11 +92,31 @@ pay ahead.
   Members / Payments which is the supported way once live. Regenerate `seed-data.js` from
   the spreadsheet with `.openclaw/tmp/make_seed.py` + `gen_seed_js.py` if needed.
 
+## Access control & credit rule (v3, 2026-09-10)
+
+- **Dashboard requires login** - logged-out visitors are sent to the login page.
+- **Members** see Dashboard + My Fund and can never open the admin panel
+  (a direct URL bounces them back). **Admins** see Dashboard + Admin - the
+  My Fund tab and the footer Admin/Setup links are hidden from everyone else.
+- **Credits are only accepted in whole multiples of 1,000 tk** (1x1000,
+  2x1000, 3x1000, ...). 100/500/1500 tk etc. are rejected with a clear
+  message - enforced in the data store, in the UI, and (for Firebase live
+  mode) in `firestore.rules`.
+
+## Deploy (GitHub Pages)
+
+1. Commit the changes: `git add -A && git commit -m "v3: access control + credit rule"`
+2. Push: `git push origin main`
+3. Pages rebuilds automatically in about 1 minute (https://iamatiq7.github.io/nextgen-fund/).
+4. Rollback: `git revert <commit>` + push, or restore a previous file state and redeploy.
+
 ## Testing
 
 ```bash
 node tests/store.test.mjs
 ```
+
+Also: `node tests/access.test.mjs` (credit-rule matrix, 12 assertions) and `node tests/reseed.harness.mjs` (13 assertions).
 
 Covers: registration with documents → admin accept/reject → login rules → due/advance
 payments via 5+ methods → verification → balance maths → access isolation → password

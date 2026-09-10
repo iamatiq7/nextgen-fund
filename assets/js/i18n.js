@@ -161,7 +161,7 @@
       'adm.mbEMonthly': 'Monthly due (BDT)', 'adm.mbEMonthlyHint': 'Auto-updates from shares unless changed.', 'adm.mbEJoin': 'Join month',
       'adm.mbEStatus': 'Status', 'adm.mbSaved': 'Member updated.',
       'adm.fiAdd': 'Add / update entry', 'adm.fiKind': 'Type', 'adm.fiMonth': 'Month', 'adm.fiAmount': 'Amount (BDT)',
-      'adm.fiNote': 'Note', 'adm.fiSave': 'Save entry', 'adm.fiFoot': 'The public dashboard updates the moment you save. Editing an existing row: click Edit — same form.',
+      'adm.fiNote': 'Note', 'adm.fiActions': 'Actions', 'adm.fiSave': 'Save entry', 'adm.fiFoot': 'The public dashboard updates the moment you save. Editing an existing row: click Edit — same form.',
       'adm.fiEntries': 'Entries ({n})', 'adm.fiEmpty': 'No entries yet.',
       'adm.fiKFunding': 'Funding (deposits)', 'adm.fiKRevenue': 'Revenue', 'adm.fiKLoss': 'Loss',
       'adm.fiSaved': 'Entry saved — dashboard updated.', 'adm.fiDeleted': 'Entry deleted.', 'adm.fiDeleteQ': 'Delete entry?',
@@ -211,7 +211,21 @@
       'ph.address': 'Village / Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': 'Repeat password',
       'ph.amount': 'e.g. 1000', 'ph.ref': 'e.g. 9F7DA23K1',
       'ph.sender': 'The number or account you paid from', 'ph.note': 'e.g. August + September due',
-      'ph.setupName': 'e.g. Kazi Atiqur Rahman', 'ph.setupEmail': 'admin@example.com'
+      'ph.setupName': 'e.g. Kazi Atiqur Rahman', 'ph.setupEmail': 'admin@example.com',
+
+      /* payment clarity */
+      'pay.guideTitle': 'How paying works — 3 steps',
+      'pay.g1': 'Send the money outside this site', 'pay.g1t': 'Pay by bKash / Nagad / Rocket / Upay / bank using the number shown when you pick a method — or hand cash at the meeting.',
+      'pay.g2': 'Record it here', 'pay.g2t': 'Fill the form below with the amount, date and the transaction ID (TrxID) from the confirmation SMS. This creates a pending entry.',
+      'pay.g3': 'Admin verifies', 'pay.g3t': 'The admin matches your TrxID against the real statement (usually before the monthly meeting). Verified payments update your balance immediately.',
+      'pay.sendTo': 'Send to this number', 'pay.copy': 'Copy', 'pay.copied': 'Copied ✓',
+      'pay.useDue': 'Use my due amount ({amt})', 'pay.dueSuggestion': 'You currently owe {amt} — paying it clears your due.',
+      'pay.dateHint': 'The date you sent the money (see the SMS or receipt).',
+      'pay.typeHint': 'Due payment counts against your monthly deposits. Advance payment is money paid ahead of schedule — it builds your advance balance and never reduces the due figure.',
+      'pay.afterTitle': 'Payment submitted — status: pending',
+      'pay.afterText': 'The admin will verify it against the statement (usually before the monthly meeting). Watch it in your history below: pending → verified (balance updates) or rejected (reason shown, you can resubmit).',
+      'pay.legend': 'pending = waiting for admin verification · verified = counted in your balance · rejected = not counted, reason shown',
+      'por.memberPhone': 'Phone'
     },
 
     /* ================= BANGLA (বাংলা) ================= */
@@ -364,7 +378,7 @@
       'adm.mbEMonthly': 'মাসিক বকেয়া (টাকা)', 'adm.mbEMonthlyHint': 'পরিবর্তন না করলে শেয়ার অনুযায়ী স্বয়ংক্রিয়।', 'adm.mbEJoin': 'যোগদানের মাস',
       'adm.mbEStatus': 'অবস্থা', 'adm.mbSaved': 'সদস্যের তথ্য হালনাগাদ হয়েছে।',
       'adm.fiAdd': 'এন্ট্রি যোগ / হালনাগাদ', 'adm.fiKind': 'ধরন', 'adm.fiMonth': 'মাস', 'adm.fiAmount': 'পরিমাণ (টাকা)',
-      'adm.fiNote': 'মন্তব্য', 'adm.fiSave': 'এন্ট্রি সংরক্ষণ', 'adm.fiFoot': 'সংরক্ষণের সাথে সাথেই প্রকাশ্য ড্যাশবোর্ড হালনাগাদ হয়। পুরোনো সারি সম্পাদনায় Edit চাপুন — একই ফর্ম।',
+      'adm.fiNote': 'মন্তব্য', 'adm.fiActions': 'কার্যক্রম', 'adm.fiSave': 'এন্ট্রি সংরক্ষণ', 'adm.fiFoot': 'সংরক্ষণের সাথে সাথেই প্রকাশ্য ড্যাশবোর্ড হালনাগাদ হয়। পুরোনো সারি সম্পাদনায় Edit চাপুন — একই ফর্ম।',
       'adm.fiEntries': 'এন্ট্রি ({n})', 'adm.fiEmpty': 'এখনও কোনো এন্ট্রি নেই।',
       'adm.fiKFunding': 'জমা (তহবিল)', 'adm.fiKRevenue': 'আয়', 'adm.fiKLoss': 'ক্ষতি',
       'adm.fiSaved': 'এন্ট্রি সংরক্ষিত — ড্যাশবোর্ড হালনাগাদ।', 'adm.fiDeleted': 'এন্ট্রি মুছে ফেলা হয়েছে।', 'adm.fiDeleteQ': 'এন্ট্রি মুছবেন?',
@@ -414,7 +428,21 @@
       'ph.address': 'গ্রাম / রাস্তা, থানা, জেলা', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': 'আবার পাসওয়ার্ড লিখুন',
       'ph.amount': 'যেমন: 1000', 'ph.ref': 'যেমন: 9F7DA23K1',
       'ph.sender': 'যে নম্বর বা অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন', 'ph.note': 'যেমন: আগস্ট + সেপ্টেম্বরের বকেয়া',
-      'ph.setupName': 'যেমন: কাজী আতিকুর রহমান', 'ph.setupEmail': 'admin@example.com'
+      'ph.setupName': 'যেমন: কাজী আতিকুর রহমান', 'ph.setupEmail': 'admin@example.com',
+
+      /* payment clarity */
+      'pay.guideTitle': 'পেমেন্ট কীভাবে কাজ করে — ৩ ধাপ',
+      'pay.g1': 'এই সাইটের বাইরে টাকা পাঠান', 'pay.g1t': 'মাধ্যম বেছে নিলে দেখানো নম্বরে বিকাশ / নগদ / রকেট / উপায় / ব্যাংকে টাকা পাঠান — অথবা সভায় নগদ দিন।',
+      'pay.g2': 'এখানে এন্ট্রি দিন', 'pay.g2t': 'নিচের ফর্মে পরিমাণ, তারিখ আর কনফার্মেশন এসএমএস থেকে পাওয়া লেনদেন নম্বর (TrxID) দিন। এতে একটি অপেক্ষমাণ এন্ট্রি তৈরি হবে।',
+      'pay.g3': 'অ্যাডমিন যাচাই করেন', 'pay.g3t': 'অ্যাডমিন প্রকৃত স্টেটমেন্টের সাথে আপনার TrxID মেলান (সাধারণত মাসিক সভার আগে)। যাচাই হলে ব্যালেন্স সাথে সাথে হালনাগাদ হয়।',
+      'pay.sendTo': 'এই নম্বরে পাঠান', 'pay.copy': 'কপি', 'pay.copied': 'কপি হয়েছে ✓',
+      'pay.useDue': 'আমার বকেয়া বসান ({amt})', 'pay.dueSuggestion': 'আপনার বর্তমান বকেয়া {amt} — এটুকু দিলে বকেয়া পরিশোধ হবে।',
+      'pay.dateHint': 'যে তারিখে টাকা পাঠিয়েছেন (এসএমএস বা রশিদ দেখুন)।',
+      'pay.typeHint': 'বকেয়া পরিশোধ আপনার মাসিক জমার হিসাবে গণনা হয়। অগ্রিম পেমেন্ট সময়ের আগে দেওয়া টাকা — এটি অগ্রিম ব্যালেন্স বাড়ায়, বকেয়া কমায় না।',
+      'pay.afterTitle': 'পেমেন্ট জমা হয়েছে — অবস্থা: অপেক্ষমাণ',
+      'pay.afterText': 'অ্যাডমিন স্টেটমেন্ট মিলিয়ে যাচাই করবেন (সাধারণত মাসিক সভার আগে)। নিচের ইতিহাসে দেখুন: অপেক্ষমাণ → যাচাইকৃত (ব্যালেন্স হালনাগাদ) অথবা বাতিল (কারণ দেখানো হবে, আবার জমা দিতে পারবেন)।',
+      'pay.legend': 'অপেক্ষমাণ = অ্যাডমিন যাচাইয়ের অপেক্ষায় · যাচাইকৃত = ব্যালেন্সে গণনা হয়েছে · বাতিল = গণনা হয়নি, কারণ দেখানো হয়েছে',
+      'por.memberPhone': 'ফোন'
     }
   };
 

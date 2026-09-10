@@ -63,7 +63,11 @@ service cloud.firestore {
 
     // Payments: members create/see their own; admins manage everything.
     match /payments/{id} {
-      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      // Credits must be whole multiples of 1,000 tk (1000, 2000, 3000, ...).
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid &&
+        request.resource.data.amount is number &&
+        request.resource.data.amount >= 1000 &&
+        request.resource.data.amount % 1000 == 0;
       allow get, list: if (isSignedIn() && resource.data.memberId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }

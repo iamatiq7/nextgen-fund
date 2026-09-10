@@ -61,21 +61,11 @@
     renderHeader: function (active) {
       var el = document.getElementById('site-header');
       if (!el) return;
-      var links = [
-        ['index.html', 'nav.dashboard'],
-        ['register.html', 'nav.register'],
-        ['login.html', 'nav.login'],
-        ['portal.html', 'nav.portal'],
-        ['admin.html', 'nav.admin']
-      ];
       var html = '<div class="bar">' +
         '<a class="brand" href="index.html">' +
         '<img class="mark" src="assets/img/logo.png" alt="' + U.esc(L.t('brand.name')) + '">' +
         '<span>' + U.esc(L.t('brand.name')) + ' <small>' + U.esc(L.t('brand.tag')) + '</small></span></a>' +
-        '<nav class="nav" aria-label="Main">' +
-        links.map(function (l) {
-          return '<a href="' + l[0] + '" data-i18n="' + l[1] + '"' + (active === l[0] ? ' class="active" aria-current="page"' : '') + '></a>';
-        }).join('') +
+        '<nav class="nav" id="main-nav" aria-label="Main">' +
         '<button type="button" class="btn sm subtle lang-btn" id="lang-btn" title="English / বাংলা">' + U.esc(L.t('lang.other')) + '</button>' +
         '<span class="who" id="nav-who"></span>' +
         '<button class="btn sm subtle hide" id="nav-logout" data-i18n="nav.logout"></button>' +
@@ -85,6 +75,20 @@
       L.apply(el);
 
       S.getSession().then(function (s) {
+        var role = s ? s.role : null;
+        var links = [['index.html', 'nav.dashboard']];
+        if (role === 'member') links.push(['portal.html', 'nav.portal']);
+        if (role === 'admin') links.push(['admin.html', 'nav.admin']);
+        if (!s) links.push(['register.html', 'nav.register'], ['login.html', 'nav.login']);
+        var navEl = document.getElementById('main-nav');
+        var langBtn = document.getElementById('lang-btn');
+        links.forEach(function (l) {
+          var a = document.createElement('a');
+          a.href = l[0]; a.setAttribute('data-i18n', l[1]);
+          if (active === l[0]) { a.className = 'active'; a.setAttribute('aria-current', 'page'); }
+          navEl.insertBefore(a, langBtn);
+        });
+        L.apply(navEl);
         if (!s) return;
         var who = document.getElementById('nav-who');
         var out = document.getElementById('nav-logout');
@@ -99,7 +103,13 @@
       if (!el) return;
       el.innerHTML = '<div class="bar"><span>' + U.esc(L.t('footer.tag')) + '</span>' +
         '<span>' + U.esc(NGFCOMMON.modeLabel()) + '</span>' +
-        '<span><a href="admin.html">' + U.esc(L.t('nav.admin')) + '</a> · <a href="setup.html">Setup</a></span></div>';
+        '<span id="footer-admin" class="hide"></span></div>';
+      S.getSession().then(function (s) {
+        if (!s || s.role !== 'admin') return;
+        var box = document.getElementById('footer-admin');
+        box.innerHTML = '<a href="admin.html">' + U.esc(L.t('nav.admin')) + '</a> &middot; <a href="setup.html">Setup</a>';
+        box.classList.remove('hide');
+      }).catch(function () {});
     },
 
     modeBadge: function () {

@@ -59,9 +59,15 @@
         }
       }
       this.mode = 'demo';
-      if (!lsGet(DB_KEY)) {
-        var seeded = buildSeed();
-        lsSet(DB_KEY, JSON.stringify(seeded));
+      var rawDb = lsGet(DB_KEY);
+      var storedDb = null;
+      if (rawDb) { try { storedDb = JSON.parse(rawDb); } catch (e) { storedDb = null; } }
+      var seedV = currentSeedVersion();
+      if (!storedDb || storedDb.seedVersion !== seedV) {
+        /* Stale or corrupt demo DB (older seed) -> refresh to the bundled seed.
+           Without this, browsers that visited before a seed update keep showing
+           empty payment history and zero balances after login. */
+        lsSet(DB_KEY, JSON.stringify(buildSeed()));
       }
       this._db = null;
       var s = lsGet(SESSION_KEY);
@@ -95,6 +101,11 @@
   };
 
   /* =============== seed =============== */
+  function currentSeedVersion() {
+    var seed = (typeof self !== 'undefined' && self.NGF_SEED) ||
+      (typeof require !== 'undefined' ? require('./seed-data.js') : null);
+    return (seed && seed.seedVersion) || 1;
+  }
   function buildSeed() {
     var seed = (typeof self !== 'undefined' && self.NGF_SEED) ||
       (typeof require !== 'undefined' ? require('./seed-data.js') : null);
@@ -330,6 +341,7 @@
       var db = Store._d();
       var amount = Number(data.amount);
       if (!(amount > 0)) { var e0 = new Error('Enter an amount greater than 0.'); e0.code = 'invalid'; throw e0; }
+      if (amount % 1000 !== 0 || amount < 1000) { var e0b = new Error('Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).'); e0b.code = 'invalid'; throw e0b; }
       if (METHODS.indexOf(data.method) < 0) { var e1 = new Error('Choose a payment method.'); e1.code = 'invalid'; throw e1; }
       if (data.type !== 'due' && data.type !== 'advance') { var e2 = new Error('Choose Due payment or Advance payment.'); e2.code = 'invalid'; throw e2; }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date || '')) { var e3 = new Error('Enter the payment date.'); e3.code = 'invalid'; throw e3; }
@@ -480,6 +492,7 @@
       if (!u) { var e = new Error('Member not found'); e.code = 'not-found'; throw e; }
       var amount = Number(data.amount);
       if (!(amount > 0)) { var e1 = new Error('Amount must be > 0.'); e1.code = 'invalid'; throw e1; }
+      if (amount % 1000 !== 0 || amount < 1000) { var e1b = new Error('Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).'); e1b.code = 'invalid'; throw e1b; }
       var p = {
         id: U.uid('p'), memberId: u.id, memberName: u.fullName,
         type: data.type === 'advance' ? 'advance' : 'due',

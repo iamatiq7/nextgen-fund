@@ -88,3 +88,14 @@ Members pay outside the site, then record it. The numbers you set in
   14 members / 21 shares, ৳162,000 total deposits, monthly per-share ৳1,000.
 - Next meeting date and payment numbers in demo mode are **placeholders** — set the
   real ones in Admin → Settings.
+
+## 8 - v3 update (2026-09-10): access control & credit rule
+
+- Dashboard (index) now requires login; logged-out visitors only see the login page.
+- Navigation is role-aware: members see Dashboard + My Fund, admins see Dashboard + Admin;
+  nobody else sees admin/setup links.
+- Credits (member payments and admin manual entries) must be whole multiples of
+  1,000 tk - 100/500/1500 tk are rejected. In Firebase live mode this is also
+  enforced by `firestore.rules`.
+- Demo-mode data still lives per browser; connect Firebase (docs/firebase_setup.md)
+  for a shared live ledger.

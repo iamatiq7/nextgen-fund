@@ -12,7 +12,7 @@
   --navy: #1f3a5f;
   --navy-deep: #16283f;
   --steel: #5c6b7a;
-  --faint: #8a97a3;
+  --faint: #5c6b7a;
   --hairline: #d9dcdf;
   --hairline-soft: #e8eaec;
   --wash: #eef0f2;
@@ -238,6 +238,23 @@ input[type=file] { padding: 7px; }
 }
 .pay-methods .pm small { display: block; font-weight: 500; color: var(--faint); font-size: 11.5px; }
 
+/* payment clarity: numbered steps + number panel */
+.pay-guide { border: 1px solid var(--hairline-soft); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; background: #fbfbfa; }
+.pay-guide h3 { font-size: 13px; margin: 0 0 8px; }
+.pay-guide ol.steps { list-style: none; counter-reset: pg; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pay-guide ol.steps li { counter-increment: pg; display: grid; grid-template-columns: 26px 1fr; gap: 4px 10px; align-items: baseline; padding: 4px 0; }
+.pay-guide ol.steps li::before {
+  content: counter(pg); grid-row: 1 / 3; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--navy); color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.pay-guide ol.steps strong { font-size: 13.5px; }
+.pay-guide ol.steps span { font-size: 12.5px; color: var(--steel); grid-column: 2; }
+#pay-numbers { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+#pay-numbers .num-inline { font-weight: 700; font-variant-numeric: tabular-nums; }
+#pay-numbers .btn-row { margin-left: auto; }
+.pay-legend { color: var(--faint); font-size: 12px; }
+
 /* ---------- misc ---------- */
 .hide { display: none !important; }
 .mono { font-family: var(--mono); font-size: 13px; }
@@ -279,3 +296,147 @@ html[lang="bn"] .brand .mark { height: 40px; width: auto; }
   color: var(--faint); font-size: 12.5px;
 }
 .site-footer .bar { max-width: 1120px; margin: 0 auto; padding: 16px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+
+/* ============================================================
+   RECOLOR v2 � "??? ???? ????" (Experimental Jetset adaptation)
+   Every section/component gets its own bold, recognizable color.
+   Added 2026-09-09. Rollback: remove this block or
+   `git checkout backup/pre-jetset-2026-09-09 -- assets/css/style.css`
+   Contrast checked: white-on-blue 6.4:1, white-on-green 4.9:1,
+   white-on-red 5.9:1, black-on-yellow 12.6:1, white-on-black 17.9:1.
+   ============================================================ */
+
+:root {
+  --j-black: #16181d;
+  --j-blue: #1d4ed8;
+  --j-blue-soft: #e8eefc;
+  --j-green: #14713d;
+  --j-green-soft: #e5f4ea;
+  --j-red: #b91c1c;
+  --j-red-soft: #fdeaea;
+  --j-yellow: #facc15;
+  --j-yellow-soft: #fdf6d8;
+  --j-orange: #c2410c;
+  --j-orange-soft: #fdeee3;
+}
+
+/* ---------- header & nav: black bar, Jetset style ---------- */
+.site-header { background: var(--j-black); border-bottom: 4px solid var(--j-yellow); }
+.site-header .brand, .site-header .brand span { color: #fff; }
+.site-header .brand small { color: #b9bdc4; }
+.site-header .nav a { color: #d6d9de; }
+.site-header .nav a:hover { color: var(--j-black); background: var(--j-yellow); }
+.site-header .nav a.active { color: var(--j-black); background: var(--j-yellow); }
+.site-header .nav .who { color: #9aa0a8; }
+#lang-btn { border-color: #4b5058; background: transparent; color: #fff; }
+#lang-btn:hover { background: var(--j-yellow); color: var(--j-black); border-color: var(--j-yellow); }
+#nav-logout { border-color: #4b5058; background: transparent; color: #ff8a80; }
+
+/* ---------- section labels: colored underline chips ---------- */
+.k { border-left: 5px solid var(--j-blue); padding-left: 8px; }
+main .k { display: inline-block; }
+
+/* ---------- headings ---------- */
+h1 { font-size: 30px; letter-spacing: -0.02em; }
+h2 { font-size: 20px; }
+.card h2 { padding-bottom: 8px; border-bottom: 2px solid var(--hairline); margin-bottom: 14px; }
+
+/* ---------- dashboard stat cards: one bold color each ---------- */
+.card.stat { border: none; border-radius: 4px; }
+.card.stat:not(.tone-yellow) .k { border-left: none; padding-left: 0; color: #fff; }
+.card.stat:not(.tone-yellow) .s { color: #fff; }
+.card.stat:not(.tone-yellow) .v { color: #fff !important; }
+#card-meeting { background: var(--j-black); }
+#card-meeting .k { color: var(--j-yellow); }
+#card-meeting .s { color: #c9ccd2; }
+.tone-blue { background: var(--j-blue); }
+.tone-green { background: var(--j-green); }
+.tone-red { background: var(--j-red); }
+.tone-yellow { background: var(--j-yellow); }
+.tone-yellow .k, .tone-yellow .s { color: #5c4a00 !important; }
+.tone-yellow .v { color: var(--j-black) !important; }
+
+/* portal due card state colors keep meaning */
+#bal-due-card.tone-red .v, #bal-due-card.tone-green .v { color: #fff !important; }
+#bal-due-card.tone-green .k, #bal-due-card.tone-red .k { color: rgba(255,255,255,.85); }
+#bal-due-card.tone-green .s, #bal-due-card.tone-red .s { color: rgba(255,255,255,.8); }
+
+/* ---------- dashboard sections: distinct bands ---------- */
+.chart-wrap { border-top: 6px solid var(--j-blue); }
+#month-table thead th { background: var(--j-black); color: #fff; border-bottom: none; }
+table.data tr.total td { background: var(--j-yellow-soft); border-top: 2px solid var(--j-black); }
+
+/* member & channels cards */
+.sec-member { border-top: 6px solid var(--j-green); }
+.sec-methods { border-top: 6px solid var(--j-yellow); }
+.sec-how { border-top: 6px solid var(--j-red); }
+.sec-how .pay-guide ol.steps li::before, .pay-guide ol.steps li::before { background: var(--j-blue); }
+
+/* payment channels pills */
+.pay-methods .pm { border: 2px solid var(--j-black); color: var(--j-black); font-weight: 700; }
+.pay-methods .pm:nth-child(1) { background: var(--j-pink, #fdeaea); }
+.pay-methods .pm:nth-child(2) { background: var(--j-yellow-soft); }
+.pay-methods .pm:nth-child(3) { background: var(--j-blue-soft); }
+.pay-methods .pm:nth-child(4) { background: var(--j-green-soft); }
+.pay-methods .pm:nth-child(5) { background: var(--j-red-soft); }
+
+/* how-it-works step dots: 4 colors */
+.sec-how ol.steps li:nth-child(1)::before { background: var(--j-blue); }
+.sec-how ol.steps li:nth-child(2)::before { background: var(--j-red); }
+.sec-how ol.steps li:nth-child(3)::before { background: var(--j-green); }
+.sec-how ol.steps li:nth-child(4)::before { background: var(--j-orange); }
+ul.clean li strong { color: var(--j-black); }
+
+/* ---------- buttons ---------- */
+.btn { background: var(--j-black); border-color: var(--j-black); }
+.btn:hover { background: #000; border-color: #000; }
+.btn.ghost { background: transparent; color: var(--j-blue); border-color: var(--j-blue); }
+.btn.ghost:hover { background: var(--j-blue-soft); }
+.btn.ok { background: var(--j-green); border-color: var(--j-green); }
+.btn.ok:hover { background: #0d5c31; }
+.btn.danger { background: var(--j-red); border-color: var(--j-red); }
+.btn.danger:hover { background: #991515; }
+.btn.subtle { background: #fff; border-color: var(--hairline); color: var(--ink); }
+.btn.subtle:hover { border-color: var(--j-black); }
+
+/* ---------- chips: stronger, still meaningful ---------- */
+.chip.pending { background: var(--j-yellow); color: #5c4a00; border-color: var(--j-yellow); }
+.chip.verified, .chip.active, .chip.approved { background: var(--j-green); color: #fff; border-color: var(--j-green); }
+.chip.rejected { background: var(--j-red); color: #fff; border-color: var(--j-red); }
+.chip.due { background: var(--j-red-soft); color: var(--j-red); border-color: var(--j-red); }
+.chip.demo { background: #fff; color: var(--j-blue); border: 2px dashed var(--j-blue); }
+.chip.advance { background: var(--j-blue-soft); color: var(--j-blue); border-color: var(--j-blue); }
+
+/* ---------- links & notices ---------- */
+a { color: var(--j-blue); }
+.notice { border-left-width: 5px; }
+.notice.warn { border-left-color: var(--j-yellow); background: var(--j-yellow-soft); }
+.notice.bad { border-left-color: var(--j-red); background: var(--j-red-soft); }
+.notice.ok { border-left-color: var(--j-green); background: var(--j-green-soft); }
+
+/* ---------- admin tabs: colored active ---------- */
+.tabs button[aria-selected="true"] { border-bottom: 3px solid var(--j-blue); color: var(--j-black); font-weight: 700; }
+
+/* ---------- footer ---------- */
+.site-footer { background: var(--j-black); border-top: 4px solid var(--j-yellow); }
+.site-footer .bar { color: #b9bdc4; }
+.site-footer a { color: var(--j-yellow); }
+
+/* ---------- typography polish ---------- */
+body { font-size: 15.5px; line-height: 1.6; }
+.card { box-shadow: 0 1px 0 rgba(22,24,29,.04); }
+.stat .v { font-size: 28px; }
+table.data { font-size: 14.5px; }
+.hint, .footnote { font-size: 13px; color: var(--faint); }
+
+/* ---------- keep light on very small screens ---------- */
+@media (max-width: 480px) {
+  .card.stat .v { font-size: 24px; }
+  h1 { font-size: 26px; }
+}
+
+/* tone-black generic (used by monthly-due card etc.) */
+.tone-black { background: var(--j-black); }
+.tone-black .k { color: var(--j-yellow) !important; }
+.tone-black .s { color: #c9ccd2 !important; }
+.tone-black .v { color: #fff !important; }

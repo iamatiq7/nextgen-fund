@@ -74,6 +74,8 @@
   async function run() {
     document.title = L.t('idx.title');
     await C.boot('index.html');
+    var sess = await S.getSession();
+    if (!sess) { location.replace('login.html?next=index.html'); return; }
     document.getElementById('mode-badge').innerHTML = C.modeBadge();
     var snap = await S.getPublicSnapshot();
 
@@ -97,7 +99,7 @@
     set('stat-loss', U.fmtBDT(snap.totalLoss));
     var net = document.getElementById('stat-net');
     net.textContent = U.fmtBDT(snap.net);
-    net.parentElement.className = 'card stat ' + (snap.net < 0 ? 'neg' : '');
+    net.parentElement.className = 'card stat tone-yellow' + (snap.net < 0 ? ' neg' : '');
     set('stat-members', L.t('idx.members', {
       n: snap.memberCount, s: snap.memberCount === 1 ? '' : 's',
       u: snap.updatedAt ? U.fmtDate(snap.updatedAt) : '—'
