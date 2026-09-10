@@ -80,8 +80,11 @@
     var m = document.getElementById('py-method').value;
     var numBox = document.getElementById('pay-numbers');
     numBox.style.display = 'flex';
+    var numText = numberFor(m);
+    var numPlaceholder = /XXXXXXX|update in Admin/i.test(numText);
     numBox.innerHTML =
-      '<span><span class="k">' + U.esc(L.t('pay.sendTo')) + '</span><br><span class="num-inline">' + U.esc(numberFor(m)) + '</span></span>' +
+      '<span><span class="k">' + U.esc(L.t('pay.sendTo')) + '</span><br><span class="num-inline">' + U.esc(numText) + '</span>' +
+      (numPlaceholder ? '<span class="sub"><br>' + U.esc(L.t('pay.numberPlaceholder')) + '</span>' : '') + '</span>' +
       (m === 'cash' ? '' : '<span class="btn-row"><button type="button" class="btn sm ghost" id="copy-num">' + U.esc(L.t('pay.copy')) + '</button></span>');
     var btn = document.getElementById('copy-num');
     if (btn) btn.onclick = function () {
