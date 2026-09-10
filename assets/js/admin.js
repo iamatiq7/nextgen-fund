@@ -315,9 +315,12 @@
     function cf(id, labelKey, val) {
       return '<label class="f"><span>' + U.esc(L.t(labelKey)) + '</span><input type="text" id="' + id + '" value="' + U.esc(val || '') + '"></label>';
     }
+    var modeNotice = C.isDemo() ?
+      ('<div class="notice">' + U.esc(L.t('adm.demoNotice')) +
+      ' <a href="' + GUIDE_URL + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.demoNoticeLink')) + '</a></div>') :
+      ('<div class="notice ok">' + U.esc(L.t('adm.liveNotice')) + '</div>');
     body.innerHTML =
-      '<div class="notice">' + U.esc(L.t('adm.demoNotice')) +
-      ' <a href="' + GUIDE_URL + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.demoNoticeLink')) + '</a></div>' +
+      modeNotice +
       '<div class="card" style="max-width:820px"><form id="set-form" novalidate>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stFundName')) + '</span><input type="text" id="st-name" value="' + U.esc(s.fundName || 'NextGen Fund') + '"></label>' +
