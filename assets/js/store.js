@@ -188,6 +188,17 @@
       return snapshotFromData(Store._d());
     },
 
+    /* live updates (Firebase mode only; returns null in demo) */
+    onPublicData: function (cb) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.onPublicData) return Store._fb.onPublicData(cb);
+      return null;
+    },
+
+    onMyData: function (cb) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.onMyData) return Store._fb.onMyData(cb);
+      return null;
+    },
+
     /* ---------- registration ---------- */
     register: async function (data) {
       var mode = Store.mode;

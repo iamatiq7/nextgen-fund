@@ -27,7 +27,12 @@
       if (!idf || !pw) { errBox.textContent = L.t('log.errBoth'); return; }
       btn.disabled = true; btn.textContent = L.t('log.loggingIn');
       try {
-        var sess = await S.login(idf, pw);
+        var withTimeout = function (pr, ms) {
+          return Promise.race([pr, new Promise(function (_, rej) {
+            setTimeout(function () { rej(new Error(L.t('fb.timeout'))); }, ms);
+          })]);
+        };
+        var sess = await withTimeout(S.login(idf, pw), 25000);
         var next = new URLSearchParams(location.search).get('next');
         if (sess.role === 'admin') location.href = next && next !== 'portal.html' ? next : 'admin.html';
         else location.href = next || 'portal.html';

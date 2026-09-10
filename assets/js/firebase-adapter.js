@@ -104,6 +104,37 @@
         return s || { docRequirements: ['Photo ID (NID / Birth Certificate)', 'Passport-size Photograph'] };
       },
 
+      /* ---------- live (real-time) subscriptions ---------- */
+      onPublicData: function (cb) {
+        var active = true;
+        var unsubs = [];
+        function emit() {
+          if (!active) return;
+          fb.getPublicSnapshot().then(function (snap) { if (active) cb(snap); }).catch(function () { /* offline: keep last */ });
+        }
+        try {
+          unsubs.push(fsMod.onSnapshot(docIn('settings', 'public'), emit, function () {}));
+          unsubs.push(fsMod.onSnapshot(col('finance'), emit, function () {}));
+          unsubs.push(fsMod.onSnapshot(fsMod.query(col('users'), fsMod.where('role', '==', 'member')), emit, function () {}));
+        } catch (e) { return null; }
+        return function () { active = false; unsubs.forEach(function (u) { try { u(); } catch (e) {} }); };
+      },
+
+      onMyData: function (cb) {
+        var active = true;
+        var unsub = null;
+        myUid().then(function (uid) {
+          if (!active) return;
+          try {
+            unsub = fsMod.onSnapshot(fsMod.query(col('payments'), fsMod.where('memberId', '==', uid)), function () {
+              if (!active) return;
+              fb.getMyAccount().then(function (acc) { if (active) cb(acc); }).catch(function () {});
+            }, function () {});
+          } catch (e) { /* ignore */ }
+        }).catch(function () {});
+        return function () { active = false; try { if (unsub) unsub(); } catch (e) {} };
+      },
+
       /* ---------- registration (creates Auth account immediately) ---------- */
       register: async function (data, uname) {
         var cred;

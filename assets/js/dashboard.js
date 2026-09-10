@@ -78,7 +78,12 @@
     if (!sess) { location.replace('login.html?next=index.html'); return; }
     document.getElementById('mode-badge').innerHTML = C.modeBadge();
     var snap = await S.getPublicSnapshot();
+    paint(snap);
+    /* live updates: re-paint when Firestore data changes (no refresh needed) */
+    try { if (S.onPublicData) S.onPublicData(function (fresh) { if (fresh) paint(fresh); }); } catch (e) { /* live off */ }
+  }
 
+  function paint(snap) {
     // admin-editable content (falls back to dictionary defaults)
     set('idx-subtitle', content(snap, 'sub', 'idx.subtitle'));
     var notice = content(snap, 'notice', '');

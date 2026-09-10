@@ -8,7 +8,12 @@
     await C.boot('setup.html');
     var body = document.getElementById('setup-body');
 
-    var exists = await S.adminExists();
+    var withTimeout = function (pr, ms) {
+      return Promise.race([pr, new Promise(function (_, rej) {
+        setTimeout(function () { rej(new Error(L.t('fb.timeout'))); }, ms);
+      })]);
+    };
+    var exists = await withTimeout(S.adminExists(), 20000);
     if (exists) {
       body.innerHTML =
         '<div class="notice ok">' + U.esc(L.t('su.exists')) + '</div>' +

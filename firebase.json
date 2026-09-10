@@ -1,0 +1,25 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "docs/**",
+      "tests/**",
+      "*.md"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css|png|svg|ico)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=600" }
+        ]
+      }
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}

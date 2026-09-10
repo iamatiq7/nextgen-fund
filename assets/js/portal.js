@@ -189,6 +189,15 @@
         errBox.textContent = e.message;
       }
     });
+
+    /* live updates in Firebase mode: balance + history refresh automatically */
+    try {
+      if (S.onMyData) S.onMyData(function (fresh) {
+        if (!fresh || !fresh.balance) return;
+        balance = fresh.balance; payments = fresh.payments;
+        renderBalances(); renderHistory();
+      });
+    } catch (e) { /* live off */ }
   }
 
   run().catch(function (e) {
