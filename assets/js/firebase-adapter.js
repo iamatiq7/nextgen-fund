@@ -41,7 +41,7 @@
 
     async function userDoc(uid) { return getDoc('users', uid); }
     async function myUid() {
-      var cu = authMod.getCurrentUser(auth);
+      var cu = auth.currentUser;
       if (!cu) throw err('unauthenticated', 'Please log in');
       return cu.uid;
     }
@@ -154,7 +154,7 @@
         }
         try { await authMod.signInWithEmailAndPassword(auth, email, password); }
         catch (e) { throw err('wrong-credentials', 'Wrong username or password.'); }
-        var cu = authMod.getCurrentUser(auth);
+        var cu = auth.currentUser;
         var u = await userDoc(cu.uid);
         if (!u) { await authMod.signOut(auth); throw err('wrong-credentials', 'Account not found.'); }
         if (u.status === 'pending') { await authMod.signOut(auth); throw err('pending', 'Your registration is still awaiting admin approval.'); }
@@ -166,7 +166,7 @@
       logout: async function () { await authMod.signOut(auth); },
 
       getSession: async function () {
-        var cu = authMod.getCurrentUser(auth);
+        var cu = auth.currentUser;
         if (!cu) return null;
         var u = await userDoc(cu.uid);
         if (!u) return null;
@@ -182,7 +182,7 @@
       },
 
       changePassword: async function (currentPw, newPw) {
-        var cu = authMod.getCurrentUser(auth);
+        var cu = auth.currentUser;
         if (!cu) throw err('unauthenticated', 'Please log in');
         var cred = authMod.EmailAuthProvider.credential(cu.email, currentPw);
         await authMod.reauthenticateWithCredential(cu, cred);
@@ -193,7 +193,7 @@
       setupAdmin: async function (data) {
         if (await fb.adminExists()) throw err('exists', 'An admin account already exists.');
         // Claim bootstrap: sign in/up, then write settings/bootstrap with own uid.
-        var cu = authMod.getCurrentUser(auth);
+        var cu = auth.currentUser;
         if (!cu) {
           if (!data.email || !data.password) throw err('invalid', 'Enter email and password (min 8 characters).');
           try { await authMod.signInWithEmailAndPassword(auth, data.email, data.password); }
@@ -201,7 +201,7 @@
             try { await authMod.createUserWithEmailAndPassword(auth, data.email, data.password); }
             catch (e2) { throw err('invalid', e2.message); }
           }
-          cu = authMod.getCurrentUser(auth);
+          cu = auth.currentUser;
         }
         var uname = (data.username || 'admin').trim().toLowerCase();
         await fsMod.setDoc(docIn('settings', 'bootstrap'), { adminUid: cu.uid, claimedAt: new Date().toISOString() });
