@@ -1,6 +1,7 @@
 /* NextGen Fund — admin panel (full access, EN/BN) */
 (function () {
   'use strict';
+  var GUIDE_URL = 'https://github.com/iamatiq7/nextgen-fund/blob/main/docs/firebase_setup_bn.md';
   var U = window.NGFUtil, C = window.NGFCOMMON, S = window.NGFStore, L = window.NGFLANG;
 
   var state = { tab: 'overview', payFilter: 'pending' };
@@ -315,7 +316,8 @@
       return '<label class="f"><span>' + U.esc(L.t(labelKey)) + '</span><input type="text" id="' + id + '" value="' + U.esc(val || '') + '"></label>';
     }
     body.innerHTML =
-      '<div class="notice">' + U.esc(L.t('adm.demoNotice')) + '</div>' +
+      '<div class="notice">' + U.esc(L.t('adm.demoNotice')) +
+      ' <a href="' + GUIDE_URL + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.demoNoticeLink')) + '</a></div>' +
       '<div class="card" style="max-width:820px"><form id="set-form" novalidate>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stFundName')) + '</span><input type="text" id="st-name" value="' + U.esc(s.fundName || 'NextGen Fund') + '"></label>' +
