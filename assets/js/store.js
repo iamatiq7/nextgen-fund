@@ -214,10 +214,8 @@
       if (!(shares >= 1 && shares <= 10)) errs.push('Shares must be between 1 and 10.');
       var reqDocs = settings.docRequirements || [];
       var docs = data.docs || [];
-      reqDocs.forEach(function (kind) {
-        var got = docs.filter(function (d) { return d.kind === kind && d.data; });
-        if (!got.length) errs.push('Required document missing: ' + kind);
-      });
+      /* Documents are optional while Firebase Storage is not enabled:
+         missing files are collected by the admin directly (registration.docsPending). */
       (data.docs || []).forEach(function (d) {
         var limit = mode === 'firebase' ? DOC_MAX_LIVE : DOC_MAX_DEMO;
         if (d.size > limit) errs.push('File too large (max ' + Math.round(limit / 1048576) + ' MB): ' + d.name);

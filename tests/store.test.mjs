@@ -84,7 +84,9 @@ await Store.register(regB);
 const pend = await Store.listRegistrations('pending');
 ok('2 new registrations pending (plus 1 seeded sample)', pend.length === 3, 'got ' + pend.length);
 ok('documents stored with the pending record', pend.find((r) => r.username === 'test.member.one').docs.length === 2);
-await throws(() => Store.register({ ...regA, docs: [] }), 'document missing', 'registration without required documents rejected');
+await Store.register({ ...regA, username: 'nodocs.member', email: 'nodocs.member@nextgen.local', docs: [] });
+const nod = (await Store.listRegistrations()).find((r) => r.username === 'nodocs.member');
+ok('registration without documents now allowed (admin collects files directly)', !!nod && nod.docs.length === 0);
 await throws(() => Store.register({ ...regA, username: 'test.member.one', email: 'other@x.com' }), 'taken', 'duplicate username rejected');
 
 console.log('== 5 · admin accept / reject decisions ==');
