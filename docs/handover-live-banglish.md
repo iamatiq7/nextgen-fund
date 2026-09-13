@@ -51,7 +51,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /registrations/{uid}/{file} {
-      allow write: if request.resource.size < 5 * 1024 * 1024
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
         && (request.resource.contentType.matches('image/.*')
             || request.resource.contentType == 'application/pdf');
       allow read: if request.auth != null;
@@ -113,3 +115,27 @@ service firebase.storage {
   Firestore/Storage **rules** theke (Kaj 1 & 3)
 - GitHub Pages (iamatiq7.github.io/nextgen-fund) age'r moto cholte thakbe;
   Firebase Hosting ekta extra address dibe (nextgen-fund-2040.web.app)
+
+---
+
+## Review findings & notes (independent reviewer, 2026-09-10)
+
+Ekjon independent reviewer ei changes gulo review korechhe. Tar findings onujayi
+ami (AutoClaw) ei issue gulo **fix korechi** (push hoye gechhe):
+
+| Issue | Fix |
+|---|---|
+| Rules: admin setup / member self-create block hoye jeto (role admin + bootstrap check) | Rules v2: bootstrap claim kora uid-i admin doc banate parbe; member self-create setup er por |
+| Rules: member payment status 'pending' force kora chilo na (self-verify kora jeto) | Rules v2: create te status=='pending', type due/advance, verifiedAt/By null force |
+| Rules: member nijer shares/monthlyDue/joinMonth bodlate parbe | Rules v2: ei field gulo self-update e locked |
+| Member dashboard 'users' list (admin-only) porte parbe na | now: settings/public e memberCount rakha hoy (admin sync kore); list denial hole fallback |
+| Username login e onno user er email porto (rules e deny hobe) | now: usernames map ei { uid, email } rakhe; login shudhu ota pore |
+| Storage rules e auth check chilo na | Doc update: request.auth.uid == uid baddho kora hoyeche |
+| Refresh e session flaky (auth restore race) | getSession e authStateReady await kora hoy |
+| Live listener partial fail e leak | Debounce (200ms) + safe attach/cleanup + console warning |
+| Adapter e 1000-tk multiple validation chilo na (raw permission error) | Adapter e friendly validation message add |
+| Bigger note: registration collision checks Firestore e late hoy | Jatota ja - admin approve korar age check korte hobe (future mejaj) |
+
+**Privacy note:** username login er jonno usernames collection public — tate
+shudhu { uid, email } thake (naam/phone/address na). Email public rakhte na chaile
+aman ku bolun, ami username login baad diye email-only login kore dibo.

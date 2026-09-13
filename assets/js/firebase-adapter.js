@@ -54,6 +54,14 @@
     async function audit(actor, action, detail) {
       try { await fsMod.addDoc(col('audit'), { at: new Date().toISOString(), actor: actor || '', action: action, detail: detail || '' }); } catch (e) { /* non-fatal */ }
     }
+    /* keep the public member count in settings/public so non-admin viewers can read it */
+    async function syncMemberCount() {
+      try {
+        var users = await getAll('users', fsMod.query(col('users'), fsMod.where('role', '==', 'member')));
+        var active = users.filter(function (u) { return u.status === 'active'; }).length;
+        await fsMod.setDoc(docIn('settings', 'public'), { memberCount: active, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) { /* non-fatal */ }
+    }
 
     /* ---- balance calc (shared formula) ---- */
     function computeBalance(user, payments) {
@@ -78,7 +86,8 @@
       getPublicSnapshot: async function () {
         var settings = await getDoc('settings', 'public');
         var finance = await getAll('finance');
-        var usersPub = await getAll('users', fsMod.query(col('users'), fsMod.where('role', '==', 'member')));
+        var usersPub = [];
+        try { usersPub = await getAll('users', fsMod.query(col('users'), fsMod.where('role', '==', 'member'))); } catch (e) { usersPub = []; }
         var dbLike = { settings: settings || {}, finance: finance, users: usersPub };
         var months = {};
         finance.forEach(function (f) {
@@ -92,7 +101,9 @@
           nextMeeting: settings && settings.nextMeeting, meetingNote: settings && settings.meetingNote,
           totalFunding: tF, totalRevenue: tR, totalLoss: tL, net: tF + tR - tL,
           months: Object.keys(months).sort().map(function (k) { return months[k]; }),
-          memberCount: usersPub.filter(function (u) { return u.status === 'active'; }).length,
+          memberCount: usersPub.length
+            ? usersPub.filter(function (u) { return u.status === 'active'; }).length
+            : (Number(settings && settings.memberCount) || 0),
           monthlyPerShare: settings && settings.monthlyPerShare,
           content: (settings && settings.content) || {},
           updatedAt: settings && settings.updatedAt
@@ -108,16 +119,31 @@
       onPublicData: function (cb) {
         var active = true;
         var unsubs = [];
+        var timer = null;
         function emit() {
           if (!active) return;
-          fb.getPublicSnapshot().then(function (snap) { if (active) cb(snap); }).catch(function () { /* offline: keep last */ });
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function () {
+            if (!active) return;
+            fb.getPublicSnapshot().then(function (snap) { if (active) cb(snap); })
+              .catch(function (e) { console.warn('live update skipped:', e && e.message); });
+          }, 200);
+        }
+        function watch(ref) {
+          return fsMod.onSnapshot(ref, emit, function (e) { console.warn('live listener error:', e && e.message); });
         }
         try {
-          unsubs.push(fsMod.onSnapshot(docIn('settings', 'public'), emit, function () {}));
-          unsubs.push(fsMod.onSnapshot(col('finance'), emit, function () {}));
-          unsubs.push(fsMod.onSnapshot(fsMod.query(col('users'), fsMod.where('role', '==', 'member')), emit, function () {}));
-        } catch (e) { return null; }
-        return function () { active = false; unsubs.forEach(function (u) { try { u(); } catch (e) {} }); };
+          unsubs.push(watch(docIn('settings', 'public')));
+          unsubs.push(watch(col('finance')));
+        } catch (e) {
+          unsubs.forEach(function (u) { try { u(); } catch (e2) {} });
+          return null;
+        }
+        return function () {
+          active = false;
+          if (timer) clearTimeout(timer);
+          unsubs.forEach(function (u) { try { u(); } catch (e) {} });
+        };
       },
 
       onMyData: function (cb) {
@@ -129,7 +155,7 @@
             unsub = fsMod.onSnapshot(fsMod.query(col('payments'), fsMod.where('memberId', '==', uid)), function () {
               if (!active) return;
               fb.getMyAccount().then(function (acc) { if (active) cb(acc); }).catch(function () {});
-            }, function () {});
+            }, function (e) { console.warn('live listener error:', e && e.message); });
           } catch (e) { /* ignore */ }
         }).catch(function () {});
         return function () { active = false; try { if (unsub) unsub(); } catch (e) {} };
@@ -167,7 +193,7 @@
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
           joinMonth: '', createdAt: new Date().toISOString()
         });
-        await fsMod.setDoc(docIn('usernames', uname), { uid: uid });
+        await fsMod.setDoc(docIn('usernames', uname), { uid: uid, email: data.email.trim() });
         await authMod.signOut(auth);
         await audit(reg.fullName, 'registration-submitted', 'username ' + uname);
         return { ok: true, registrationId: uid };
@@ -179,9 +205,8 @@
         if (email.indexOf('@') < 0) {
           var map = await getDoc('usernames', email);
           if (!map || !map.uid) throw err('wrong-credentials', 'Wrong username or password.');
-          var u0 = await userDoc(map.uid);
-          if (!u0) throw err('wrong-credentials', 'Wrong username or password.');
-          email = u0.email;
+          if (!map.email) throw err('wrong-credentials', 'This username has no email on file yet - log in with the email address instead.');
+          email = String(map.email).toLowerCase();
         }
         try { await authMod.signInWithEmailAndPassword(auth, email, password); }
         catch (e) { throw err('wrong-credentials', 'Wrong username or password.'); }
@@ -197,6 +222,7 @@
       logout: async function () { await authMod.signOut(auth); },
 
       getSession: async function () {
+        if (auth.authStateReady) { try { await auth.authStateReady(); } catch (e) {} }
         var cu = auth.currentUser;
         if (!cu) return null;
         var u = await userDoc(cu.uid);
@@ -241,7 +267,7 @@
           fullName: data.fullName || 'Fund Administrator', phone: '', address: '', shares: 0,
           monthlyDue: 0, joinMonth: '', createdAt: new Date().toISOString()
         }, { merge: true });
-        await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid });
+        await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid, email: cu.email || '' });
         if (!(await getDoc('settings', 'public'))) {
           await fsMod.setDoc(docIn('settings', 'public'), {
             fundName: 'NextGen Fund', currency: 'BDT', monthlyPerShare: 1000,
@@ -251,6 +277,7 @@
           });
         }
         await audit(uname, 'admin-created', 'bootstrap claim');
+        await syncMemberCount();
         return { ok: true };
       },
 
@@ -280,6 +307,7 @@
         var u = await userDoc(uid);
         var amount = Number(data.amount);
         if (!(amount > 0)) throw err('invalid', 'Enter an amount greater than 0.');
+        if (amount % 1000 !== 0 || amount < 1000) throw err('invalid', 'Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).');
         if (S.METHODS.indexOf(data.method) < 0) throw err('invalid', 'Choose a payment method.');
         if (data.type !== 'due' && data.type !== 'advance') throw err('invalid', 'Choose Due payment or Advance payment.');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date || '')) throw err('invalid', 'Enter the payment date.');
@@ -321,6 +349,7 @@
           joinMonth: approve ? U.currentMonth() : '',
           monthlyDue: approve ? (r.shares * ((await fb.getSettings()).monthlyPerShare || 1000)) : 0
         });
+        await syncMemberCount();
         await audit(me.user.username, approve ? 'registration-approved' : 'registration-rejected', r.username + (note ? ' — ' + note : ''));
         return { ok: true, decidedAt: new Date().toISOString() };
       },
@@ -355,6 +384,7 @@
         }
         if (patch.monthlyDue !== undefined) allowed.monthlyDue = Number(patch.monthlyDue) || 0;
         await fsMod.updateDoc(docIn('users', memberId), allowed);
+        await syncMemberCount();
         await audit(me.user.username, 'member-updated', memberId);
         return { ok: true };
       },
@@ -390,6 +420,7 @@
         if (!u) throw err('not-found', 'Member not found');
         var amount = Number(data.amount);
         if (!(amount > 0)) throw err('invalid', 'Amount must be > 0.');
+        if (amount % 1000 !== 0 || amount < 1000) throw err('invalid', 'Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).');
         var p = {
           memberId: data.memberId, memberName: u.fullName, type: data.type === 'advance' ? 'advance' : 'due',
           method: S.METHODS.indexOf(data.method) >= 0 ? data.method : 'cash', amount: amount,

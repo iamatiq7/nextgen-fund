@@ -1,16 +1,19 @@
 rules_version = '2';
 
-// NextGen Fund — Firestore baseline rules.
-// Review before production use (see docs/FIREBASE_SETUP.md).
+// NextGen Fund — Firestore security rules (v2, default-deny).
+// Public read: settings/public, finance, usernames (login map) — nothing else.
+// Writes: admin only, PLUS a member's own pending payments and self-registration docs.
+// Review notes: bootstrap must be claimed first; admin doc create is allowed only
+// for the uid that claimed bootstrap.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function hasBoot() { return exists(/databases/$(database)/documents/settings/bootstrap); }
+    function boot() { return get(/databases/$(database)/documents/settings/bootstrap).data; }
     function isAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/settings/bootstrap) &&
-        get(/databases/$(database)/documents/settings/bootstrap).data.adminUid == request.auth.uid;
+      return isSignedIn() && hasBoot() && boot().adminUid == request.auth.uid;
     }
 
     // Public settings: dashboard reads; only admin writes.
@@ -22,7 +25,7 @@ service cloud.firestore {
     // One-time bootstrap slot: the first admin claims it; afterwards immutable.
     match /settings/bootstrap {
       allow get: if true;
-      allow create: if isSignedIn() && !exists(/databases/$(database)/documents/settings/bootstrap);
+      allow create: if isSignedIn() && !hasBoot();
       allow update, delete: if false; // immutable once claimed
     }
 
@@ -32,47 +35,62 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Users: readable by admins; members read/update only their own doc
-    // (and cannot change role/status).
+    // Users: admins read/see all; members read their own.
+    // Self-create is allowed for (a) a pending member after setup, or
+    // (b) exactly the uid that claimed bootstrap (admin setup).
     match /users/{uid} {
       allow get: if isSelf(uid) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isSelf(uid) &&
-        request.resource.data.role == 'member' &&
-        !exists(/databases/$(database)/documents/settings/bootstrap);
-      allow update: if (isSelf(uid) &&
+      allow create: if isSelf(uid) && hasBoot() && (
+          (request.resource.data.role == 'member' && request.resource.data.status == 'pending') ||
+          (request.resource.data.role == 'admin' && boot().adminUid == request.auth.uid)
+        );
+      // Members may not change identity or money fields on their own doc.
+      allow update: if isAdmin() || (isSelf(uid) &&
           request.resource.data.role == resource.data.role &&
-          request.resource.data.status == resource.data.status) || isAdmin();
+          request.resource.data.status == resource.data.status &&
+          request.resource.data.username == resource.data.username &&
+          request.resource.data.shares == resource.data.shares &&
+          request.resource.data.monthlyDue == resource.data.monthlyDue &&
+          request.resource.data.joinMonth == resource.data.joinMonth);
       allow delete: if isAdmin();
     }
 
-    // Username → uid mapping: readable by all (login), created once by owner.
+    // Username -> {uid, email}: public read (needed for username login),
+    // created once by the owner (or admin). Never updatable.
     match /usernames/{name} {
       allow get: if true;
       allow create: if isSelf(request.resource.data.uid) || isAdmin();
       allow update, delete: if false;
     }
 
-    // Registrations: anyone (before login) may submit; admins decide.
+    // Registrations: submitted by applicants (pending only); admins decide.
     match /registrations/{id} {
-      allow create: if true;
+      allow create: if request.resource.data.status == 'pending';
       allow get, list: if isSelf(resource.data.__ownerUid) || isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Payments: members create/see their own; admins manage everything.
+    // Payments: members create their OWN pending credits; admins manage all.
+    // Credits must be whole multiples of 1,000 tk (1000, 2000, 3000, ...).
     match /payments/{id} {
-      // Credits must be whole multiples of 1,000 tk (1000, 2000, 3000, ...).
-      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid &&
-        request.resource.data.amount is number &&
-        request.resource.data.amount >= 1000 &&
-        request.resource.data.amount % 1000 == 0;
+      allow create: if isAdmin() || (
+          isSignedIn() &&
+          request.resource.data.memberId == request.auth.uid &&
+          request.resource.data.amount is number &&
+          request.resource.data.amount >= 1000 &&
+          request.resource.data.amount % 1000 == 0 &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.type in ['due', 'advance'] &&
+          request.resource.data.verifiedAt == null &&
+          request.resource.data.verifiedBy == null
+        );
       allow get, list: if (isSignedIn() && resource.data.memberId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }
 
-    // Audit log: admin only.
+    // Audit log: admin read; any signed-in user may append; never editable.
     match /audit/{id} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
