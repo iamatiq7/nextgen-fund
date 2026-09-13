@@ -80,8 +80,10 @@
 
       var local = [];
       if (pw !== pw2) local.push(L.t('reg.errMatch'));
+      /* Documents are optional while Firebase Storage is not enabled:
+         the registration still goes through; the admin collects files directly. */
       var missing = reqs.filter(function (k) { return !pickedDocs[k]; });
-      if (missing.length) local.push(L.t('reg.errMissing', { docs: missing.join(', ') }));
+      var docsMissingCount = missing.length;
       if (local.length) { errBox.textContent = local.join(' '); return; }
 
       btn.disabled = true; btn.textContent = L.t('reg.submit') + '…';
@@ -92,7 +94,7 @@
           '<div class="notice ok"><strong>' + U.esc(L.t('reg.pending')) + '</strong></div>' +
           '<div class="card"><ul class="clean">' +
           '<li><strong>' + U.esc(L.t('reg.doneUser')) + '</strong> <span class="mono">' + U.esc(data.username) + '</span> — ' + U.esc(L.t('reg.doneUserNote')) + '</li>' +
-          '<li><strong>' + U.esc(L.t('reg.doneDocs')) + '</strong> ' + docs.length + ' ' + U.esc(L.t('reg.doneFiles')) + '.</li>' +
+          '<li><strong>' + U.esc(L.t('reg.doneDocs')) + '</strong> ' + docs.length + ' ' + U.esc(L.t('reg.doneFiles')) + (docsMissingCount ? ' (' + docsMissingCount + ' pending - give them to the admin directly)' : '') + '.</li>' +
           '<li><strong>' + U.esc(L.t('reg.doneNext')) + '</strong> ' + U.esc(L.t('reg.doneNextText')) + '</li>' +
           '</ul></div><p><a class="btn ghost" href="index.html">' + U.esc(L.t('reg.back')) + '</a></p>';
       } catch (e) {

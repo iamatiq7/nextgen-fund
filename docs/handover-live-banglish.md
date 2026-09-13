@@ -165,3 +165,21 @@ diye push kore debo, tarpor apni token ta **revoke** kore diten.
 
 Push hoye gele GitHub Pages (~1 min) + Firebase Hosting (workflow cholle)
 dutoi notun version peye jabe.
+
+
+---
+
+## Update (2026-09-13) — Storage problem & exact setup link
+
+**Storage Get started ashe na?** Notun Firebase project e Cloud Storage er jonno Blaze
+plan lagte pare (card lage; free quota er vitore thakle bill 0 taka). Na chaile
+**Storage skip korun** — site tobuo puropuri cholbe:
+- Member ra registration korte parbe documents chara (code e handle kora: docsPending)
+- ID/photo tader apnake direct (WhatsApp/email) dite bolun
+- Admin panel e registration approve korar somoy docs 0 dekhale mone rakhen file alada eshechhe
+
+**setup.html er EXACT link (ei-ta-i site):**
+https://iamatiq7.github.io/nextgen-fund/setup.html
+
+Ei page e giye admin account toiri korun (username admin, apnar email, 12+ chars password).
+Firebase console noy — ei link-i apnar live site.

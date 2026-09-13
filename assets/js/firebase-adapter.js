@@ -173,18 +173,23 @@
         }
         var uid = cred.user.uid;
         var docs = [];
+        var docsPending = false;
         for (var i = 0; i < (data.docs || []).length; i++) {
           var d = data.docs[i];
-          var path = 'registrations/' + uid + '/' + Date.now() + '-' + d.name;
-          var ref = stMod.ref(storage, path);
-          await stMod.uploadBytes(ref, d.file, { contentType: d.mime });
-          docs.push({ kind: d.kind, name: d.name, mime: d.mime, size: d.size, path: path });
+          try {
+            var path = 'registrations/' + uid + '/' + Date.now() + '-' + d.name;
+            var ref = stMod.ref(storage, path);
+            await stMod.uploadBytes(ref, d.file, { contentType: d.mime });
+            docs.push({ kind: d.kind, name: d.name, mime: d.mime, size: d.size, path: path });
+          } catch (e) {
+            docsPending = true; /* Storage unavailable (not enabled) - keep going, admin can collect files directly */
+          }
         }
         var reg = {
           fullName: data.fullName.trim(), username: uname, email: data.email.trim(),
           phone: data.phone.trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
           nominee: (data.nominee || '').trim(), shares: parseInt(data.shares, 10),
-          docs: docs, status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
+          docs: docs, docsPending: docsPending, status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
         };
         await fsMod.setDoc(docIn('registrations', uid), reg);
         await fsMod.setDoc(docIn('users', uid), {
