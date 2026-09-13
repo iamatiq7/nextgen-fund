@@ -31,8 +31,11 @@ baki. Nicher 4 ta kaj korlei site live hoye jabe.
 4. **Production mode** select korun
 5. Location: **asia-south1 (Mumbai)** -> **Enable** (2-3 minute lagbe)
 6. Database ready hoye gele upore **Rules** tab e jaan
-7. Ei repo'r [firestore.rules](https://github.com/iamatiq7/nextgen-fund/blob/main/firestore.rules)
-   file er **puro content** copy kore editor e paste korun (age jeta ache muche)
+7. Rules file er **puro content** copy kore editor e paste korun (age jeta ache muche).
+   File ta dui jaygay ache - jeta shohoj hoy:
+   - Local (recommended): C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund\firestore.rules
+   - GitHub: <https://github.com/iamatiq7/nextgen-fund/blob/main/firestore.rules>
+     *(GitHub e notun rules push hote ekbar apnar push lagbe - niche dekhen)*
 8. **Publish** click korun
 
 ### Kaj 2 — Authentication chalu korun
@@ -139,3 +142,26 @@ ami (AutoClaw) ei issue gulo **fix korechi** (push hoye gechhe):
 **Privacy note:** username login er jonno usernames collection public — tate
 shudhu { uid, email } thake (naam/phone/address na). Email public rakhte na chaile
 aman ku bolun, ami username login baad diye email-only login kore dibo.
+
+---
+
+## GitHub push (ekbar apnar hate)
+
+Notun code + rules GitHub e tule dite ekbar apnar credential lagche (ami
+security-r CARONE apnar password/token charchi na). Dui vabe parben:
+
+**Vabe 1 (shohoj):** Windows Terminal kholun, ei folder e jaan:
+`
+cd C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\gh-clone
+git push origin main
+`
+Sign-in window ashle GitHub e login korun - tahole push hoye jabe.
+(Commit 4b85759 agei toiri - shudhu push baki.)
+
+**Vabe 2:** Amake ekta **fine-grained Personal Access Token** din
+(GitHub -> Settings -> Developer settings -> Tokens (fine-grained) ->
+only iamatiq7/nextgen-fund repo -> Contents: Read and write). Amitoken
+diye push kore debo, tarpor apni token ta **revoke** kore diten.
+
+Push hoye gele GitHub Pages (~1 min) + Firebase Hosting (workflow cholle)
+dutoi notun version peye jabe.
