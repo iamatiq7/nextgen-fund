@@ -191,13 +191,23 @@
           nominee: (data.nominee || '').trim(), shares: parseInt(data.shares, 10),
           docs: docs, docsPending: docsPending, status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
         };
-        await fsMod.setDoc(docIn('registrations', uid), reg);
+        try {
+          await fsMod.setDoc(docIn('registrations', uid), reg);
+        } catch (e1) {
+          if (String(e1 && e1.code) === 'permission-denied') throw err('closed', 'Registration is not open yet - the fund admin has not finished setting up the fund. Please try again later.');
+          throw err('invalid', e1.message || 'Could not save the registration.');
+        }
+        try {
         await fsMod.setDoc(docIn('users', uid), {
           role: 'member', status: 'pending', username: uname, email: data.email.trim(),
           fullName: data.fullName.trim(), phone: data.phone.trim(), address: reg.address,
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
           joinMonth: '', createdAt: new Date().toISOString()
         });
+        } catch (e2) {
+          if (String(e2 && e2.code) === 'permission-denied') throw err('closed', 'Registration is not open yet - the fund admin has not finished setting up the fund. Please try again later.');
+          throw err('invalid', e2.message || 'Could not save the profile.');
+        }
         await fsMod.setDoc(docIn('usernames', uname), { uid: uid, email: data.email.trim() });
         await authMod.signOut(auth);
         await audit(reg.fullName, 'registration-submitted', 'username ' + uname);
