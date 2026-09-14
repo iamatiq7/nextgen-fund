@@ -1,11 +1,21 @@
 === NextGen Fund database reset report (CI) ===
 project        : nextgen-fund-2040
-mode           : verify
-confirmed wipe : no
+mode           : wipe
+confirmed wipe : yes
 target         : LIVE Firebase (admin credentials, security rules bypassed)
-started        : 2026-09-14T09:38:19.660Z
+started        : 2026-09-14T09:41:26.289Z
 result         : PASS
 
-counts         : {"payments":0,"registrations":0,"audit":0,"usernames":1,"users":1,"finance":0,"settings":2}
-auth accounts  : 1 (ids wS5gF6…)
-finished       : 2026-09-14T09:38:19.958Z
+counts before  : {"payments":0,"registrations":0,"audit":0,"usernames":1,"users":1,"finance":0,"settings":2}
+backup file    : ops/db-reset/backup-2026-09-14T0941.json
+backup sha256  : 0b1e187da1aed397b7621c57cce30f1467d76993bf60f13a69bed7b326d7f700
+backup bytes   : 1344
+backup counts  : {"payments":0,"registrations":0,"audit":0,"usernames":1,"users":1,"finance":0,"settings":2}
+backup total   : 4 document(s)
+deletions      : {"payments":"ok","registrations":"ok","audit":"ok","usernames":"ok","users":"ok","finance":"ok","settings":"ok"}
+counts after   : {"payments":0,"registrations":0,"audit":0,"usernames":0,"users":0,"finance":0,"settings":0}
+all zero       : YES
+auth before    : 1 (ids wS5gF6…)
+auth after     : 0 (ids none)
+first-run state: YES - setup.html can claim the project again
+finished       : 2026-09-14T09:41:26.289Z
