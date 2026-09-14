@@ -1,0 +1,107 @@
+name: Database reset (owner-run, guarded)
+
+# Two ways to start this job:
+#   1. a change to ops/db-reset/TRIGGER whose first line is one of the two exact
+#      phrases handled in the guard step below (this is the only way to reach a wipe)
+#   2. the "Run workflow" button - backup / verify only, never a wipe
+#
+# The Admin SDK credentials in the repository secret bypass Firestore security rules,
+# so the deployed rules are left exactly as they are.
+#
+# After the reset has been run, delete this file and ops/db-reset/TRIGGER together:
+# the removal push matches no path filter and therefore starts no run.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ops/db-reset/TRIGGER'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'backup or verify (a wipe still requires the TRIGGER file)'
+        required: true
+        default: 'backup'
+        type: choice
+        options:
+          - backup
+          - verify
+
+permissions:
+  contents: write
+
+concurrency:
+  group: db-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Decide the mode from the trigger file (guard)
+        run: |
+          set -euo pipefail
+          MODE="verify"
+          if [ -f ops/db-reset/TRIGGER ]; then
+            FIRST="$(head -n 1 ops/db-reset/TRIGGER | tr -d '\r' | sed 's/[[:space:]]*$//')"
+            echo "trigger first line: [$FIRST]"
+            case "$FIRST" in
+              'backup-only 2026-09-14') MODE="backup" ;;
+              'wipe 2026-09-14')        MODE="wipe" ;;
+              *) echo "trigger file present but not recognised - staying read-only" ;;
+            esac
+          else
+            echo "no trigger file - staying read-only"
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ github.event.inputs.mode }}"
+          fi
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+
+      - name: Install the Admin SDK
+        run: npm install --no-save firebase-admin@13
+
+      - name: Write the service-account key
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -euo pipefail
+          mkdir -p .ci
+          printf '%s' "$FIREBASE_SA" > .ci/sa.json
+          node -e "const j=require('./.ci/sa.json'); if(!j.private_key||!j.client_email){console.error('service-account secret missing or malformed');process.exit(1);} console.log('service account:', j.client_email, '| project:', j.project_id);"
+
+      - name: Run the reset
+        env:
+          PROJECT_ID: nextgen-fund-2040
+          MODE: ${{ env.MODE }}
+          CONFIRM_WIPE: ${{ env.MODE == 'wipe' && 'yes' || 'no' }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: node ops/db-reset/ci-reset.mjs
+
+      - name: Upload the backup as a private artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-reset-backup
+          path: ops/db-reset/backup-*.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Commit the report
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -rf .ci
+          if [ ! -f ops/db-reset/REPORT.txt ]; then echo "no report produced"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ops/db-reset/REPORT.txt
+          if git diff --cached --quiet; then echo "report unchanged"; exit 0; fi
+          git commit -m "chore(db-reset): CI report for mode ${MODE}"
+          git push
