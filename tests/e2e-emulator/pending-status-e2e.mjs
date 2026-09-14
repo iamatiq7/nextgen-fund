@@ -140,6 +140,21 @@ const mStats = window.NGFUtil.summarisePayments(mine);
 step('member ledger: ' + mine.map((p) => p.ref + ':' + p.status).join(', '));
 check('E25 the member history footer agrees (2 verified, 0 pending)', mStats.counts.verified === 2 && mStats.counts.pending === 0, JSON.stringify(mStats.counts));
 
+console.log('== 7b. a decided payment cannot be flipped again (live adapter parity) ==');
+await Store.logout();
+await Store.login('admin', 'AdminPass123');
+const decided = (await Store.listPayments()).filter((p) => p.status === 'verified')[0];
+await expectThrow('E27 rejecting an already verified payment is refused on the live backend',
+  () => Store.rejectPayment(decided.id, 'trying to flip it'), 'invalid');
+await expectThrow('E28 verifying an already verified payment is refused on the live backend',
+  () => Store.verifyPayment(decided.id), 'invalid');
+await expectThrow('E29 a payment id that does not exist is refused',
+  () => Store.verifyPayment('does-not-exist'), 'not-found');
+const afterFlip = await Store.paymentStats();
+const snapAfterFlip = await Store.getPublicSnapshot();
+step('after the refused flips: verified ' + afterFlip.counts.verified + ' / ' + afterFlip.amounts.verified + ' · deposits ' + snapAfterFlip.memberDeposits);
+check('E30 the refused attempts changed nothing', afterFlip.counts.verified === 2 && afterFlip.amounts.verified === 7000 && snapAfterFlip.memberDeposits === 7000);
+
 console.log('== 8. audit trail ==');
 await Store.logout();
 await Store.login('admin', 'AdminPass123');
@@ -147,6 +162,12 @@ const audit = await Store.listAudit();
 step('audit actions: ' + JSON.stringify(Array.from(new Set(audit.map((a) => a.action)))));
 const ver = audit.filter((a) => a.action === 'payment-verified');
 check('E26 every verification is in the audit log with actor + detail', ver.length === 2 && ver.every((a) => a.actor && a.detail), JSON.stringify(ver[0] || {}));
+/* the registration audit entry used to be written AFTER signOut, so the rules
+   rejected it and it was never stored - it must be there now. */
+const regAudit = audit.filter((a) => a.action === 'registration-submitted');
+check('E31 the registration audit entry survives (written before sign-out)', regAudit.length === 1, JSON.stringify(regAudit[0] || {}));
+const subAudit = audit.filter((a) => a.action === 'payment-submitted');
+check('E32 both member submissions are in the audit log', subAudit.length === 2, JSON.stringify(subAudit.map((a) => a.detail)));
 
 console.log(fails === 0 ? 'REAL-ADAPTER PENDING E2E: ALL PASS (' + n + ' checks)' : 'REAL-ADAPTER PENDING E2E: ' + fails + ' FAILURES of ' + n);
 process.exit(fails === 0 ? 0 : 1);

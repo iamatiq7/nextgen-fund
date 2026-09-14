@@ -65,7 +65,7 @@
   <div class="meta">
     <span class="chip">২০২৬-০৯-১৪</span>
     <span class="chip">commit 3d11384</span>
-    <span class="chip ok">২৩৭টি চেক ALL PASS</span>
+    <span class="chip ok">২৪৩টি চেক ALL PASS</span>
     <span class="chip ok">লাইভে pending ৳০</span>
     <span class="chip">ডেটা মাইগ্রেশন লাগেনি</span>
   </div>
@@ -159,6 +159,9 @@ listPayments: async function (filter) {
       <tr><td>Payments সারসংক্ষেপ কার্ড</td><td><code>admin.js</code></td><td>Pending 1 (৳৬,০০০) · Verified 107 (৳১,৬৮,০০০) · Rejected … · All …</td></tr>
       <tr><td>যাচাই কার্ড</td><td><code>admin.js</code></td><td>ড্যাশবোর্ডের সংখ্যা বনাম কাঁচা রেকর্ডের স্ক্যান — মিললে সবুজ, নাহলে লাল। এই কার্ডটিই বাগটি ধরত</td></tr>
       <tr><td>ডুপ্লিকেট ref বন্ধ</td><td>দুই ব্যাকএন্ড</td><td>একই সদস্য+মাধ্যম+ref থাকলে <code>dup-ref</code> এরর → ফান্ডে টাকা দুইবার যোগ হবে না</td></tr>
+      <tr><td><strong>verify/reject status-guard (রিভিউতে ধরা)</strong></td><td><code>firebase-adapter.js</code></td><td>লাইভে guard ছিল না → verified পেমেন্ট reject করলে নিঃশব্দে উল্টে যেত (paid ৳৮,০০০→৳৭,০০০)। এখন দুই ব্যাকএন্ডে একই নিয়ম: শুধু pending বদলানো যায় (E27–E30)</td></tr>
+      <tr><td><strong>রেজিস্ট্রেশন অডিট (রিভিউতে ধরা)</strong></td><td><code>firebase-adapter.js</code></td><td>sign-out-এর পরে লেখা হত → rules আটকাত → এন্ট্রি হারিয়ে যেত। এখন আগে লেখা হয় (E31)</td></tr>
+      <tr><td>"all" চিপ</td><td><code>admin.js</code></td><td>হাতে যোগ করা বাদ, <code>counts.all</code> ব্যবহার</td></tr>
       <tr><td>পোর্টাল ফুটার</td><td><code>portal.js</code></td><td>একই শেয়ার্ড হিসাব ব্যবহার</td></tr>
       <tr><td>ভাষা</td><td><code>i18n.js</code></td><td>১৪টি নতুন key, EN + BN সমতা ৪৭৭/৪৭৭</td></tr>
     </tbody>
@@ -166,14 +169,14 @@ listPayments: async function (filter) {
 </section>
 
 <section>
-  <h2><span class="n">05</span>যাচাই — ২৩৭টি স্বয়ংক্রিয় চেক</h2>
+  <h2><span class="n">05</span>যাচাই — ২৪৩টি স্বয়ংক্রিয় চেক</h2>
   <svg viewBox="0 0 700 250" role="img" aria-label="টেস্ট ফলাফল">
     <text x="0" y="14" class="chartlab">স্যুট অনুযায়ী পাস হওয়া চেক (ব্যর্থ ০)</text>
     <g>
       <text x="0" y="46" class="chartlab">pending.test.mjs (নতুন)</text>
       <rect x="215" y="34" width="360" height="16" rx="8" fill="#6f8f72"/><text x="583" y="47" class="chartlab">36</text>
       <text x="0" y="78" class="chartlab">e2e pending (আসল rules)</text>
-      <rect x="215" y="66" width="260" height="16" rx="8" fill="#6f8f72"/><text x="483" y="79" class="chartlab">26</text>
+      <rect x="215" y="66" width="300" height="16" rx="8" fill="#6f8f72"/><text x="523" y="79" class="chartlab">32</text>
       <text x="0" y="110" class="chartlab">store.test.mjs</text>
       <rect x="215" y="98" width="600" height="16" rx="8" fill="#8d968f"/><text x="823" y="111" class="chartlab">60</text>
       <text x="0" y="142" class="chartlab">advance.test.mjs</text>
@@ -194,7 +197,7 @@ listPayments: async function (filter) {
       <tr><td>tests/member-cannot-modify.mjs</td><td class="num">ALL PASS</td></tr>
       <tr><td>tests/fixes.test.mjs</td><td class="num">ALL PASS</td></tr>
       <tr><td>tests/advance.test.mjs</td><td class="num">ALL PASS (32)</td></tr>
-      <tr><td>tests/e2e-emulator/pending-status-e2e.mjs <strong>(নতুন)</strong></td><td class="num">ALL PASS (26)</td><td rowspan="2" class="foot">docs/evidence/pending-e2e-output.txt</td></tr>
+      <tr><td>tests/e2e-emulator/pending-status-e2e.mjs <strong>(নতুন)</strong></td><td class="num">ALL PASS (32)</td><td rowspan="2" class="foot">docs/evidence/pending-e2e-output.txt</td></tr>
       <tr><td>tests/e2e-emulator/fixes-live-e2e.mjs</td><td class="num">ALL PASS (35)</td></tr>
     </tbody>
   </table>
@@ -202,7 +205,7 @@ listPayments: async function (filter) {
   <pre><code>OLD (পুরোনো): listPayments('pending')  → 107 rows   ← সব পেমেন্ট
 নতুন        : listPayments('pending')  →   0 rows   ← আসল pending = ০
 নতুন        : paymentStats()            → pending 0 / ৳0 · verified 107 / ৳168,000</code></pre>
-  <p class="foot">আসল অ্যাডাপ্টার + আসল <code>firestore.rules</code> (emulator) E2E-এও একই: verify করার আগে pending ২/৭,০০০ → একটি verify করলে ১/৬,০০০ → সব verify করলে ০/০, আর পুরোনো কলে তখনও "২" দেখাত।</p>
+  <p class="foot">আসল অ্যাডাপ্টার + আসল <code>firestore.rules</code> (emulator) E2E-এও একই: verify করার আগে pending ২/৭,০০০ → একটি verify করলে ১/৬,০০০ → সব verify করলে ০/০, আর পুরোনো কলে তখনও "২" দেখাত। সাথে নতুন guard: verified পেমেন্ট আবার verify/reject করা গেল না এবং ফান্ড টোটাল অপরিবর্তিত রইল (E27–E30); রেজিস্ট্রেশন-অডিট এন্ট্রিও এখন সংরক্ষিত (E31)।</p>
 </section>
 
 <section>
@@ -247,6 +250,7 @@ AUDIT VERDICT: 2 finding(s)  ← exit code 1 (মনিটরিংয়ে ব
     <li>পাবলিক অ্যাগ্রিগেট (<code>settings/public</code>) শুধু অ্যাডমিন লিখতে পারে — তাই সদস্যের সাবমিশনের সঙ্গে সঙ্গে ফান্ড-লেভেল <code>pendingDue</code> হালনাগাদ হয় না, পরবর্তী অ্যাডমিন অ্যাকশনে হয়। পাবলিক পেজ কোনো pending অঙ্ক দেখায় না; সদস্যের পোর্টাল সরাসরি নিজের লেজার পড়ে।</li>
     <li>পুরোনো (যদি থাকে) ডুপ্লিকেট রো স্বয়ংক্রিয়ভাবে মোছা হয় না — অ্যাডমিনের সামনে চিহ্নিত করে দেখানো হয়, reject করলে মোট থেকে বাদ যায় ও অডিট থাকে।</li>
     <li>অ্যাডমিন প্যানেলের চিত্র-প্রমাণ: এই টার্নে স্ক্রিনশট-ধাপটি সেফটি গার্ড কর্তৃক আটকানো হয়েছিল; সংখ্যা প্রমাণিত হয়েছে স্বয়ংক্রিয় টেস্ট (৩৬) ও রিয়েল-অ্যাডাপ্টার E2E (২৬) দিয়ে।</li>
+    <li><code>submitPayment</code> ফান্ড-লেভেল অ্যাগ্রিগেট (<code>settings/public</code>) হালনাগাদ করে না — rules অনুযায়ী তা কেবল অ্যাডমিন লিখতে পারে; পরবর্তী অ্যাডমিন অ্যাকশনে হালনাগাদ হয়। পাবলিক পেজ pending অঙ্ক দেখায় না, তাই ব্যবহারকারীর কাছে ভুল সংখ্যা যায় না।</li>
     <li>স্কোপ: পেমেন্ট গেটওয়ে, ফি/মূল্য বা বিলিং আর্কিটেকচার — কিছুই বদলানো হয়নি।</li>
   </ul>
 </section>

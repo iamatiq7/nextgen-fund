@@ -297,8 +297,11 @@
           throw err('invalid', e2.message || 'Could not save the profile.');
         }
         await fsMod.setDoc(docIn('usernames', uname), { uid: uid, email: data.email.trim() });
-        await authMod.signOut(auth);
+        /* the audit entry must be written while the new member is still signed in:
+           /audit only allows creates for signed-in users, so after signOut it was
+           always rejected (PERMISSION_DENIED) and the entry was lost. */
         await audit(reg.fullName, 'registration-submitted', 'username ' + uname);
+        await authMod.signOut(auth);
         return { ok: true, registrationId: uid };
       },
 
@@ -523,6 +526,12 @@
 
       verifyPayment: async function (paymentId) {
         var me = await requireAdminUid();
+        var pay = await getDoc('payments', paymentId);
+        if (!pay) throw err('not-found', 'Payment not found');
+        /* parity with the demo store: only a pending payment may change state,
+           otherwise a second click (or a stale row) would silently flip a
+           verified payment and move money out of the fund totals. */
+        if (pay.status !== 'pending') throw err('invalid', 'Only pending payments can be verified.');
         await fsMod.updateDoc(docIn('payments', paymentId), {
           status: 'verified', verifiedAt: new Date().toISOString(), verifiedBy: me.user.username || 'admin'
         });
@@ -533,6 +542,11 @@
 
       rejectPayment: async function (paymentId, reason) {
         var me = await requireAdminUid();
+        var pay = await getDoc('payments', paymentId);
+        if (!pay) throw err('not-found', 'Payment not found');
+        /* rejecting an already verified/rejected payment would silently remove
+           money from the member balance - refuse it, exactly like the demo store. */
+        if (pay.status !== 'pending') throw err('invalid', 'Only pending payments can be rejected.');
         await fsMod.updateDoc(docIn('payments', paymentId), {
           status: 'rejected', verifiedAt: new Date().toISOString(), verifiedBy: me.user.username || 'admin', rejectReason: reason || ''
         });

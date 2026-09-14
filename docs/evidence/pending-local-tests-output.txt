@@ -138,7 +138,7 @@ FIX TESTS: ALL PASS
 
 ===== tests/advance.test.mjs =====
 == STEP 1: admin approves a member who joins in September ==
-  ┬╖ member id=m-mu0yhncw7ykifx joinMonth=2026-09 monthlyDue=1000 shares=1
+  ┬╖ member id=m-mu0yulymmpx0in joinMonth=2026-09 monthlyDue=1000 shares=1
 == STEP 2: member deposits 1,000 + 1,000 (both recorded as monthly due) ==
   ┬╖ both verified by admin
 == STEP 3: BEFORE (old formula) vs AFTER (fixed Store.computeBalance) ==

@@ -63,6 +63,9 @@ if (filter && filter.status) list = list.filter(function (p) { return p.status =
 | পাবলিক স্ন্যাপশট `pendingDue` | `firebase-adapter.js` `syncPublicTotals` | অ্যাডমিন-রাইটে হালনাগাদ হত | ✅ অপরিবর্তিত (নথিভুক্ত) |
 | অ্যাডমিন ম্যানুয়াল এন্ট্রি | `store.js`/`firebase-adapter.js` `addManualPayment` | **একই ref দুইবার এন্ট্রি করা যেত** → ফান্ডে টাকা দুইবার | ✅ ফিক্সড (dup-ref) |
 | মেম্বার পেমেন্ট সাবমিট | `store.js:415-420` | ডুপ্লিকেট ref আটকাত | ✅ অপরিবর্তিত |
+| **আসল অ্যাডাপ্টারে verify/reject-এ status-guard** | `firebase-adapter.js` | **guard ছিল না** → verified পেমেন্ট reject করলে নিঃশব্দে উল্টে যেত; সদস্যের paid ৳৮,০০০→৳৭,০০০, `memberDeposits`-ও কমত | ✅ ফিক্সড |
+| **রেজিস্ট্রেশন অডিট এন্ট্রি** | `firebase-adapter.js` `register()` | sign-out-এর **পরে** অডিট লিখত → rules (signed-in only) আটকাত → লাইভে এন্ট্রিটি কখনো সেভ হত না | ✅ ফিক্সড |
+| Payments ট্যাব "all" চিপ | `admin.js` | কাউন্ট হাতে যোগ করত (`other` বাদ পড়ত) | ✅ ফিক্সড (`counts.all`) |
 
 সহায়ক প্রমাণ: স্বাধীন সারফেস-অডিট রিপোর্ট `.openclaw/tmp/pending-review/A-surface-audit.md`।
 
@@ -105,14 +108,23 @@ U.summarisePayments = function (list) {          // counts + amounts + duplicate
 ### ৪.৪ ডুপ্লিকেট রেফারেন্স বন্ধ — দুই পথেই
 `addManualPayment`-এ এখন সদস্য-সাবমিশনের মতোই নিয়ম: একই সদস্য + একই মাধ্যম + একই ref (rejected বাদে) থাকলে `dup-ref` এরর — *"This transaction ID is already recorded for this member."* → ফান্ডে একই টাকা দুইবার যোগ হবে না। rejected ref আবার সাবমিট করা যাবে (ডকুমেন্টেড recovery পথ)।
 
-### ৪.৫ পোর্টাল ফুটার
+### ৪.৫ স্বাধীন রিভিউয়ে ধরা পড়া দুইটি ত্রুটি (এই ধাপে ঠিক করা)
+
+1. **লাইভ অ্যাডাপ্টারে state-guard ছিল না (HIGH)।** ডেমো স্টোর `verifyPayment`/`rejectPayment`-এ "শুধু pending" নিয়ম ছিল, কিন্তু আসল Firebase অ্যাডাপ্টারে ছিল না। ফলে লাইভে ইতিমধ্যে verified একটি পেমেন্ট reject করা গেলে **নিঃশব্দে উল্টে যেত** — মেম্বারের paid ৳৮,০০০→৳৭,০০০ এবং ফান্ডের `memberDeposits` কমে যেত (এক ক্লিকে টাকা "হারানো")। দ্বিতীয়বার verify/reject বা পুরোনো ট্যাবের ক্লিকেও একই বিপদ।
+   **ফিক্স:** দুই ব্যাকএন্ডে হুবহু একই নিয়ম — `if (pay.status !== 'pending') throw err('invalid', 'Only pending payments can be verified/rejected.')`; না-থাকা আইডিতে `not-found`।
+   **প্রমাণ:** E2E `E27–E30` (আসল অ্যাডাপ্টার + আসল rules): verified পেমেন্ট reject/verify দুটোই প্রত্যাখ্যাত, এবং ফান্ড টোটাল অপরিবর্তিত (৳৭,০০০)।
+2. **রেজিস্ট্রেশন অডিট এন্ট্রি লাইভে হারিয়ে যেত (MEDIUM)।** `register()` সদস্যকে sign-out করার **পরে** `registration-submitted` অডিট লিখত; `/audit` রুল শুধু signed-in ইউজারকে create করতে দেয় (`@L96`) → PERMISSION_DENIED → এন্ট্রি কখনো সেভ হত না (লাইভে "কে কখন রেজিস্ট্রেশন করেছে"-র অডিট অসম্পূর্ণ ছিল)।
+   **ফিক্স:** অডিট লেখা হয় sign-out-এর **আগে**। **প্রমাণ:** E2E `E31` — অ্যাডমিন লগইনে অডিট লগে `registration-submitted` এন্ট্রি পাওয়া যায় (`actor: Pend Member`), আগে পেত না।
+3. Payments ট্যাবের "all" চিপ এখন `counts.all` ব্যবহার করে (আগে হাতে যোগ করত, `other` বাদ পড়ত)।
+
+### ৪.৬ পোর্টাল ফুটার
 মেম্বারের history ফুটারও এখন শেয়ার্ড `U.summarisePayments` ব্যবহার করে — একই সংখ্যা সব জায়গায়।
 
 **পরিবর্তিত ফাইল:** `assets/js/util.js`, `store.js`, `firebase-adapter.js`, `admin.js`, `portal.js`, `i18n.js` (নতুন ১৪টি key, EN+BN সমতা ৪৭৭/৪৭৭)।
 
 ---
 
-## ৫. যাচাই — ২৩৭টি স্বয়ংক্রিয় চেক
+## ৫. যাচাই — ২৪৩টি স্বয়ংক্রিয় চেক
 
 | স্যুট | ফলাফল |
 |---|---|
@@ -123,9 +135,9 @@ U.summarisePayments = function (list) {          // counts + amounts + duplicate
 | `tests/fixes.test.mjs` | ALL PASS |
 | `tests/advance.test.mjs` | ALL PASS (32 checks) |
 | **লোকাল মোট** | **১৭৬** |
-| `tests/e2e-emulator/pending-status-e2e.mjs` (**নতুন**, আসল অ্যাডাপ্টার + আসল `firestore.rules`) | **ALL PASS (26 checks)** |
+| `tests/e2e-emulator/pending-status-e2e.mjs` (**নতুন**, আসল অ্যাডাপ্টার + আসল `firestore.rules`) | **ALL PASS (32 checks)** — guard E27–E30, অডিট E31–E32 সহ |
 | `tests/e2e-emulator/fixes-live-e2e.mjs` (রিগ্রেশন) | ALL PASS (35 checks) |
-| **সর্বমোট** | **২৩৭টি চেক** |
+| **সর্বমোট** | **২৪৩টি চেক (ব্যর্থ ০)** |
 
 আউটপুট সংরক্ষিত: `docs/evidence/pending-local-tests-output.txt`, `docs/evidence/pending-e2e-output.txt`
 
@@ -185,6 +197,7 @@ git revert 3d11384 && git push      # অথবা Firebase Hosting → Release 
 - **পাবলিক অ্যাগ্রিগেট রিফ্রেশ:** Firestore রুল অনুযায়ী `settings/public` কেবল অ্যাডমিন লিখতে পারে; তাই কোনো সদস্য পেমেন্ট সাবমিট করার সঙ্গে সঙ্গে ফান্ড-লেভেল `pendingDue` হালনাগাদ হয় না — পরবর্তী অ্যাডমিন অ্যাকশনে (verify/reject) হয়ে যায়। পাবলিক পেজ কোনো pending অঙ্ক দেখায় না, আর সদস্যের নিজের পোর্টাল সরাসরি তার লেজার পড়ে — তাই ব্যবহারকারীর কাছে কোনো ভুল সংখ্যা যায় না (E2E E13/E20-এ নথিভুক্ত)।
 - **পুরোনো ডেটার ডুপ্লিকেট:** নতুন এন্ট্রি আর ডুপ্লিকেট তৈরি করতে পারবে না, কিন্তু আগে তৈরি হওয়া ডুপ্লিকেট (যদি থাকে) স্বয়ংক্রিয়ভাবে মোছা হয় না — সরাসরি ডিলিট না করে অ্যাডমিনকে চিহ্নিত করে দেখানো হয় (Reject করলে মোট থেকে বাদ পড়বে, অডিট থাকবে)।
 - **অ্যাডমিন UI-এর চিত্র-প্রমাণ:** এই টার্নে ব্রাউজার-স্ক্রিনশটের ধাপটি সেফটি গার্ড কর্তৃক আটকানো হয় (স্ক্রিপ্টে ডিরেক্টরি মোছার অপারেশন ছিল); তাই অ্যাডমিন প্যানেলের সংখ্যা প্রমাণিত হয়েছে স্বয়ংক্রিয় টেস্ট + DOM/রিয়েল-অ্যাডাপ্টার E2E দিয়ে, স্ক্রিনশট দিয়ে নয়। ব্যবহারকারীর নিজের লগইনে সাথে সাথেই দৃশ্যমান হবে।
+- **`submitPayment` ফান্ড-লেভেল অ্যাগ্রিগেট হালনাগাদ করে না (latent, LOW):** Firestore রুল অনুযায়ী `settings/public` কেবল অ্যাডমিন লিখতে পারে, তাই সদস্যের সাবমিটে ফান্ডের `pendingDue` সাথে সাথে বদলানো সম্ভব নয় — পরবর্তী অ্যাডমিন অ্যাকশনে হয়ে যায়। পাবলিক পেজ কোনো pending অঙ্ক দেখায় না এবং অ্যাডমিনের সংখ্যা সরাসরি `paymentStats()` থেকে আসে, তাই ব্যবহারকারীর কাছে ভুল সংখ্যা যায় না (E2E E13/E20)।
 - **স্কোপ:** পেমেন্ট গেটওয়ে, ফি/মূল্য, বিলিং আর্কিটেকচার — কিছুই বদলানো হয়নি।
 
 ## ১০. ভবিষ্যতে যাতে ফিরে না আসে
@@ -202,7 +215,7 @@ git revert 3d11384 && git push      # অথবা Firebase Hosting → Release 
 |---|---|
 | `assets/js/util.js` | `PAY_STATUSES`, `normPayFilter`, `summarisePayments` (+স্ব-পরীক্ষা) |
 | `assets/js/store.js` | `listPayments` নরমালাইজড, `paymentStats()`, `addManualPayment`-এ dup-ref গার্ড |
-| `assets/js/firebase-adapter.js` | একই তিনটি পরিবর্তন (প্যারিটি) |
+| `assets/js/firebase-adapter.js` | একই তিনটি পরিবর্তন (প্যারিটি) + verify/reject status-guard + রেজিস্ট্রেশন অডিটের ক্রম ঠিক |
 | `assets/js/admin.js` | overview KPI+অঙ্ক, do-next, ট্যাব ব্যাজ, Payments সারসংক্ষেপ, check কার্ড, ডুপ্লিকেট নোটিশ ও চিপ |
 | `assets/js/portal.js` | ফুটার শেয়ার্ড summariser ব্যবহার করে |
 | `assets/js/i18n.js` | ১৪টি নতুন key (EN + BN, ৪৭৭/৪৭৭) |

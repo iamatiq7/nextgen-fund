@@ -161,7 +161,7 @@
         : '') +
       '<div class="row-flex" style="margin-bottom:12px">' +
       ['pending', 'verified', 'rejected', 'all'].map(function (f) {
-        var n = f === 'all' ? counts.pending + counts.verified + counts.rejected : (counts[f] || 0);
+        var n = counts[f] || 0;
         var label = f === 'all' ? L.t('adm.pyAll') : L.t('st.' + f);
         return '<button class="btn sm ' + (state.payFilter === f ? '' : 'subtle') + '" data-f="' + f + '">' + U.esc(label) + ' (' + n + ')</button>';
       }).join('') +
