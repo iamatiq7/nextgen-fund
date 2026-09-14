@@ -1,7 +1,6 @@
-wipe 2026-09-14
+﻿wipe 2026-09-14
 # The workflow guard reads the FIRST LINE of this file and nothing else.
 #   backup-only 2026-09-14   -> read-only run: counts + a full JSON backup
 #   wipe 2026-09-14          -> backup, then delete every collection and every auth account
-# Any other content, or no file at all, keeps the job read-only (verify mode).
-# Authorised by the fund owner's instruction to empty the database and start again
-# (backup taken in the same run before the first delete).
+# Run 2 (2026-09-14): removes the first-run verification identity so the owner
+# receives a genuinely clean project to set up themselves.
