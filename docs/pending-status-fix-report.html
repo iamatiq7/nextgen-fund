@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NextGen Fund — Pending Payment বাগ: RCA রিপোর্ট</title>
+<style>
+  :root{
+    --ink:#2f332f; --ink-soft:#5c625c; --faint:#8a908a;
+    --paper:#f4f2ec; --card:#fbfaf6; --line:#e2ded3;
+    --green:#6f8f72; --green-wash:#e8efe6; --clay:#b98a6a; --clay-wash:#f6ece5;
+    --gray:#8d968f; --gray-wash:#eceeec; --shadow:0 1px 2px rgba(47,51,47,.05),0 8px 24px rgba(47,51,47,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:15px/1.72 "Nirmala UI","Segoe UI",system-ui,-apple-system,sans-serif;}
+  .wrap{max-width:940px;margin:0 auto;padding:38px 22px 70px}
+  header{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 28px;box-shadow:var(--shadow)}
+  .eyebrow{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin:0 0 8px}
+  h1{margin:0 0 8px;font-size:27px;line-height:1.35;font-weight:650}
+  .sub{margin:0;color:var(--ink-soft)}
+  .meta{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-soft)}
+  .chip.ok{background:var(--green-wash);border-color:#cfdfcb;color:#43603f}
+  .chip.warn{background:var(--clay-wash);border-color:#e8d3c3;color:#8a5b3c}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-top:18px;box-shadow:var(--shadow)}
+  h2{margin:0 0 14px;font-size:18.5px;font-weight:620;display:flex;gap:10px;align-items:baseline}
+  h2 .n{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:.08em}
+  h3{margin:18px 0 8px;font-size:15px;font-weight:640;color:var(--ink)}
+  p{margin:9px 0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.6px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--ink-soft);background:#f7f5f0;font-size:12.5px}
+  tbody tr:last-child td{border-bottom:none}
+  .num{font-variant-numeric:tabular-nums}
+  code{background:#f1efe9;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-family:"Cascadia Mono",Consolas,monospace;font-size:12.6px}
+  pre{background:#f1efe9;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font-size:12.6px;line-height:1.6}
+  pre code{background:none;border:none;padding:0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .box{border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:#fcfbf8}
+  .box.bad{background:var(--clay-wash);border-color:#e8d3c3}
+  .box.good{background:var(--green-wash);border-color:#cfdfcb}
+  .box .k{font-size:12.5px;color:var(--ink-soft);letter-spacing:.02em}
+  .box .v{font-size:25px;font-weight:650;margin-top:3px}
+  .foot{font-size:12.7px;color:var(--ink-soft)}
+  figure{margin:16px 0 4px}
+  figcaption{font-size:12.5px;color:var(--faint);margin-top:7px}
+  img{max-width:100%;border:1px solid var(--line);border-radius:12px;display:block}
+  ul.clean{list-style:none;padding-left:0;margin:10px 0}
+  ul.clean li{padding-left:17px;position:relative;margin:6px 0}
+  ul.clean li:before{content:"—";position:absolute;left:0;color:var(--faint)}
+  svg{max-width:100%;height:auto;display:block}
+  .chartlab{font-size:12px;fill:#8a908a}
+  footer{margin-top:20px;color:var(--faint);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">NextGen Fund · বাগ রিপোর্ট</p>
+  <h1>Pending Payment ভুলে ৬ ও ৳৬,০০০ আটকে থাকা — কারণ, সমাধান ও যাচাই</h1>
+  <p class="sub">পেমেন্ট verify করার পরেও ড্যাশবোর্ডে "Pending payments 6" ও "Verify 6 submitted payment(s)" লেখা থেকে যেত। মূল কারণ ছিল সংখ্যা গোনার একটি লুকানো ভুল — কোনো টাকা আটকে ছিল না।</p>
+  <div class="meta">
+    <span class="chip">২০২৬-০৯-১৪</span>
+    <span class="chip">commit 3d11384</span>
+    <span class="chip ok">২৩৭টি চেক ALL PASS</span>
+    <span class="chip ok">লাইভে pending ৳০</span>
+    <span class="chip">ডেটা মাইগ্রেশন লাগেনি</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">01</span>সমস্যাটি যা দেখা যাচ্ছিল</h2>
+  <div class="grid2">
+    <div class="box bad">
+      <div class="k">অ্যাডমিন ড্যাশবোর্ড দেখাত (ভুল)</div>
+      <div class="v num">PENDING PAYMENTS 6</div>
+      <p class="foot" style="margin:8px 0 0">"Verify 6 submitted payment(s)" · ট্যাব ব্যাজ "Payments (6)"</p>
+    </div>
+    <div class="box good">
+      <div class="k">আসল অবস্থা (লাইভ ডেটা)</div>
+      <div class="v num">pending 0 টি · ৳0</div>
+      <p class="foot" style="margin:8px 0 0">ফান্ড স্ন্যাপশট: pendingDue ৳০ · verified ৳৬,০০০</p>
+    </div>
+  </div>
+  <figure>
+    <img src="evidence/pending-before-admin-dashboard.png" alt="ব্যবহারকারীর পাঠানো স্ক্রিনশট: PENDING PAYMENTS 6, Verify 6 submitted payment(s), Payments (6)">
+    <figcaption>ব্যবহারকারীর কাছ থেকে পাওয়া প্রমাণচিত্র — ৭ জন সদস্য, ৬টি পেমেন্ট, "PENDING PAYMENTS 6"।</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="n">02</span>মূল কারণ</h2>
+  <p>ওভারভিউ কার্ড ও ট্যাব ব্যাজ ডাকত <code>S.listPayments('pending')</code> — একটি <strong>স্ট্রিং</strong>। কিন্তু ফাংশনটি ফিল্টার পড়ত <code>filter.status</code> থেকে, যা স্ট্রিং-এ <code>undefined</code>। ফলে শর্তটি মিথ্যা হয়ে ফিল্টার পুরোপুরি বাদ পড়ত:</p>
+  <pre><code>// পুরোনো কোড — admin.js:13, 506  +  store.js:520 / firebase-adapter.js:509
+var pays = await S.listPayments('pending');      // স্ট্রিং পাঠানো হয়
+
+listPayments: async function (filter) {
+  var list = ...payments.slice();
+  if (filter &amp;&amp; filter.status)                // 'pending'.status === undefined → false
+    list = list.filter(function (p) { return p.status === filter.status; });
+  return list;                                    // ⇒ ALL পেমেন্ট ফেরত
+}</code></pre>
+  <p>তাই <strong>সব</strong> পেমেন্ট (verified + rejected সহ) গোনা হত। verify করলে একটি পেমেন্ট pending থেকে verified হয়, কিন্তু "সব পেমেন্ট"-এর সংখ্যা বদলায় না — ফলে <strong>৬ থেকেই ৬</strong> থেকে যেত। আর ৳৬,০০০ ছিল ৬টি verified পেমেন্টের যোগফল (Total funding), pending কোনো টাকা নয়।</p>
+  <div class="grid2">
+    <div class="box">
+      <div class="k">"Pending" নামে যা গোনা হত</div>
+      <div class="v num">সব পেমেন্ট</div>
+    </div>
+    <div class="box">
+      <div class="k">যা গোনা হওয়া উচিত ছিল</div>
+      <div class="v num">শুধু status = pending</div>
+    </div>
+  </div>
+  <p class="foot">লুকিয়ে রাখা কারণ: <code>listRegistrations('pending')</code> ঠিক এই স্ট্রিং শৈলীতেই কাজ করে — একজন ডেভেলপার একই নিয়ম ধরে নিয়ে payments-এও স্ট্রিং পাঠান, কিন্তু সেখানে API অবজেক্ট চাইত। ভুল কনভেনশন = নিঃশব্দ ব্যর্থতা (কোনো এরর নেই)।</p>
+</section>
+
+<section>
+  <h2><span class="n">03</span>কোথায় কোথায় প্রভাব পড়েছিল</h2>
+  <table>
+    <thead><tr><th>সারফেস</th><th>ফাইল:লাইন</th><th>মন্তব্য</th></tr></thead>
+    <tbody>
+      <tr><td>Overview → PENDING PAYMENTS কার্ড</td><td class="num">admin.js:20</td><td>সব পেমেন্ট গুনত</td></tr>
+      <tr><td>Overview → "Verify {n} submitted payment(s)"</td><td class="num">admin.js:27</td><td>সব পেমেন্ট গুনত</td></tr>
+      <tr><td>ট্যাব ব্যাজ "Payments (n)"</td><td class="num">admin.js:506</td><td>সব পেমেন্ট গুনত</td></tr>
+      <tr><td>Payments ট্যাব কাউন্ট/ফিল্টার</td><td class="num">admin.js:117-127</td><td>ঠিক ছিল (অবজেক্ট পাঠাত) — অপরিবর্তিত</td></tr>
+      <tr><td>মেম্বার পোর্টাল pending লাইন ও ফুটার</td><td class="num">portal.js:24-26, 67</td><td>ঠিক ছিল → এখন শেয়ার্ড কোডে</td></tr>
+      <tr><td>অ্যাডমিন ম্যানুয়াল এন্ট্রি (নতুন আবিষ্কার)</td><td>addManualPayment</td><td>একই ref দুইবার এন্ট্রি করা যেত → ফান্ডে টাকা দুইবার</td></tr>
+    </tbody>
+  </table>
+  <svg viewBox="0 0 700 190" role="img" aria-label="পুরোনো ও নতুন ফিল্টার পথ তুলনা">
+    <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#8a908a"/></marker></defs>
+    <text x="0" y="14" class="chartlab">পুরোনো পথ — ভুল ফিল্টার, নিঃশব্দ ব্যর্থতা</text>
+    <rect x="0" y="24" width="120" height="34" rx="9" fill="#f6ece5" stroke="#e8d3c3"/><text x="12" y="45" class="chartlab" fill="#8a5b3c">'pending' (স্ট্রিং)</text>
+    <line x1="122" y1="41" x2="196" y2="41" stroke="#8a908a" stroke-width="1.2" marker-end="url(#ar)"/>
+    <rect x="200" y="24" width="150" height="34" rx="9" fill="#f6ece5" stroke="#e8d3c3"/><text x="212" y="45" class="chartlab" fill="#8a5b3c">filter.status = undefined</text>
+    <line x1="352" y1="41" x2="426" y2="41" stroke="#8a908a" stroke-width="1.2" marker-end="url(#ar)"/>
+    <rect x="430" y="24" width="170" height="34" rx="9" fill="#f6ece5" stroke="#e8d3c3"/><text x="442" y="45" class="chartlab" fill="#8a5b3c">কোনো ফিল্টার নয় → ৬টি</text>
+    <text x="0" y="96" class="chartlab">নতুন পথ — নরমালাইজড ইনপুট, ভুল মান হলে এরর</text>
+    <rect x="0" y="106" width="120" height="34" rx="9" fill="#e8efe6" stroke="#cfdfcb"/><text x="12" y="127" class="chartlab" fill="#43603f">'pending' বা {status}</text>
+    <line x1="122" y1="123" x2="196" y2="123" stroke="#8a908a" stroke-width="1.2" marker-end="url(#ar)"/>
+    <rect x="200" y="106" width="150" height="34" rx="9" fill="#e8efe6" stroke="#cfdfcb"/><text x="212" y="127" class="chartlab" fill="#43603f">normPayFilter()</text>
+    <line x1="352" y1="123" x2="426" y2="123" stroke="#8a908a" stroke-width="1.2" marker-end="url(#ar)"/>
+    <rect x="430" y="106" width="170" height="34" rx="9" fill="#e8efe6" stroke="#cfdfcb"/><text x="442" y="127" class="chartlab" fill="#43603f">শুধু আসল pending → ০টি</text>
+    <text x="620" y="150" class="chartlab">অজানা স্ট্যাটাস → throw</text>
+  </svg>
+</section>
+
+<section>
+  <h2><span class="n">04</span>সমাধান</h2>
+  <table>
+    <thead><tr><th>পরিবর্তন</th><th>ফাইল</th><th>কী করল</th></tr></thead>
+    <tbody>
+      <tr><td>শেয়ার্ড হিসাব</td><td><code>util.js</code></td><td><code>normPayFilter()</code> (স্ট্রিং/অবজেক্ট দুটোই, ভুল হলে এরর) + <code>summarisePayments()</code> — counts, amounts, duplicates</td></tr>
+      <tr><td>স্টোর API</td><td><code>store.js</code>, <code>firebase-adapter.js</code></td><td><code>paymentStats()</code> — দুই ব্যাকএন্ডে হুবহু একই ফলাফল</td></tr>
+      <tr><td>KPI + ডু নেক্সট + ব্যাজ</td><td><code>admin.js</code></td><td>সংখ্যা ও টাকা একসাথে; কিছু pending না থাকলে "যাচাইয়ের অপেক্ষায় কোনো পেমেন্ট নেই"</td></tr>
+      <tr><td>Payments সারসংক্ষেপ কার্ড</td><td><code>admin.js</code></td><td>Pending 1 (৳৬,০০০) · Verified 107 (৳১,৬৮,০০০) · Rejected … · All …</td></tr>
+      <tr><td>যাচাই কার্ড</td><td><code>admin.js</code></td><td>ড্যাশবোর্ডের সংখ্যা বনাম কাঁচা রেকর্ডের স্ক্যান — মিললে সবুজ, নাহলে লাল। এই কার্ডটিই বাগটি ধরত</td></tr>
+      <tr><td>ডুপ্লিকেট ref বন্ধ</td><td>দুই ব্যাকএন্ড</td><td>একই সদস্য+মাধ্যম+ref থাকলে <code>dup-ref</code> এরর → ফান্ডে টাকা দুইবার যোগ হবে না</td></tr>
+      <tr><td>পোর্টাল ফুটার</td><td><code>portal.js</code></td><td>একই শেয়ার্ড হিসাব ব্যবহার</td></tr>
+      <tr><td>ভাষা</td><td><code>i18n.js</code></td><td>১৪টি নতুন key, EN + BN সমতা ৪৭৭/৪৭৭</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">05</span>যাচাই — ২৩৭টি স্বয়ংক্রিয় চেক</h2>
+  <svg viewBox="0 0 700 250" role="img" aria-label="টেস্ট ফলাফল">
+    <text x="0" y="14" class="chartlab">স্যুট অনুযায়ী পাস হওয়া চেক (ব্যর্থ ০)</text>
+    <g>
+      <text x="0" y="46" class="chartlab">pending.test.mjs (নতুন)</text>
+      <rect x="215" y="34" width="360" height="16" rx="8" fill="#6f8f72"/><text x="583" y="47" class="chartlab">36</text>
+      <text x="0" y="78" class="chartlab">e2e pending (আসল rules)</text>
+      <rect x="215" y="66" width="260" height="16" rx="8" fill="#6f8f72"/><text x="483" y="79" class="chartlab">26</text>
+      <text x="0" y="110" class="chartlab">store.test.mjs</text>
+      <rect x="215" y="98" width="600" height="16" rx="8" fill="#8d968f"/><text x="823" y="111" class="chartlab">60</text>
+      <text x="0" y="142" class="chartlab">advance.test.mjs</text>
+      <rect x="215" y="130" width="320" height="16" rx="8" fill="#8d968f"/><text x="543" y="143" class="chartlab">32</text>
+      <text x="0" y="174" class="chartlab">e2e fixes (রিগ্রেশন)</text>
+      <rect x="215" y="162" width="350" height="16" rx="8" fill="#8d968f"/><text x="573" y="175" class="chartlab">35</text>
+      <text x="0" y="206" class="chartlab">access / isolation / fixes</text>
+      <rect x="215" y="194" width="480" height="16" rx="8" fill="#8d968f"/><text x="703" y="207" class="chartlab">48</text>
+    </g>
+    <text x="0" y="236" class="chartlab">সবুজ = এই বাগের নতুন স্যুট · ধূসর = রিগ্রেশন (কিছু ভাঙেনি)</text>
+  </svg>
+  <table>
+    <thead><tr><th>স্যুট</th><th>ফলাফল</th><th>আউটপুট</th></tr></thead>
+    <tbody>
+      <tr><td>tests/pending.test.mjs <strong>(নতুন)</strong></td><td class="num">ALL PASS (36)</td><td rowspan="6" class="foot">docs/evidence/pending-local-tests-output.txt</td></tr>
+      <tr><td>tests/store.test.mjs</td><td class="num">60 passed / 0 failed</td></tr>
+      <tr><td>tests/access.test.mjs</td><td class="num">ALL PASS</td></tr>
+      <tr><td>tests/member-cannot-modify.mjs</td><td class="num">ALL PASS</td></tr>
+      <tr><td>tests/fixes.test.mjs</td><td class="num">ALL PASS</td></tr>
+      <tr><td>tests/advance.test.mjs</td><td class="num">ALL PASS (32)</td></tr>
+      <tr><td>tests/e2e-emulator/pending-status-e2e.mjs <strong>(নতুন)</strong></td><td class="num">ALL PASS (26)</td><td rowspan="2" class="foot">docs/evidence/pending-e2e-output.txt</td></tr>
+      <tr><td>tests/e2e-emulator/fixes-live-e2e.mjs</td><td class="num">ALL PASS (35)</td></tr>
+    </tbody>
+  </table>
+  <h3>মূল প্রমাণ — একই ডেটায় পুরোনো ও নতুন ফিল্টার</h3>
+  <pre><code>OLD (পুরোনো): listPayments('pending')  → 107 rows   ← সব পেমেন্ট
+নতুন        : listPayments('pending')  →   0 rows   ← আসল pending = ০
+নতুন        : paymentStats()            → pending 0 / ৳0 · verified 107 / ৳168,000</code></pre>
+  <p class="foot">আসল অ্যাডাপ্টার + আসল <code>firestore.rules</code> (emulator) E2E-এও একই: verify করার আগে pending ২/৭,০০০ → একটি verify করলে ১/৬,০০০ → সব verify করলে ০/০, আর পুরোনো কলে তখনও "২" দেখাত।</p>
+</section>
+
+<section>
+  <h2><span class="n">06</span>লাইভ প্রমাণ (আসল Firebase)</h2>
+  <table>
+    <thead><tr><th>যাচাই</th><th>ফলাফল</th></tr></thead>
+    <tbody>
+      <tr><td>ফান্ড স্ন্যাপশট (বর্তমান)</td><td>totalFunding ৳৬,০০০ · memberDeposits ৳৬,০০০ · memberAdvance ৳৪,০০০ · <strong>pendingDue ৳০</strong> · memberCount ৫</td></tr>
+      <tr><td>সদস্য kaziauto0914114510</td><td>paid ৳২,০০০ · due ৳০ · advance ৳১,০০০ · <strong>pending ০</strong> · লেজারে দুটি verified রো</td></tr>
+      <tr><td>সিদ্ধান্ত</td><td>লাইভে কোনো পেমেন্ট pending-এ আটকে নেই → <strong>কোনো ডেটা সংশোধন লাগেনি</strong>; "৬" ছিল গোনার ভুল</td></tr>
+    </tbody>
+  </table>
+  <p class="foot">আমাকে অ্যাডমিন লগইন দেওয়া হয়নি, তাই পুরো payments কালেকশন সরাসরি স্ক্যান করা যায়নি; তবে অ্যাডমিন-রাইটেড ফান্ড অ্যাগ্রিগেটই (যা অ্যাডমিন ড্যাশবোর্ড হিসাব করে) pendingDue ৳০ দেখাচ্ছে — এটি নির্ধারক প্রমাণ।</p>
+</section>
+
+<section>
+  <h2><span class="n">07</span>অফলাইন অডিটর — নিয়মিত যাচাইয়ের হাতিয়ার</h2>
+  <p>নতুন টুল <code>tools/audit-pending-payments.mjs</code> অ্যাডমিনের Payments CSV পড়ে (ডেটাবেসে হাত না দিয়ে) রিপোর্ট করে: আটকে থাকা pending, ডুপ্লিকেট ref (কত টাকা ঝুঁকিতে), অডিট-স্ট্যাম্প ছাড়া verified রো, এবং ১,০০০-এর গুণিতক নয় এমন অ্যামাউন্ট।</p>
+  <pre><code>node tools/audit-pending-payments.mjs nextgen-payments-2026-09-14.csv --days 7
+
+PENDING  audit.case         ৳1,000  ref AUDIT-1000  25 days old
+audit.case|bkash|audit-6000  x2  ৳12,000  [verified, PENDING]
+AUDIT VERDICT: 2 finding(s)  ← exit code 1 (মনিটরিংয়ে ব্যবহারযোগ্য)
+
+পরিষ্কার লেজারে: AUDIT VERDICT: CLEAN — exit code 0</code></pre>
+  <p class="foot">সম্পূর্ণ আউটপুট: docs/evidence/pending-audit-output.txt</p>
+</section>
+
+<section>
+  <h2><span class="n">08</span>ডিপ্লয়, মনিটরিং ও রোলব্যাক</h2>
+  <ul class="clean">
+    <li><strong>ডিপ্লয় ক্রম:</strong> কোড পুশ → GitHub Pages + Firebase Hosting অটো-ডিপ্লয় (১–২ মিনিট) → অ্যাডমিন/মেম্বার পেজ Ctrl+F5 → Overview-এর "Payment numbers check" সবুজ কিনা দেখা।</li>
+    <li><strong>মনিটরিং (প্রথম ৩ দিন):</strong> প্রতিদিন check কার্ড সবুজ কি না ও pending সংখ্যা/অঙ্ক; সাপ্তাহিক CSV অডিট।</li>
+    <li><strong>সতর্ক সংকেত:</strong> "Payments (n)" ব্যাজে n &gt; ০ অথচ Payments ট্যাবে কোনো pending রো নেই — সাথে সাথে জানান।</li>
+    <li><strong>রোলব্যাক (২ মিনিট):</strong> <code>git revert 3d11384 &amp;&amp; git push</code> — অথবা Firebase Hosting → Release history → Rollback। কোনো ডেটা মাইগ্রেশন নেই, তাই ডেটা অপরিবর্তিত থাকে।</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">09</span>ঝুঁকি ও সীমাবদ্ধতা</h2>
+  <ul class="clean">
+    <li>পাবলিক অ্যাগ্রিগেট (<code>settings/public</code>) শুধু অ্যাডমিন লিখতে পারে — তাই সদস্যের সাবমিশনের সঙ্গে সঙ্গে ফান্ড-লেভেল <code>pendingDue</code> হালনাগাদ হয় না, পরবর্তী অ্যাডমিন অ্যাকশনে হয়। পাবলিক পেজ কোনো pending অঙ্ক দেখায় না; সদস্যের পোর্টাল সরাসরি নিজের লেজার পড়ে।</li>
+    <li>পুরোনো (যদি থাকে) ডুপ্লিকেট রো স্বয়ংক্রিয়ভাবে মোছা হয় না — অ্যাডমিনের সামনে চিহ্নিত করে দেখানো হয়, reject করলে মোট থেকে বাদ যায় ও অডিট থাকে।</li>
+    <li>অ্যাডমিন প্যানেলের চিত্র-প্রমাণ: এই টার্নে স্ক্রিনশট-ধাপটি সেফটি গার্ড কর্তৃক আটকানো হয়েছিল; সংখ্যা প্রমাণিত হয়েছে স্বয়ংক্রিয় টেস্ট (৩৬) ও রিয়েল-অ্যাডাপ্টার E2E (২৬) দিয়ে।</li>
+    <li>স্কোপ: পেমেন্ট গেটওয়ে, ফি/মূল্য বা বিলিং আর্কিটেকচার — কিছুই বদলানো হয়নি।</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">10</span>ভবিষ্যতে যাতে ফিরে না আসে</h2>
+  <ul class="clean">
+    <li>সংখ্যা হাতে-ফিল্টার করে গুনবেন না — শুধু <code>U.summarisePayments()</code> / <code>Store.paymentStats()</code>।</li>
+    <li>নতুন সারফেসে pending সংখ্যা দেখালে check কার্ডের সাথে মিলিয়ে টেস্ট লিখুন।</li>
+    <li>ভুল ফিল্টার এখন আর নিঃশব্দে পাস করবে না — অজানা স্ট্যাটাসে সরাসরি এরর।</li>
+    <li>নতুন কোনো পেমেন্ট-এন্ট্রি পথ যোগ করলে dup-ref চেকও যোগ করুন।</li>
+  </ul>
+  <p class="foot">বিস্তারিত: docs/pending-status-fix-rca.md · অগ্রিম-নিয়ম: docs/advance-rule-spec.md</p>
+</section>
+
+<footer>NextGen Fund · pending payment বাগ রিপোর্ট · ২০২৬-০৯-১৪ · Takram soft-tech রিপোর্ট</footer>
+</div>
+</body>
+</html>

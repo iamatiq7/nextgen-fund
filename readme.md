@@ -85,7 +85,11 @@ credit and is applied automatically to future months. Full rule: `docs/advance-r
 │   └── img/favicon.svg
 ├── firestore.rules          Firestore security rules (paste into Firebase)
 ├── tests/store.test.mjs     end-to-end test suite — `node tests/store.test.mjs` (60 checks)
-└── docs/                    HANDOVER.md · FIREBASE_SETUP.md · DEPLOY_GITHUB.md
+├── tests/pending.test.mjs   pending / verified / rejected counts, duplicates — `node tests/pending.test.mjs` (36 checks)
+├── tests/advance.test.mjs   advance-credit rule — `node tests/advance.test.mjs` (32 checks)
+├── tests/e2e-emulator/      real adapter + real Firestore rules on the emulator (26 + 35 checks)
+├── tools/audit-pending-payments.mjs   offline payments-CSV auditor (stuck pending, duplicate refs)
+└── docs/                    HANDOVER.md · pending-status-fix-rca.md · advance-rule-spec.md · evidence/
 ```
 
 ## Where to change things (common edits)
@@ -103,7 +107,18 @@ credit and is applied automatically to future months. Full rule: `docs/advance-r
 
 ```bash
 node tests/store.test.mjs
+node tests/pending.test.mjs    # payment pending / verified / rejected counts + duplicates
+node tests/advance.test.mjs    # advance-credit rule
+node tests/fixes.test.mjs      # regression suite for earlier fixes
+node tests/access.test.mjs     # role and access-control checks
 ```
+
+End-to-end with the real adapter and the real Firestore rules (needs the Firebase emulator
+on ports 8080 / 9099): `node tests/e2e-emulator/pending-status-e2e.mjs` and
+`node tests/e2e-emulator/fixes-live-e2e.mjs`.
+
+Offline ledger audit from an admin payments CSV:
+`node tools/audit-pending-payments.mjs nextgen-payments-YYYY-MM-DD.csv --days 7`
 
 Covers: registration with documents → admin accept/reject → login rules → due/advance
 payments via 5+ methods → verification → balance maths → access isolation → password
