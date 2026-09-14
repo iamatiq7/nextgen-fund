@@ -155,13 +155,14 @@ const e1 = pend2.find((p) => p.ref === 'RKT-E1');
 await Store.verifyPayment(e1.id);
 const balE2 = (await Store.getMemberDetail(memE.id)).balance;
 ok('E2 verification applies amount immediately', balE2.paid === balBefore.paid + 1000, 'paid=' + balE2.paid);
-// E3: overpaying due floors at 0 and does not create advance
+// E3: overpaying due floors the due at 0 and the surplus becomes ADVANCE (fixed rule)
 await Store.login('test.member.one', 'testpass123');
 await Store.submitPayment({ type: 'due', method: 'upay', amount: 99000, date: '2026-09-09', ref: 'UPY-E3' });
 await Store.login('admin', 'nextgen2026');
 await Store.verifyPayment((await Store.listPayments({ status: 'pending' })).find((p) => p.ref === 'UPY-E3').id);
 const balE3 = (await Store.getMemberDetail(memE.id)).balance;
 ok('E3 overpay of due floors due at 0', balE3.due === 0, 'due=' + balE3.due);
+ok('E3+ surplus of the overpaid due becomes advance', balE3.advance === balE3.paid - balE3.expected, 'advance=' + balE3.advance + ' paid=' + balE3.paid + ' expected=' + balE3.expected);
 // E4: rejected submission allows resubmitting the same TrxID
 await Store.login('test.member.one', 'testpass123');
 await Store.submitPayment({ type: 'advance', method: 'bkash', amount: 1000, date: '2026-09-09', ref: 'BK-E4' });

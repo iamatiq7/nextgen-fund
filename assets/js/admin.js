@@ -189,7 +189,19 @@
   /* ---------------- members ---------------- */
   async function tabMembers() {
     var members = await S.listMembers();
+    /* Advance audit: who holds credit, and who has paid more than billed.
+       These are exactly the accounts the old (buggy) formula showed as 0. */
+    var withAdv = members.filter(function (m) { return m.balance.advance > 0; });
+    var advTotal = withAdv.reduce(function (a, m) { return a + m.balance.advance; }, 0);
+    var overpaid = members.filter(function (m) { return m.balance.paid > m.balance.expected; });
+    var audit = '<div class="card" style="max-width:980px"><h2>' + U.esc(L.t('adm.advAudit')) + '</h2>' +
+      '<p class="footnote">' + (withAdv.length
+        ? U.esc(L.t('adm.advAuditLine', { n: withAdv.length, amt: U.fmtBDT(advTotal), over: overpaid.length }))
+        : U.esc(L.t('adm.advAuditNone'))) + '</p>' +
+      (withAdv.length ? '<p class="footnote mono">' + withAdv.map(function (m) { return U.esc(m.username) + ' = ' + U.fmtBDT(m.balance.advance); }).join(' · ') + '</p>' : '') +
+      '</div>';
     body.innerHTML =
+      audit +
       (members.length ? '<div class="tablewrap"><table class="data"><thead><tr>' +
         ['adm.mbName', 'adm.rgUsername', 'adm.mbShares', 'adm.mbMonthly', 'adm.mbPaid', 'adm.mbDue', 'adm.mbAdvance', 'adm.mbStatus', 'adm.rgActions'].map(function (k) { return '<th>' + U.esc(L.t(k)) + '</th>'; }).join('') +
         '</tr></thead><tbody>' +

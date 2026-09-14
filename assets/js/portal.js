@@ -21,12 +21,17 @@
     set('bal-paid-sub', L.t('por.paidSub', { amt: U.fmtBDT(b.expected) }));
     set('bal-due', U.fmtBDT(b.due));
     var dueSub = b.due > 0
-      ? L.t('por.dueSub', { e: U.fmtBDT(b.expected), p: U.fmtBDT(b.paidDue + (b.pendingDue || 0)) })
+      ? L.t('por.dueSub', { e: U.fmtBDT(b.expected), p: U.fmtBDT((b.paid || 0) + (b.pending || 0)) })
       : (b.pendingDue > 0 ? L.t('por.dueCovered') : L.t('por.dueOk'));
     if ((b.pendingDue || 0) > 0) dueSub += ' ' + L.t('por.pendingDue', { amt: U.fmtBDT(b.pendingDue) });
     set('bal-due-sub', dueSub);
     document.getElementById('bal-due-card').className = 'card stat ' + (b.due > 0 ? 'tone-red' : 'tone-green');
     set('bal-advance', U.fmtBDT(b.advance));
+    var advSub = document.getElementById('bal-advance-sub');
+    if (advSub) {
+      advSub.textContent = L.t('por.advanceSub') + ((b.advanceMonths || 0) > 0
+        ? ' · ' + L.t('por.advanceMonths', { n: b.advanceMonths, s: b.advanceMonths > 1 ? 's' : '' }) : '');
+    }
     set('bal-monthly', U.fmtBDT(profile.monthlyDue));
     set('bal-shares', L.t('por.sharesSub', { n: profile.shares, s: '', amt: U.fmtBDT(settings.monthlyPerShare || 1000) }));
     renderDueHint();

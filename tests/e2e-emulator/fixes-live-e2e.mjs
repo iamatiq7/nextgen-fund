@@ -1,8 +1,16 @@
 /* E2E with the REAL production adapter code against the Firestore/Auth emulator.
-   Proves: pending payment reduces due, approval auto-feeds the fund totals, admin name/password, edge guards. */
+   Proves: pending payment reduces the due, approval auto-feeds the fund totals,
+   an overpaid monthly due becomes advance credit, admin name/password change, edge guards.
+   Runs from either tests/e2e-emulator/ (repo) or the scratch harness dir. */
 import { createRequire } from 'module';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
 const require = createRequire(import.meta.url);
-const SITE = '../../assets/js/';
+const CANDIDATES = ['../../assets/js/', '../../ngf-build/assets/js/', '../../../ngf-build/assets/js/'];
+const SITE = CANDIDATES.find((p) => fs.existsSync(fileURLToPath(new URL(p + 'store.js', import.meta.url))));
+if (!SITE) { console.error('cannot locate assets/js/store.js from', import.meta.url); process.exit(2); }
+console.log('# adapter source:', SITE);
 
 globalThis.window = globalThis;
 globalThis.self = globalThis;
@@ -30,8 +38,8 @@ async function expectThrow(n, fn, code) {
 await Store.init();
 check('real adapter boots against emulator', Store.mode === 'firebase', 'mode=' + Store.mode);
 if (Store.mode !== 'firebase') {
-  try { await Store._fbFactory(); console.log("factory ok but mode demo?"); }
-  catch (e) { console.log("FACTORY ERROR:", e && e.code, e && e.message); }
+  try { await Store._fbFactory(); console.log('factory ok but mode demo?'); }
+  catch (e) { console.log('FACTORY ERROR:', e && e.code, e && e.message); }
 }
 
 /* --- 1. first admin claims the fund --- */
@@ -39,13 +47,12 @@ await Store.setupAdmin({ fullName: 'E2E Admin', username: 'admin', email: 'admin
 let sess = await Store.getSession();
 check('admin created + signed in', sess && sess.role === 'admin', sess && sess.username);
 
-/* --- 2. member registers (pending) --- */
+/* --- 2. member registers (pending) then gets approved --- */
 await Store.logout();
 await Store.register({ fullName: 'E2E Member', username: 'e2e.member', email: 'e2e.member@e2e.local', password: 'MemberPass123', phone: '01711111111', shares: 1, docs: [] });
 await Store.logout();
 await Store.login('admin', 'AdminPass123');
-const regs = await Store.listRegistrations();
-const reg = regs.filter((r) => r.username === 'e2e.member')[0];
+const reg = (await Store.listRegistrations()).filter((r) => r.username === 'e2e.member')[0];
 check('registration visible to admin', !!reg, reg && reg.status);
 await Store.decideRegistration(reg.id, true);
 
@@ -54,6 +61,7 @@ await Store.logout();
 await Store.login('e2e.member', 'MemberPass123');
 let acc = await Store.getMyAccount();
 check('new member due = 1000 (1 month x 1000)', acc.balance.due === 1000, JSON.stringify(acc.balance));
+check('advance starts at 0 - nothing overpaid yet', acc.balance.advance === 0, 'advance=' + acc.balance.advance);
 const t0 = (await Store.getPublicSnapshot()).totalFunding;
 check('fund total starts at 0 (no manual entries)', t0 === 0, 'totalFunding=' + t0);
 
@@ -68,13 +76,12 @@ check('pending payment is NOT in the fund total yet', t1 === 0, 'totalFunding=' 
 /* --- 5. admin approval auto-updates the fund totals --- */
 await Store.logout();
 await Store.login('admin', 'AdminPass123');
-const pays = await Store.listPayments();
-const mine = pays.filter((p) => p.ref === 'E2E-1000')[0];
+const mine = (await Store.listPayments()).filter((p) => p.ref === 'E2E-1000')[0];
 check('payment listed for admin', !!mine, mine && mine.status);
 await Store.verifyPayment(mine.id);
-const snap = await Store.getPublicSnapshot();
-const ft = snap.fundTotals || snap;
-check('approval -> totals written to settings/public (spread on snapshot)', Object.keys(ft).length > 5, 'keys=' + Object.keys(ft).join(','));
+let snap = await Store.getPublicSnapshot();
+let ft = snap.fundTotals || snap;
+check('approval -> totals written to settings/public', Object.keys(ft).length > 5, 'keys=' + Object.keys(ft).join(','));
 check('totalFunding = 1000 (auto, no manual entry)', Number(ft.totalFunding) === 1000, 'totalFunding=' + ft.totalFunding);
 check('memberDeposits = 1000', Number(ft.memberDeposits) === 1000, 'memberDeposits=' + ft.memberDeposits);
 check('pendingDue cleared to 0 after approval', Number(ft.pendingDue) === 0, 'pendingDue=' + ft.pendingDue);
@@ -84,10 +91,25 @@ await Store.logout();
 await Store.login('e2e.member', 'MemberPass123');
 acc = await Store.getMyAccount();
 check('member view agrees (paid 1000, due 0)', acc.balance.paid === 1000 && acc.balance.due === 0, JSON.stringify(acc.balance));
+
+/* --- 5b. ADVANCE: the member overpays the monthly due (the reported bug) --- */
+await Store.submitPayment({ type: 'due', method: 'bkash', amount: 1000, date: '2026-09-15', ref: 'E2E-OVERPAY' });
 await Store.logout();
 await Store.login('admin', 'AdminPass123');
+await Store.verifyPayment((await Store.listPayments()).filter((p) => p.ref === 'E2E-OVERPAY')[0].id);
+await Store.logout();
+await Store.login('e2e.member', 'MemberPass123');
+const advBal = (await Store.getMyAccount()).balance;
+check('overpaid due becomes advance (2,000 paid vs 1,000 billed)', advBal.advance === 1000, JSON.stringify(advBal));
+check('advanceMonths tells how far ahead the member is', advBal.advanceMonths === 1, 'months=' + advBal.advanceMonths);
+check('due stays 0 and paid total is 2,000', advBal.due === 0 && advBal.paid === 2000, 'due=' + advBal.due + ' paid=' + advBal.paid);
+snap = await Store.getPublicSnapshot();
+check('fund totals expose the advance pool', Number(snap.memberAdvance) === 1000, 'memberAdvance=' + snap.memberAdvance);
+check('fund deposits equal the money actually received (2,000)', Number(snap.memberDeposits) === 2000, 'memberDeposits=' + snap.memberDeposits);
 
 /* --- 6. admin profile: name + password (real adapter path) --- */
+await Store.logout();
+await Store.login('admin', 'AdminPass123');
 await Store.updateMyName('E2E Admin Renamed');
 sess = await Store.getSession();
 check('admin name change persisted (re-read from Firestore)', sess.fullName === 'E2E Admin Renamed', sess.fullName);
@@ -103,7 +125,7 @@ check('renamed admin still shown after re-login', sess.fullName === 'E2E Admin R
 /* --- 7. edge cases against the live rules --- */
 await Store.logout();
 await Store.login('e2e.member', 'MemberPass123');
-await expectThrow('member cannot self-verify', () => Store.verifyPayment(mine.id));
+await expectThrow('member cannot self-verify', () => Store.verifyPayment(mine.id), 'forbidden');
 await expectThrow('zero amount rejected', () => Store.submitPayment({ type: 'due', method: 'bkash', amount: 0, date: '2026-09-14', ref: 'E2E-0' }), 'invalid');
 await expectThrow('negative amount rejected', () => Store.submitPayment({ type: 'due', method: 'bkash', amount: -1000, date: '2026-09-14', ref: 'E2E-NEG' }), 'invalid');
 await expectThrow('non-multiple rejected', () => Store.submitPayment({ type: 'due', method: 'bkash', amount: 1500, date: '2026-09-14', ref: 'E2E-1500' }), 'invalid');
@@ -112,7 +134,7 @@ await expectThrow('member cannot write fund settings', () => Store.saveSettings(
 await expectThrow('member cannot add finance entries', () => Store.upsertFinanceEntry({ kind: 'funding', month: '2026-09', amount: 5000, note: 'hack' }), 'forbidden');
 await expectThrow('member cannot approve their own account', () => Store.decideRegistration('x', true), 'forbidden');
 acc = await Store.getMyAccount();
-check('books still balanced after bad input', acc.balance.due === 0 && acc.balance.paid === 1000, JSON.stringify(acc.balance));
+check('books still balanced after bad input', acc.balance.due === 0 && acc.balance.paid === 2000 && acc.balance.advance === 1000, JSON.stringify(acc.balance));
 
 console.log(fails === 0 ? 'REAL-ADAPTER E2E: ALL PASS' : 'REAL-ADAPTER E2E: ' + fails + ' FAILURES');
 process.exit(fails === 0 ? 0 : 1);

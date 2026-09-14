@@ -138,29 +138,37 @@
   /* =============== shared calculations =============== */
   function computeBalance(user, payments, nowMonth) {
     var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
-    var paidDue = 0, advance = 0, pendingDue = 0, pendingAdvance = 0;
+    var paidDue = 0, paidAdvance = 0, pendingDue = 0, pendingAdvance = 0;
     (payments || []).forEach(function (p) {
       var amt = Number(p.amount) || 0;
       if (p.status === 'verified') {
-        if (p.type === 'due') paidDue += amt;
-        if (p.type === 'advance') advance += amt;
+        if (p.type === 'advance') paidAdvance += amt; else paidDue += amt;
       } else if (p.status === 'pending') {
-        if (p.type === 'due') pendingDue += amt;
-        if (p.type === 'advance') pendingAdvance += amt;
+        if (p.type === 'advance') pendingAdvance += amt; else pendingDue += amt;
       }
     });
-    /* A submitted (pending) due payment already reduces the outstanding due;
+    /* ADVANCE RULE (docs/advance-rule-spec.md): every verified taka is money
+       received. Whatever was received beyond the amount billed to date
+       (months joined x monthly due) is member credit, i.e. advance - so an
+       overpaid monthly due automatically becomes advance. */
+    var received = paidDue + paidAdvance;
+    var pendingReceived = pendingDue + pendingAdvance;
+    var dueVerified = Math.max(0, expected - received);
+    var advance = Math.max(0, received - expected);
+    var perMonth = Number(user.monthlyDue) || 0;
+    /* A submitted (pending) payment already reduces the outstanding due;
        it only enters the fund total after the admin approves it. */
     return {
       expected: expected,
-      paid: paidDue + advance,
+      paid: received,
       paidDue: paidDue,
       advance: advance,
-      pending: pendingDue + pendingAdvance,
+      advanceMonths: perMonth > 0 ? Math.floor(advance / perMonth) : 0,
+      pending: pendingReceived,
       pendingDue: pendingDue,
-      pendingAdvance: pendingAdvance,
-      due: Math.max(0, expected - paidDue - pendingDue),
-      dueVerified: Math.max(0, expected - paidDue)
+      pendingAdvance: Math.max(0, pendingReceived - dueVerified),
+      due: Math.max(0, expected - received - pendingReceived),
+      dueVerified: dueVerified
     };
   }
 
@@ -170,9 +178,12 @@
       var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0, deposits: 0 });
       m[f.kind] += Number(f.amount) || 0;
     });
-    /* verified member deposits are fund income as well */
+    /* verified member deposits are fund income as well. Advances count too:
+       the money is in the fund, it is member credit until billed. */
+    var memberDeposits = 0;
     (db.payments || []).forEach(function (p) {
-      if (p.status !== 'verified' || p.type !== 'due') return;
+      if (p.status !== 'verified') return;
+      memberDeposits += Number(p.amount) || 0;
       var mk = String(p.date || '').slice(0, 7);
       if (!mk) return;
       var mm = months[mk] || (months[mk] = { month: mk, funding: 0, revenue: 0, loss: 0, deposits: 0 });
@@ -184,6 +195,13 @@
       totalFunding += months[k].funding; totalRevenue += months[k].revenue; totalLoss += months[k].loss;
     });
     var memberCount = (db.users || []).filter(function (u) { return u.role === 'member' && u.status === 'active'; }).length;
+    var memberAdvance = 0, pendingDue = 0;
+    (db.users || []).filter(function (u) { return u.role === 'member'; }).forEach(function (u) {
+      var mine = (db.payments || []).filter(function (p) { return p.memberId === u.id; });
+      var bal = computeBalance(u, mine, U.currentMonth());
+      memberAdvance += bal.advance;
+      pendingDue += bal.pendingDue;
+    });
     var list = Object.keys(months).sort().map(function (k) { return months[k]; });
     return {
       fundName: db.settings.fundName, currency: db.settings.currency || 'BDT',
@@ -191,6 +209,7 @@
       totalFunding: totalFunding, totalRevenue: totalRevenue, totalLoss: totalLoss,
       net: totalFunding + totalRevenue - totalLoss,
       months: list, memberCount: memberCount,
+      memberDeposits: memberDeposits, memberAdvance: memberAdvance, pendingDue: pendingDue,
       monthlyPerShare: db.settings.monthlyPerShare,
       content: db.settings.content || {},
       updatedAt: db.settings.updatedAt

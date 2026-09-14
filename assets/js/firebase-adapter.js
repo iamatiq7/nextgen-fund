@@ -66,12 +66,12 @@
           var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0, deposits: 0 });
           m[f.kind] = (Number(m[f.kind]) || 0) + (Number(f.amount) || 0);
         });
-        var depositTotal = 0, pendingDueTotal = 0;
+        var depositTotal = 0, pendingDueTotal = 0, memberAdvance = 0;
         pays.forEach(function (p) {
           var amt = Number(p.amount) || 0;
           if (p.status === 'pending' && p.type === 'due') pendingDueTotal += amt;
           if (p.status !== 'verified') return;
-          if (p.type === 'advance') return; /* advances stay member credit, not fund income */
+          /* every verified taka that came in is money in the fund (advance too) */
           var mk = String(p.date || '').slice(0, 7);
           if (!mk) return;
           var mm = months[mk] || (months[mk] = { month: mk, funding: 0, revenue: 0, loss: 0, deposits: 0 });
@@ -81,11 +81,14 @@
         });
         var tF = 0, tR = 0, tL = 0;
         Object.keys(months).sort().forEach(function (k) { tF += months[k].funding; tR += months[k].revenue; tL += months[k].loss; });
+        users.forEach(function (u) {
+          memberAdvance += computeBalance(u, pays.filter(function (p) { return p.memberId === u.id; })).advance;
+        });
         await fsMod.setDoc(docIn('settings', 'public'), {
           memberCount: users.filter(function (u) { return u.status === 'active'; }).length,
           fundTotals: {
             totalFunding: tF, totalRevenue: tR, totalLoss: tL, net: tF + tR - tL,
-            memberDeposits: depositTotal, pendingDue: pendingDueTotal,
+            memberDeposits: depositTotal, memberAdvance: memberAdvance, pendingDue: pendingDueTotal,
             months: Object.keys(months).sort().map(function (k) { return months[k]; }),
             updatedAt: new Date().toISOString()
           },
@@ -107,29 +110,37 @@
     function computeBalance(user, payments) {
       var nowMonth = U.currentMonth();
       var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
-      var paidDue = 0, advance = 0, pendingDue = 0, pendingAdvance = 0;
+      var paidDue = 0, paidAdvance = 0, pendingDue = 0, pendingAdvance = 0;
       (payments || []).forEach(function (p) {
         var amt = Number(p.amount) || 0;
         if (p.status === 'verified') {
-          if (p.type === 'due') paidDue += amt;
-          if (p.type === 'advance') advance += amt;
+          if (p.type === 'advance') paidAdvance += amt; else paidDue += amt;
         } else if (p.status === 'pending') {
-          if (p.type === 'due') pendingDue += amt;
-          if (p.type === 'advance') pendingAdvance += amt;
+          if (p.type === 'advance') pendingAdvance += amt; else pendingDue += amt;
         }
       });
-      /* A submitted (pending) due payment already reduces the outstanding due;
+      /* ADVANCE RULE (docs/advance-rule-spec.md): every verified taka is money
+         received. Whatever was received beyond the amount billed to date
+         (months joined x monthly due) is member credit, i.e. advance - so an
+         overpaid monthly due automatically becomes advance. */
+      var received = paidDue + paidAdvance;
+      var pendingReceived = pendingDue + pendingAdvance;
+      var dueVerified = Math.max(0, expected - received);
+      var advance = Math.max(0, received - expected);
+      var perMonth = Number(user.monthlyDue) || 0;
+      /* A submitted (pending) payment already reduces the outstanding due;
          it only enters the fund total after the admin approves it. */
       return {
         expected: expected,
-        paid: paidDue + advance,
+        paid: received,
         paidDue: paidDue,
         advance: advance,
-        pending: pendingDue + pendingAdvance,
+        advanceMonths: perMonth > 0 ? Math.floor(advance / perMonth) : 0,
+        pending: pendingReceived,
         pendingDue: pendingDue,
-        pendingAdvance: pendingAdvance,
-        due: Math.max(0, expected - paidDue - pendingDue),
-        dueVerified: Math.max(0, expected - paidDue)
+        pendingAdvance: Math.max(0, pendingReceived - dueVerified),
+        due: Math.max(0, expected - received - pendingReceived),
+        dueVerified: dueVerified
       };
     }
 
@@ -149,7 +160,8 @@
             nextMeeting: settings && settings.nextMeeting, meetingNote: settings && settings.meetingNote,
             totalFunding: Number(agg.totalFunding) || 0, totalRevenue: Number(agg.totalRevenue) || 0,
             totalLoss: Number(agg.totalLoss) || 0, net: Number(agg.net) || 0,
-            memberDeposits: Number(agg.memberDeposits) || 0, pendingDue: Number(agg.pendingDue) || 0,
+            memberDeposits: Number(agg.memberDeposits) || 0, memberAdvance: Number(agg.memberAdvance) || 0,
+            pendingDue: Number(agg.pendingDue) || 0,
             months: agg.months,
             memberCount: Number(settings && settings.memberCount) || 0,
             monthlyPerShare: settings && settings.monthlyPerShare,
@@ -172,6 +184,7 @@
           fundName: (settings && settings.fundName) || 'NextGen Fund', currency: 'BDT',
           nextMeeting: settings && settings.nextMeeting, meetingNote: settings && settings.meetingNote,
           totalFunding: tF, totalRevenue: tR, totalLoss: tL, net: tF + tR - tL,
+          memberDeposits: 0, memberAdvance: 0, pendingDue: 0,
           months: Object.keys(months).sort().map(function (k) { return months[k]; }),
           memberCount: usersPub.length
             ? usersPub.filter(function (u) { return u.status === 'active'; }).length
