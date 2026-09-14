@@ -337,10 +337,15 @@
       changePassword: async function (currentPw, newPw) {
         var cu = auth.currentUser;
         if (!cu) throw err('unauthenticated', 'Please log in');
+        if (!newPw || newPw.length < 8) throw err('invalid', 'New password must be at least 8 characters.');
         var cred = authMod.EmailAuthProvider.credential(cu.email, currentPw);
-        await authMod.reauthenticateWithCredential(cu, cred);
+        try {
+          await authMod.reauthenticateWithCredential(cu, cred);
+        } catch (e) {
+          throw err('wrong-credentials', 'Current password is incorrect.');
+        }
         await authMod.updatePassword(cu, newPw);
-        await audit((me && me.user && me.user.username) || '', 'password-changed', 'own password changed');
+        await audit((cu.email || ''), 'password-changed', 'own password changed');
         return { ok: true };
       },
 
