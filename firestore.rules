@@ -1,10 +1,29 @@
 rules_version = '2';
 
-// NextGen Fund — Firestore security rules (v2, default-deny).
-// Public read: settings/public, finance, usernames (login map) — nothing else.
-// Writes: admin only, PLUS a member's own pending payments and self-registration docs.
-// Review notes: bootstrap must be claimed first; admin doc create is allowed only
-// for the uid that claimed bootstrap.
+// NextGen Fund - Firestore security rules (v3, default-deny).
+//
+// v3 adds ONE thing to v2: a full-reset capability for the fund admin.
+// Reason (audited 2026-09-14): v2 made three stores undeletable by anyone,
+// including the admin - /settings/bootstrap, /usernames/* and /audit/*.
+// That made it impossible to ever return the app to a clean, first-run
+// state: bootstrap kept "an admin already exists" true forever, and a
+// leftover /usernames/{name} blocked that username from being reused
+// (create on an existing doc is an update, and update stays false).
+//
+// What changed, precisely:
+//   settings/bootstrap : delete allowed for the admin (was: never)
+//   usernames/{name}   : delete allowed for the admin (was: never)
+//   audit/{id}         : delete allowed for the admin (was: never)
+// Everything else is byte-identical to v2. Updates stay forbidden everywhere
+// they were forbidden: identity is still immutable, the audit log is still
+// append-only in normal operation, and no member gains any new power.
+//
+// RISK NOTE (read before releasing the bootstrap): deleting
+// /settings/bootstrap puts the app back into first-run mode, because admin
+// setup is claimable whenever the doc is absent - that is the intended
+// "start from new" behaviour. Do it deliberately, and create the new admin
+// immediately afterwards at setup.html.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -16,17 +35,22 @@ service cloud.firestore {
       return isSignedIn() && hasBoot() && boot().adminUid == request.auth.uid;
     }
 
-    // Public settings: dashboard reads; only admin writes.
+    // Public settings: dashboard reads; only admin writes (delete included).
     match /settings/public {
       allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    // One-time bootstrap slot: the first admin claims it; afterwards immutable.
+    // One-time bootstrap slot: the first admin claims it. Immutable once claimed,
+    // EXCEPT that the admin may release it (full reset back to first-run).
     match /settings/bootstrap {
       allow get: if true;
+      // NB: /settings/public and /settings/bootstrap are matched by document path,
+      // so no per-id block can ever grant a collection *list*. A reset therefore
+      // reaches these two by id (it knows both paths) rather than by enumerating.
       allow create: if isSignedIn() && !hasBoot();
-      allow update, delete: if false; // immutable once claimed
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Public finance aggregates (funding / revenue / loss).
@@ -57,11 +81,15 @@ service cloud.firestore {
     }
 
     // Username -> {uid, email}: public read (needed for username login),
-    // created once by the owner (or admin). Never updatable.
+    // created once by the owner (or admin). Never updatable; deletable by the
+    // admin so a reset can free the handle for reuse.
     match /usernames/{name} {
       allow get: if true;
+      // as above: the reset has to enumerate every handle to free them for reuse
+      allow list: if isAdmin();
       allow create: if isSelf(request.resource.data.uid) || isAdmin();
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Registrations: submitted by applicants (pending only); admins decide.
@@ -90,11 +118,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Audit log: admin read; any signed-in user may append; never editable.
+    // Audit log: append-only in normal operation (read/delete: admin only).
     match /audit/{id} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
   }
 }

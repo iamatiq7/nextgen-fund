@@ -540,6 +540,57 @@
         return { ok: true };
       },
 
+
+      /* ---------- full reset (admin only) ----------
+         Empties every application collection, then deletes the two configuration
+         documents, then optionally the caller's own sign-in account. Needs the v3
+         rules (see docs/database-reset-runbook.md).
+
+         Two orderings are deliberate:
+         - the per-collection counts are gathered and reported BEFORE
+           settings/bootstrap is released, because releasing the bootstrap ends
+           the admin's own rights - anything read afterwards comes back denied;
+         - the caller's Auth account is deleted LAST, so a failure part-way still
+           leaves a usable admin sign-in to retry with. */
+      resetDatabase: async function (opts) {
+        opts = opts || {};
+        var me = await requireAdminUid();
+        var onStep = typeof opts.onProgress === 'function' ? opts.onProgress : function () {};
+        var report = { collections: {}, deleted: 0, errors: [] };
+        var order = ['payments', 'registrations', 'audit', 'usernames', 'users', 'finance'];
+        for (var i = 0; i < order.length; i++) {
+          var name = order[i];
+          var docs = await getAll(name);
+          for (var k = 0; k < docs.length; k++) {
+            try { await fsMod.deleteDoc(docIn(name, docs[k].id)); report.deleted++; }
+            catch (e) { report.errors.push(name + '/' + docs[k].id + ': ' + (e.code || e.message)); }
+          }
+          report.collections[name] = docs.length;
+          onStep('deleted ' + docs.length + ' from /' + name);
+        }
+        for (var s = 0; s < 2; s++) {
+          var which = s === 0 ? 'public' : 'bootstrap';
+          try { await fsMod.deleteDoc(docIn('settings', which)); onStep('deleted settings/' + which); }
+          catch (e) { report.errors.push('settings/' + which + ': ' + (e.code || e.message)); }
+        }
+        if (opts.deleteAccount && auth.currentUser) {
+          try { await authMod.deleteUser(auth.currentUser); report.accountDeleted = true; onStep('deleted my sign-in account'); }
+          catch (e) { report.accountDeleted = false; report.errors.push('auth: ' + (e.code || e.message)); }
+        }
+        return report;
+      },
+
+      /* ---------- flat inventory for the reset screen ---------- */
+      resetInventory: async function () {
+        await requireAdminUid();
+        var out = {};
+        var names = ['users', 'payments', 'registrations', 'audit', 'usernames', 'finance'];
+        for (var i = 0; i < names.length; i++) {
+          try { out[names[i]] = (await getAll(names[i])).length; } catch (e) { out[names[i]] = null; }
+        }
+        out.adminExists = await fb.adminExists();
+        return out;
+      },
       rejectPayment: async function (paymentId, reason) {
         var me = await requireAdminUid();
         var pay = await getDoc('payments', paymentId);

@@ -16,6 +16,25 @@
     en: {
       'lang.other': 'বাংলা', 'lang.cur': 'English',
 
+      /* ---- reset screen (reset.html) ---- */
+      'rs.kicker': 'Danger zone', 'rs.title': 'Reset the database',
+      'rs.lede': 'Starts the fund over from zero: every member, payment, registration, username and setting is deleted, and the app returns to first-run (setup.html). Take a backup first.',
+      'rs.checking': 'Checking your account.',
+      'rs.needAdmin': 'You must sign in as the fund admin to reset the database.',
+      'rs.goLogin': 'Sign in', 'rs.toDash': 'Back to dashboard',
+      'rs.notLive': 'This browser is in demo mode, so there is no server database to reset. Live data lives in Firebase; open the live site to reset it.',
+      'rs.inventory': 'What is there right now', 'rs.what': 'Store', 'rs.count': 'Documents',
+      'rs.pendingSkip': 'The tool can read these; a reset deletes them.',
+      'rs.confirmLabel': 'Type RESET to confirm', 'rs.confirmPh': 'RESET',
+      'rs.alsoAccount': 'Also delete my admin sign-in account (you will create a fresh admin at setup.html)',
+      'rs.wipe': 'Delete everything', 'rs.running': 'Working, do not close this tab.',
+      'rs.done': 'The database is empty. Open setup.html to create the new admin.',
+      'rs.doneAccount': 'The database is empty and your sign-in was deleted. Open setup.html to create the new admin.',
+      'rs.errors': 'Some documents could not be deleted. Publish the v3 rules first (docs/database-reset-runbook.md), then run it again - it is safe to repeat.',
+      'rs.backupHint': 'Before the first reset, dump everything with: node tools/db-reset.mjs --backup --email you@example.com --password ... ',
+      'rs.toSetup': 'Create the new admin', 'rs.wrongWord': 'Type RESET exactly to enable the button.',
+      'rs.deleted': 'deleted',
+
       'brand.name': 'NextGen Fund', 'brand.tag': 'family fund ledger',
       'nav.dashboard': 'Dashboard', 'nav.register': 'Register', 'nav.login': 'Login',
       'nav.portal': 'My Fund', 'nav.admin': 'Admin', 'nav.logout': 'Log out',
@@ -244,6 +263,25 @@
     /* ================= BANGLA (বাংলা) ================= */
     bn: {
       'lang.other': 'English', 'lang.cur': 'বাংলা',
+
+      /* ---- রিসেট স্ক্রিন (reset.html) ---- */
+      'rs.kicker': 'বিপদ অঞ্চল', 'rs.title': 'ডেটাবেস রিসেট করুন',
+      'rs.lede': 'ফান্ড শূন্য থেকে নতুন করে শুরু হবে: সব সদস্য, পেমেন্ট, রেজিস্ট্রেশন, ইউজারনেম ও সেটিং মুছে যাবে, আর অ্যাপ আবার ফাইর্স্ট-রান (সেটআপ) অবস্থায় ফিরে যাবে। আগে ব্যাকআপ নিন।',
+      'rs.checking': 'আপনার অ্যাকাউন্ট যাচাই করা হচ্ছে।',
+      'rs.needAdmin': 'ডেটাবেস রিসেট করতে ফান্ড অ্যাডমিন হিসেবে লগইন করতে হবে।',
+      'rs.goLogin': 'লগইন', 'rs.toDash': 'ড্যাশবোর্ডে ফিরে যান',
+      'rs.notLive': 'এই ব্রাউজারটি ডেমো মোডে আছে, তাই রিসেট করার সার্ভার-ডেটাবেস নেই। লাইভ ডেটা Firebase-এ থাকে; লাইভ সাইটে খুলে রিসেট করুন।',
+      'rs.inventory': 'এখন যা আছে', 'rs.what': 'স্টোর', 'rs.count': 'ডকুমেন্ট',
+      'rs.pendingSkip': 'টুল এগুলো পড়তে পারে; রিসেটে সব মুছে যাবে।',
+      'rs.confirmLabel': 'নিশ্চিত করতে RESET লিখুন', 'rs.confirmPh': 'RESET',
+      'rs.alsoAccount': 'আমার অ্যাডমিন লগইনও মুছে ফেলুন (নতুন অ্যাডমিন setup.html-এ তৈরি করবেন)',
+      'rs.wipe': 'সব মুছে ফেলুন', 'rs.running': 'কাজ চলছে, ট্যাব বন্ধ করবেন না।',
+      'rs.done': 'ডেটাবেস খালি। নতুন অ্যাডমিন তৈরিটে setup.html খুলুন।',
+      'rs.doneAccount': 'ডেটাবেস খালি এবং আপনার লগইন মুছে ফেলা হয়েছে। নতুন অ্যাডমিন তৈরিটে setup.html খুলুন।',
+      'rs.errors': 'কিছু ডকুমেন্ট মুছা যায়নি। আগে v3 রুল পাবলিশ করুন (docs/database-reset-runbook.md), তারপর আবার চলান - বার বার চলানো নিরাপদ।',
+      'rs.backupHint': 'প্রথম রিসেটের আগে সব ডাউনলোড করুন: node tools/db-reset.mjs --backup --email you@example.com --password ... ',
+      'rs.toSetup': 'নতুন অ্যাডমিন তৈরি করুন', 'rs.wrongWord': 'বাটন চালু করতে হুবহু বর্ণে RESET লিখুন।',
+      'rs.deleted': 'মুছা হয়েছে',
 
       'brand.name': 'নেক্সটজেন ফান্ড', 'brand.tag': 'পারিবারিক তহবিলের হিসাব',
       'nav.dashboard': 'ড্যাশবোর্ড', 'nav.register': 'নিবন্ধন', 'nav.login': 'লগ ইন',

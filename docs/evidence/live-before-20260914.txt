@@ -1,0 +1,56 @@
+NEXTGEN FUND - live database state before the reset
+Captured 2026-09-14 ~14:52 (Asia/Dhaka) by tools/../probe scripts, project nextgen-fund-2040
+Method: Firestore REST reads with the app's public client identifier; no admin credentials used.
+
+[1] settings/bootstrap        -> 200
+    {"adminUid": "BvTyCq264PQ421Ymwo1Sma4QeK83", "claimedAt": "2026-09-13T15:41:43.703Z"}
+    => an admin has already been claimed, so setup.html answers "an admin account already exists"
+
+[2] settings/public           -> 200
+    fundName       NextGen Fund
+    currency       BDT
+    monthlyPerShare 1000
+    memberCount    5
+    totalFunding   6000
+    memberDeposits 6000
+    memberAdvance  4000
+    pendingDue     0
+    nextMeeting    2026-12-25
+    updatedAt      2026-09-14T07:37:56.953Z
+
+[3] finance                   -> 200, 0 documents
+
+[4] protected stores (unauthenticated list) - the live rules are deployed and default-deny
+    users          403 PERMISSION_DENIED   "Missing or insufficient permissions."
+    usernames      403 PERMISSION_DENIED
+    payments       403 PERMISSION_DENIED
+    registrations  403 PERMISSION_DENIED
+    audit          403 PERMISSION_DENIED
+    settings       403 PERMISSION_DENIED   (collection list; the two documents are gettable by id)
+
+[5] account handles (usernames/{name} is gettable by name; email local parts masked here)
+    admin                  -> uid BvTyCq264PQ421Ymwo1Sma4QeK83  iam***@gmail.com
+    kaziauto0914114510     -> uid nfj01jM6NAUn31nVrgXeuhVUDIM2  kaz***@nextgen.local
+    kazi.ibrahim           -> uid VFB64Sh0pZNVfaSWWslv7lgMJbX2  kaz***@nextgen.local
+    kazi.quddus / kazi.shakil / kazi.farid / kazi.mamun / atiq / fundadmin / administrator -> 404
+
+[6] Authentication existence probe (deliberately wrong password, read-only):
+    INVALID_LOGIN_CREDENTIALS for all three probed handles
+    => email enumeration protection is on, so this cannot confirm or deny an account.
+       The admin handle maps to the owner's mailbox, so a password reset is the recovery path.
+
+[7] Environment guard facts
+    repo      C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund
+    project   nextgen-fund-2040 (.firebaserc)
+    hosts     https://iamatiq7.github.io/nextgen-fund/ , https://nextgen-fund-2040.web.app/
+    tooling   no firebase CLI, no gcloud, no service-account key on this machine
+              -> the reset runs either from the browser (reset.html / console) or from
+                 tools/db-reset.mjs with an admin login.
+
+[8] Backup taken before any destructive step
+    file    live-backup-20260914T1452.json          (7,379 bytes)
+    sha256  951de8876bec7d312dbf3349ee32a1573afea423055165d87bd3ca11ade83eee
+    scope   settings/public, settings/bootstrap, finance, usernames/admin,
+            usernames/kaziauto0914114510, usernames/kazi.ibrahim
+    location <agent workspace>\.openclaw\tmp\reset\backups\  (outside the public repo)
+    not readable without admin rights: users, payments, registrations, audit, usernames list
