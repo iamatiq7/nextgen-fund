@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NextGen Fund — setup.html কোথায় রান হচ্ছে? · প্রমাণসহ হোস্টিং রিপোর্ট</title>
+<meta name="description" content="https://nextgen-fund-2040.web.app/setup.html কোথায় হোস্ট ও রান হচ্ছে — DNS, HTTP হেডার, TLS সার্টিফিকেট, CDN এজ, ডিপ্লয় পাইপলাইন ও ব্যাকএন্ড ডেটা ফ্লোর প্রমাণসহ প্রযুক্তিগত রিপোর্ট।">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --ink:#14120f;
+    --ink-2:#4a453d;
+    --ink-3:#8a8277;
+    --line:#e8e4dd;
+    --line-2:#f2efe9;
+    --bg:#fcfbf9;
+    --card:#ffffff;
+    --accent:#9a6a3a;      /* single accent, copper */
+    --accent-soft:#f6efe6;
+    --shadow-1:0 1px 2px rgba(20,18,15,.04);
+    --shadow-2:0 10px 30px rgba(20,18,15,.05);
+    --s1:.5rem; --s2:.8rem; --s3:1.3rem; --s4:2.1rem; --s5:3.4rem; --s6:5.5rem;
+    --measure:66ch;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Bengali","Nirmala UI",Roboto,Helvetica,Arial,sans-serif;
+    font-weight:300;font-size:16.5px;line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:var(--s5) var(--s3) var(--s6)}
+  h1,h2,h3{font-weight:300;letter-spacing:-.015em;margin:0}
+  h1{font-size:clamp(1.9rem,4.2vw,3rem);line-height:1.16}
+  h2{font-size:clamp(1.25rem,2.2vw,1.6rem);margin:var(--s5) 0 var(--s2)}
+  h3{font-size:1.02rem;font-weight:600;margin:var(--s3) 0 var(--s1)}
+  p,ul,ol{margin:0 0 var(--s2);max-width:var(--measure)}
+  ul,ol{padding-left:1.15rem}
+  li{margin:.28rem 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(154,106,58,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  code,kbd{font-family:ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:.86em;background:var(--line-2);padding:.12em .38em;border-radius:4px}
+  .kicker{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  header.doc{border-bottom:1px solid var(--line);padding-bottom:var(--s3);margin-bottom:var(--s4)}
+  header.doc p{color:var(--ink-2)}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:var(--s2);margin-top:var(--s3)}
+  .meta div{font-size:.83rem;color:var(--ink-2)}
+  .meta strong{display:block;font-weight:600;color:var(--ink);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase}
+  .answer{background:var(--card);border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:3px;padding:var(--s3);box-shadow:var(--shadow-1)}
+  .answer p:last-child{margin-bottom:0}
+  .grid{display:grid;gap:var(--s2);grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .facts{margin-top:var(--s3)}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:var(--s2) var(--s3);box-shadow:var(--shadow-1)}
+  .fact .lbl{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .fact .val{font-weight:600;font-size:1.02rem;margin-top:.15rem}
+  .fact .sub{font-size:.82rem;color:var(--ink-2)}
+  .badge{display:inline-block;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.16em .5em;border-radius:999px;vertical-align:1px}
+  .b-yes{color:#1f5c3d;background:#eaf5ee;border:1px solid #cfe6d8}
+  .b-maybe{color:#8a5a13;background:#fdf3e3;border:1px solid #f0ddb8}
+  .b-no{color:#7c2d12;background:#fbeee7;border:1px solid #f0d3c4}
+  .b-unk{color:#4a453d;background:#f1efeb;border:1px solid #e3dfd7}
+  table{width:100%;border-collapse:collapse;margin:var(--s2) 0 var(--s3);font-size:.9rem}
+  caption{text-align:left;font-size:.78rem;color:var(--ink-3);padding-bottom:.4rem}
+  th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);border-bottom-color:var(--line)}
+  tbody tr:hover{background:#fdfcfa}
+  .ev{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;color:var(--ink-3)}
+  figure{margin:var(--s3) 0;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:var(--s3);box-shadow:var(--shadow-1);overflow-x:auto}
+  figcaption{font-size:.8rem;color:var(--ink-3);margin-top:var(--s2)}
+  svg{display:block;min-width:860px;width:100%;height:auto}
+  pre{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:var(--s2) var(--s3);overflow-x:auto;font-size:.82rem;line-height:1.6;box-shadow:var(--shadow-1)}
+  .callout{background:var(--accent-soft);border:1px solid #eddfcd;border-radius:3px;padding:var(--s2) var(--s3)}
+  .callout strong{font-weight:600}
+  .two{display:grid;gap:var(--s3);grid-template-columns:1fr}
+  @media(min-width:820px){.two{grid-template-columns:1.15fr .85fr}}
+  footer.doc{margin-top:var(--s5);padding-top:var(--s3);border-top:1px solid var(--line);font-size:.82rem;color:var(--ink-3)}
+  @media print{body{background:#fff} .wrap{padding:0} figure,pre,table{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="kicker">প্রমাণসহ হোস্টিং ও রানটাইম রিপোর্ট</p>
+  <h1><code style="background:none;padding:0;font-size:.62em">nextgen-fund-2040.web.app/setup.html</code><br>আসলে কোথায় রান হচ্ছে?</h1>
+  <div class="meta">
+    <div><strong>প্রজেক্ট</strong>nextgen-fund-2040 (Firebase)</div>
+    <div><strong>অডিটের সময়</strong>2026-09-14, 15:57–16:05 (Asia/Dhaka)</div>
+    <div><strong>পদ্ধতি</strong>পাবলিক DNS / HTTP / TLS + হেডলেস ব্রাউজার লোড</div>
+    <div><strong>প্রমাণ ফোল্ডার</strong>docs/hosting-audit/evidence/</div>
+  </div>
+</header>
+
+<section>
+  <h2>এক নজরে উত্তর</h2>
+  <div class="answer">
+    <p><strong>পেজটি কোনো নিজস্ব সার্ভারে রান করে না।</strong> এটি একটি <strong>স্ট্যাটিক HTML ফাইল</strong>, যা <strong>Firebase Hosting</strong> (Google-এর ম্যানেজড হোস্টিং, প্রজেক্ট আইডি <code>nextgen-fund-2040</code>) থেকে <strong>Google-এর গ্লোবাল এজ ক্যাশ</strong> দিয়ে সার্ভ হয় — আমাদের পরিমাপে ক্যাশ নোডটি ছিল <strong>CCU (কলকাতা)</strong>। পেজে কোনো সার্ভার-সাইড কোড নেই; JavaScript ব্রাউজারে চলে, আর ফর্মের ডেটা যায় Google-এর ম্যানেজড সার্ভিসে — <strong>Firebase Authentication</strong> ও <strong>Cloud Firestore</strong>-এ, একই প্রজেক্টের ভেতরে।</p>
+  </div>
+
+  <div class="grid facts">
+    <div class="fact"><div class="lbl">হোস্টিং প্ল্যাটফর্ম</div><div class="val">Firebase Hosting (Google)</div><div class="sub">DNS + হেডার + TLS — তিন প্রমাণ মিলে <span class="badge b-yes">নিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">কোথা থেকে সার্ভ হয়</div><div class="val">Google এজ ক্যাশ, নোড CCU (Kolkata)</div><div class="sub"><code>x-served-by: cache-ccu830031-CCU</code> · <span class="badge b-yes">নিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">Origin রিজিয়ন</div><div class="val">পাবলিকভাবে অজানা</div><div class="sub">Hosting হেডারে আসে না <span class="badge b-unk">অনিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">সার্ভার-সাইড রানটাইম</div><div class="val">নেই — সম্পূর্ণ স্ট্যাটিক</div><div class="sub">ব্যাকএন্ড = Firebase Auth + Firestore <span class="badge b-yes">নিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">ডেটা কোথায় যায়</div><div class="val">Google Cloud (একই প্রজেক্ট)</div><div class="sub"><code>identitytoolkit</code> + <code>firestore.googleapis.com</code> <span class="badge b-yes">নিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">ডেটাবেসের লোকেশন</div><div class="val">অজানা → console-এ দেখুন</div><div class="sub">Firestore → Location <span class="badge b-unk">অজানা</span></div></div>
+    <div class="fact"><div class="lbl">ডিপ্লয় কীভাবে</div><div class="val">GitHub Actions → Hosting live</div><div class="sub">ফাইল হ্যাশ হুবহু মিলেছে <span class="badge b-yes">নিশ্চিত</span></div></div>
+    <div class="fact"><div class="lbl">একই ফাইল আরও কোথাও?</div><div class="val">হ্যাঁ — GitHub Pages</div><div class="sub">একই bytes, আলাদা স্ট্যাক <span class="badge b-yes">নিশ্চিত</span></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>১. হোস্টিং প্রোভাইডার নির্ধারণ</h2>
+  <p>তিনটি স্বাধীন সূত্র একই দিকে ইঙ্গিত করে। নিচের প্রতিটি সারির ডান কলামে সেই ফাইল, যেখানে কাঁচা আউটপুট সংরক্ষিত আছে।</p>
+  <table>
+    <caption>Provenance of the provider claim</caption>
+    <thead><tr><th>প্রমাণ</th><th>মান</th><th>ব্যাখ্যা</th><th>ফাইল</th></tr></thead>
+    <tbody>
+      <tr><td><code>vary</code> হেডার</td><td><code>x-fh-requested-host, accept-encoding</code></td><td><code>fh</code> = Firebase Hosting-এর নিজস্ব সিগনেচার</td><td class="ev">04-http-detail-a.txt</td></tr>
+      <tr><td>ডোমেইন জোন SOA</td><td><code>web.app → ns1.googledomains.com</code></td><td>জোন Google-পরিচালিত</td><td class="ev">01-dns-http-headers.txt</td></tr>
+      <tr><td>TLS SAN</td><td><code>DNS:web.app, DNS:*.web.app</code></td><td>এই SAN শুধু Google-ই দেয়</td><td class="ev">02-tls-run-a.txt</td></tr>
+      <tr><td>IP মালিকানা (RDAP)</td><td><code>199.36.158.100</code> · <code>NET-172-217-0-0-1</code> → <strong>GOOGLE</strong></td><td>রেজিস্ট্রি-প্রমাণ</td><td class="ev">01-dns-http-headers.txt</td></tr>
+      <tr><td>HSTS</td><td><code>max-age=31556926; includeSubDomains; preload</code></td><td>Firebase Hosting-এর ডিফল্ট মান</td><td class="ev">04-http-detail-a.txt</td></tr>
+      <tr><td>নেতিবাচক প্রমাণ</td><td><code>server</code> হেডার নেই; <code>x-vercel-*</code>/<code>server: Netlify</code> নেই <span class="badge b-no">খণ্ডিত</span></td><td>Netlify / Vercel / কাস্টম সার্ভার নয়</td><td class="ev">04-http-detail-a.txt</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>২. DNS ও ডোমেইন কাঠামো</h2>
+  <table>
+    <thead><tr><th>রেকর্ড</th><th>মান</th><th>মন্তব্য</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td><code>nextgen-fund-2040.web.app → 199.36.158.100</code></td><td>IPv4, TTL ~5916s</td></tr>
+      <tr><td>AAAA</td><td><code>nextgen-fund-2040.web.app → 2620:0:890::100</code></td><td>IPv6 সাপোর্টেড</td></tr>
+      <tr><td>SOA (web.app)</td><td><code>ns1.googledomains.com</code></td><td>ব্যবহারকারীর নিজের DNS জোন নয় — Google-এর</td></tr>
+      <tr><td>TXT (firebaseapp.com হোস্ট)</td><td>২টি TXT রেকর্ড (Firebase verification)</td><td>ডোমেইন ওনারশিপ মার্কার</td></tr>
+      <tr><td>SOA (github.io)</td><td><code>dns1.p05.nsone.net</code></td><td>NS1/IBM — GitHub Pages-এর DNS</td></tr>
+    </tbody>
+  </table>
+  <p><strong>গুরুত্বপূর্ণ:</strong> এখানে কোনো কাস্টম ডোমেইন DNS-এ যুক্ত নেই। সাইটটি Google-এর দেওয়া দুটি হোস্টনেমে চলে — <code>nextgen-fund-2040.web.app</code> ও <code>nextgen-fund-2040.firebaseapp.com</code>।</p>
+</section>
+
+<section>
+  <h2>৩. TLS সার্টিফিকেট</h2>
+  <table>
+    <thead><tr><th>ফিল্ড</th><th>Firebase Hosting</th><th>GitHub Pages</th></tr></thead>
+    <tbody>
+      <tr><td>প্রোটোকল / cipher</td><td>TLSv1.3 / <code>TLS_AES_128_GCM_SHA256</code></td><td>TLSv1.3 / <code>TLS_AES_128_GCM_SHA256</code></td></tr>
+      <tr><td>Leaf subject</td><td><code>CN=web.app</code></td><td><code>CN=*.github.io</code></td></tr>
+      <tr><td>Issuer</td><td><strong>Google Trust Services</strong> (WR4)</td><td><strong>Let's Encrypt</strong> (YR1)</td></tr>
+      <tr><td>মেয়াদ</td><td>2026-07-20 → <strong>2026-10-18</strong></td><td>2026-08-02 → <strong>2026-10-31</strong></td></tr>
+      <tr><td>Chain</td><td>WR4 → GTS Root R1 → GlobalSign Root CA</td><td>YR1 → Root YR → ISRG Root X1</td></tr>
+      <tr><td>ALPN</td><td><code>h2</code> (HTTP/2); <code>alt-svc</code>-এ <code>h3</code> (HTTP/3)</td><td><code>h2</code></td></tr>
+    </tbody>
+  </table>
+  <p>সার্টিফিকেট Google নিজেই ম্যানেজ ও অটো-রিনিউ করে; আপনাকে কিছু করতে হবে না।</p>
+</section>
+
+<section>
+  <h2>৪. রিকোয়েস্ট ও রিডাইরেক্ট চেইন</h2>
+<pre>https://nextgen-fund-2040.web.app/setup.html          → 200   (hops = 1, কোনো রিডাইরেক্ট নেই)
+http://nextgen-fund-2040.web.app/setup.html           → 301 → https://…    → 200   (HSTS force)
+https://nextgen-fund-2040.firebaseapp.com/setup.html  → 200   (একই কনটেন্ট, একই etag)
+https://iamatiq7.github.io/nextgen-fund/setup.html    → 200   (একই bytes, আলাদা হোস্ট)
+https://nextgen-fund-2040.web.app/&lt;নেই-এমন-পাথ&gt;    → 200 index.html   (soft-404: SPA rewrite)</pre>
+  <div class="callout">
+    <p><strong>পর্যবেক্ষণ (বাগ নয়, ডিজাইন-সিদ্ধান্ত):</strong> <code>firebase.json</code>-এ <code>rewrites: ** → /index.html</code> থাকায় ভুল URL-ও 404 না দিয়ে হোমপেজ ফেরত দেয় (HTTP 200)। মনিটরিং বা SEO-এর জন্য এটি বিভ্রান্তিকর হতে পারে।</p>
+  </div>
+  <table>
+    <caption>setup.html রেসপন্স হেডার (Firebase Hosting)</caption>
+    <thead><tr><th>হেডার</th><th>মান</th><th>ব্যাখ্যা</th></tr></thead>
+    <tbody>
+      <tr><td><code>x-served-by</code></td><td><code>cache-ccu830031-CCU</code> → <code>cache-ccu830067-CCU</code></td><td>ক্যাশ নোড <strong>CCU = কলকাতা</strong> (দুই রানে দুই নোড, একই এজ)</td></tr>
+      <tr><td><code>x-cache</code> / <code>x-cache-hits</code></td><td><code>HIT</code> / <code>0–2</code></td><td>এজ ক্যাশ থেকেই সার্ভ</td></tr>
+      <tr><td><code>x-timer</code></td><td><code>S…,VS0,VE1</code></td><td>ক্যাশ-লেয়ারের টাইমিং হেডার (Fastly-ধাঁচের পরিবার) <span class="badge b-maybe">সম্ভাব্য</span></td></tr>
+      <tr><td><code>cache-control</code></td><td>HTML <code>max-age=3600</code> · assets <code>max-age=600</code></td><td>assets-এর ৬০০ সেকেন্ড <code>firebase.json</code> থেকে</td></tr>
+      <tr><td><code>etag</code></td><td><code>"7e4f56ca…-br"</code></td><td>Brotli-ভেরিয়েন্টের কনটেন্ট হ্যাশ</td></tr>
+      <tr><td><code>last-modified</code></td><td><code>Mon, 14 Sep 2026 09:46:47 GMT</code></td><td>সর্বশেষ ডিপ্লয়ের সময় (UTC)</td></tr>
+      <tr><td><code>content-encoding</code></td><td><code>br</code></td><td>Brotli কমপ্রেশন</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>৫. আর্কিটেকচার</h2>
+  <figure>
+    <svg viewBox="0 0 1200 520" role="img" aria-label="ব্রাউজার থেকে DNS, এজ ক্যাশ, Firebase Hosting, Firebase SDK এবং ব্যাকএন্ড ডেটাস্টোর পর্যন্ত ডেটা ফ্লো ডায়াগ্রাম">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9a6a3a"/>
+        </marker>
+        <style>
+          .b{fill:#fff;stroke:#e8e4dd;stroke-width:1.2}
+          .t{fill:#14120f;font:600 14px -apple-system,Segoe UI,Noto Sans Bengali,sans-serif}
+          .s{fill:#4a453d;font:300 12.5px -apple-system,Segoe UI,Noto Sans Bengali,sans-serif}
+          .m{fill:#8a8277;font:600 10.5px ui-monospace,Consolas,monospace;letter-spacing:.06em}
+          .l{stroke:#9a6a3a;stroke-width:1.3;fill:none;marker-end:url(#ar)}
+          .ln{stroke:#cfc9be;stroke-width:1;fill:none;stroke-dasharray:4 4}
+          .acc{stroke:#9a6a3a;stroke-width:1.2}
+        </style>
+      </defs>
+
+      <rect class="b" x="20" y="150" width="180" height="96" rx="3"/>
+      <text class="t" x="36" y="180">ব্রাউজার</text>
+      <text class="s" x="36" y="202">ব্যবহারকারী · ঢাকা</text>
+      <text class="s" x="36" y="222">setup.html + JS চলে</text>
+
+      <rect class="b" x="250" y="150" width="200" height="96" rx="3"/>
+      <text class="t" x="266" y="180">DNS</text>
+      <text class="s" x="266" y="202">A 199.36.158.100</text>
+      <text class="s" x="266" y="222">AAAA 2620:0:890::100</text>
+
+      <rect class="b" x="500" y="140" width="230" height="116" rx="3"/>
+      <rect class="acc" x="500" y="140" width="230" height="116" rx="3" fill="none"/>
+      <text class="t" x="516" y="170">Google এজ ক্যাশ নোড</text>
+      <text class="s" x="516" y="192">কোড CCU = Kolkata</text>
+      <text class="s" x="516" y="212">x-cache: HIT · TLS 1.3</text>
+      <text class="s" x="516" y="232">ALPN h2 · alt-svc h3</text>
+
+      <rect class="b" x="780" y="130" width="250" height="136" rx="3"/>
+      <text class="t" x="796" y="160">Firebase Hosting</text>
+      <text class="s" x="796" y="182">project nextgen-fund-2040</text>
+      <text class="s" x="796" y="202">স্ট্যাটিক ফাইল সার্ভ</text>
+      <text class="s" x="796" y="222">কোনো সার্ভার-সাইড কোড নেই</text>
+      <text class="m" x="796" y="246">x-fh-requested-host</text>
+
+      <rect class="b" x="780" y="310" width="250" height="96" rx="3"/>
+      <text class="t" x="796" y="340">Firebase JS SDK v10.12.2</text>
+      <text class="s" x="796" y="362">www.gstatic.com থেকে</text>
+      <text class="s" x="796" y="382">app · auth · firestore · storage</text>
+
+      <rect class="b" x="440" y="380" width="300" height="120" rx="3"/>
+      <rect class="acc" x="440" y="380" width="300" height="120" rx="3" fill="none"/>
+      <text class="t" x="456" y="408">Google ম্যানেজড ব্যাকএন্ড</text>
+      <text class="s" x="456" y="430">Firebase Authentication</text>
+      <text class="m" x="456" y="447">identitytoolkit.googleapis.com</text>
+      <text class="s" x="456" y="468">Cloud Firestore</text>
+      <text class="m" x="456" y="485">firestore.googleapis.com · Listen/channel</text>
+
+      <rect class="b" x="20" y="30" width="290" height="80" rx="3"/>
+      <text class="t" x="36" y="58">সোর্স: GitHub repo</text>
+      <text class="s" x="36" y="80">iamatiq7/nextgen-fund · branch main</text>
+      <text class="s" x="36" y="98">পাবলিক</text>
+
+      <rect class="b" x="360" y="30" width="290" height="80" rx="3"/>
+      <text class="t" x="376" y="58">GitHub Actions</text>
+      <text class="s" x="376" y="80">firebase-hosting.yml · push → deploy</text>
+      <text class="s" x="376" y="98">service-account secret (live চ্যানেল)</text>
+
+      <rect class="b" x="700" y="30" width="240" height="80" rx="3"/>
+      <text class="t" x="716" y="58">GitHub Pages</text>
+      <text class="s" x="716" y="80">একই repo → দ্বিতীয় origin</text>
+      <text class="s" x="716" y="98">একই কনটেন্ট, আলাদা স্ট্যাক</text>
+
+      <path class="l" d="M200,198 L248,198"/>
+      <path class="l" d="M450,198 L498,198"/>
+      <path class="l" d="M730,198 L778,198"/>
+      <path class="l" d="M905,266 L905,308"/>
+      <path class="l" d="M905,406 C905,470 800,440 742,440"/>
+      <path class="l" d="M560,380 C470,300 300,260 205,214"/>
+      <path class="ln" d="M310,70 L358,70"/>
+      <path class="ln" d="M650,70 L698,70"/>
+      <path class="ln" d="M505,110 L505,138"/>
+      <text class="s" x="212" y="228">১. নাম রিজলভ</text>
+      <text class="s" x="452" y="228">২. TLS + কনটেন্ট</text>
+      <text class="s" x="734" y="228">৩. অরিজিন</text>
+      <text class="s" x="830" y="292">৪. SDK ডাউনলোড</text>
+      <text class="s" x="700" y="432">৫. Auth + Firestore কল</text>
+      <text class="s" x="250" y="262">৬. ডেটা এখানেই থাকে (Google)</text>
+      <text class="s" x="312" y="60">বিল্ড করে না (push = deploy)</text>
+      <text class="s" x="652" y="60">স্বতন্ত্র</text>
+      <text class="s" x="514" y="128">একই কমিট</text>
+    </svg>
+    <figcaption>যতটুকু পাবলিকভাবে প্রমাণিত। পেজে কোনো অ্যাপ্লিকেশন সার্ভার নেই — ফাইল আসে এজ ক্যাশ থেকে, আর ডেটা যায় Google-এর ম্যানেজড সার্ভিসে।</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>৬. setup.html পেজ বিশ্লেষণ</h2>
+  <table>
+    <thead><tr><th>বিষয়</th><th>ফলাফল</th><th>প্রমাণ</th></tr></thead>
+    <tbody>
+      <tr><td>ফ্রেমওয়ার্ক / বিল্ড</td><td>কোনোটিই নেই — প্লেইন HTML + ভ্যানিলা JS (IIFE), কোনো bundler/React/Vue নয়</td><td class="ev">setup.html, 05-code-analysis.txt</td></tr>
+      <tr><td>ফাইল সাইজ ও হ্যাশ</td><td>1461 bytes · sha256 <code>6221c6e22192b1…</code> — repo-র HEAD-এর সাথে হুবহু মিল</td><td class="ev">03-live-files-a.txt</td></tr>
+      <tr><td>লোকাল অ্যাসেট</td><td>১১টি (style.css, util.js, i18n.js, seed-data.js, firebase-config.js, store.js, firebase-adapter.js, common.js, setup.js, favicon, apple-touch-icon) — সব বাইট-লেভেলে মিল</td><td class="ev">03-live-files-a.txt</td></tr>
+      <tr><td>বাহ্যিক স্ক্রিপ্ট</td><td><code>www.gstatic.com/firebasejs/10.12.2/</code> — app, auth, firestore, storage</td><td class="ev">06-browser-network-trace-a.txt</td></tr>
+      <tr><td>i18n</td><td>নিজস্ব ব্যবস্থা: <code>data-i18n</code> + i18n.js (EN + BN অভিধান)</td><td class="ev">05-code-analysis.txt</td></tr>
+      <tr><td>ফর্ম আছে কি?</td><td><strong>শর্তসাপেক্ষ</strong> — পেজ নিজে ফর্ম বানায় শুধু যদি <code>settings/bootstrap</code> না থাকে</td><td class="ev">setup.js, 08-page-state-*.txt</td></tr>
+      <tr><td>ফিল্ড (তৈরি হলে)</td><td><code>#su-user</code> (text, ডিফল্ট admin) · <code>#su-name</code> · <code>#su-email</code> · <code>#su-pass</code> · submit</td><td class="ev">08-page-state-a.txt</td></tr>
+      <tr><td>সাবমিট কোথায় যায়</td><td>সার্ভারে নয় — <code>S.setupAdmin()</code> → Firebase Auth অ্যাকাউন্ট → Firestore-এ <code>settings/bootstrap</code>, <code>users/{uid}</code>, <code>usernames/{name}</code>, <code>settings/public</code></td><td class="ev">05-code-analysis.txt</td></tr>
+      <tr><td>অডিটের মুহূর্তে অবস্থা</td><td>বootstrap আছে (<code>adminUid = SxCwc5…</code>) → পেজ লেখে “An admin account already exists — setup is complete.”, রেন্ডার হয় <strong>০টি form, ০টি input</strong></td><td class="ev">08-page-state-b.txt</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>৭. রিয়েল ব্রাউজার নেটওয়ার্ক ট্রেস</h2>
+  <p>হেডলেস Chromium (Chrome 152) দিয়ে পেজটি প্রকৃতভাবে লোড করা হয়েছে — মোট <strong>১৯টি রিকোয়েস্ট</strong>, নিচে হোস্ট অনুযায়ী এবং কোন IP থেকে এসেছে:</p>
+  <table>
+    <thead><tr><th>হোস্ট</th><th>রিকোয়েস্ট</th><th>IP</th><th>কী লোড হয়</th></tr></thead>
+    <tbody>
+      <tr><td><code>nextgen-fund-2040.web.app</code></td><td>১২</td><td><code>199.36.158.100</code></td><td>HTML + CSS + ৮টি JS + ২টি PNG (h2/h3)</td></tr>
+      <tr><td><code>www.gstatic.com</code></td><td>৪</td><td><code>142.251.222.195</code></td><td>Firebase JS SDK v10.12.2</td></tr>
+      <tr><td><code>firestore.googleapis.com</code></td><td>৩</td><td><code>172.217.24.10</code></td><td><code>Listen/channel?database=projects/nextgen-fund-2040/databases/(default)</code> — পেজ লোডেই লাইভ লিস্টেন শুরু</td></tr>
+    </tbody>
+  </table>
+  <p><strong>ডেটা কোথায় জমা হয়:</strong> ব্যবহারকারী যা টাইপ করেন তা আপনার সার্ভারে যায় না; পাসওয়ার্ড যায় Firebase Authentication-এ, নাম/ইউজারনেম/হিসাব যায় Cloud Firestore-এ — প্রজেক্ট <code>nextgen-fund-2040</code>-এর ভেতরে, অর্থাৎ Google Cloud। ট্রেসে কোনো থার্ড-পার্টি অ্যানালিটিক্স বা ট্র্যাকিং স্ক্রিপ্ট পাওয়া যায়নি।</p>
+</section>
+
+<section>
+  <h2>৮. ডিপ্লয়মেন্ট পাইপলাইন</h2>
+  <table>
+    <thead><tr><th>ধাপ</th><th>প্রমাণ</th></tr></thead>
+    <tbody>
+      <tr><td>সোর্স = GitHub repo <code>iamatiq7/nextgen-fund</code> (পাবলিক, <code>main</code>)</td><td class="ev">git log / remote</td></tr>
+      <tr><td>CI = <code>.github/workflows/firebase-hosting.yml</code> — push/ম্যানুয়াল, <code>channelId: live</code></td><td class="ev">workflow ফাইল</td></tr>
+      <tr><td>ক্রেডেনশিয়াল = GitHub Secret (রিপোতে কমিট করা নেই)</td><td class="ev">workflow ফাইল</td></tr>
+      <tr><td>প্রকৃত রান = <code>Deploy to Firebase Hosting</code> → success (সর্বশেষ কমিটের sha)</td><td class="ev">Actions runs API</td></tr>
+      <tr><td>হোস্টিং ফাইলের সেট = <code>public: "."</code>, <code>ignore: [… docs/**, tests/**, *.md, ops/**]</code>, rewrite <code>** → /index.html</code></td><td class="ev">05-code-analysis.txt</td></tr>
+      <tr><td>কনটেন্ট যাচাই = সার্ভ করা ১২টি ফাইলের sha256 = repo HEAD-এর sha256</td><td class="ev">03-live-files-a.txt</td></tr>
+      <tr><td>ডিপ্লয়ের সময় = <code>last-modified 2026-09-14 09:46:47 UTC</code></td><td class="ev">04-http-detail-a.txt</td></tr>
+      <tr><td>দ্বিতীয় হোস্ট = GitHub Pages, টেক্সট হুবহু একই কিন্তু আলাদা স্ট্যাক (<code>server: GitHub.com</code>, <code>etag W/"6aa7c284-5b5"</code>, <code>max-age=600</code>, <code>access-control-allow-origin: *</code>)</td><td class="ev">03-live-files-a.txt</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>৯. বর্তমান প্রকৃত অবস্থা — একটি আবিষ্কার</h2>
+  <table>
+    <thead><tr><th>সময় (UTC)</th><th>ঘটনা</th><th>প্রমাণ</th></tr></thead>
+    <tbody>
+      <tr><td>09:34 / 09:41</td><td>ডেটাবেস সম্পূর্ণ খালি (৫৪ → ০), সব Auth অ্যাকাউন্ট মুছে ফেলা</td><td class="ev">docs/evidence/reset-executed.txt</td></tr>
+      <tr><td>09:47</td><td><code>settings/bootstrap</code> → <code>404</code> (প্রথম-রান অবস্থা)</td><td class="ev">পুরোনো সেশনের প্রমাণ</td></tr>
+      <tr><td>09:47–10:00</td><td><strong>bootstrap আবার তৈরি</strong> — নতুন <code>adminUid = SxCwc5…</code> (আমার টেস্ট আইডি <code>wS5gF6…</code> ছিল, মুছে গেছে)</td><td class="ev">08-page-state-*.txt</td></tr>
+      <tr><td>10:02–10:04</td><td>পেজ দেখায় “setup is complete”; <code>usernames/admin</code> নতুন একটি ইমেইলে ম্যাপড (masked <code>ad***@…</code>)</td><td class="ev">08-page-state-b.txt</td></tr>
+      <tr><td>10:04</td><td>আগে দেওয়া অ্যাডমিন পাসওয়ার্ড আর কাজ করে না (<code>400 INVALID_LOGIN_CREDENTIALS</code>)</td><td class="ev">08-page-state.console.txt</td></tr>
+    </tbody>
+  </table>
+  <p><strong>সিদ্ধান্ত</strong> <span class="badge b-maybe">সম্ভাব্য</span>: অডিটের ফাঁকে কেউ (সম্ভবত মালিক নিজেই) <code>setup.html</code> থেকে নতুন অ্যাডমিন তৈরি করেছেন — অর্থাৎ প্রথম-রান সেটআপ <strong>সফলভাবে কাজ করেছে</strong>। কে করেছেন তা বাইরে থেকে প্রমাণ করা যায় না (Audit কালেকশন অ্যাডমিন-সুরক্ষিত), তাই এটি “সম্ভাব্য” লেবেলেই রাখা হলো।</p>
+</section>
+
+<section>
+  <h2>১০. যাচাই করা গেছে বনাম অনিশ্চিত</h2>
+  <div class="two">
+    <div>
+      <h3>যাচাই করা গেছে <span class="badge b-yes">নিশ্চিত</span></h3>
+      <ol>
+        <li>হোস্টিং = Firebase Hosting, প্রজেক্ট <code>nextgen-fund-2040</code></li>
+        <li>HTTPS-এ সরাসরি <code>200</code>, রিডাইরেক্ট চেইন নেই; <code>http://</code> → <code>301</code> → https</li>
+        <li>TLS = Google Trust Services, SAN <code>web.app</code>, TLSv1.3, ALPN h2, h3 উপলব্ধ</li>
+        <li>এজ ক্যাশ থেকে সার্ভ, নোড কোড <strong>CCU (Kolkata)</strong>, <code>x-cache: HIT</code></li>
+        <li>সার্ভ করা ১২টি ফাইল repo HEAD-এর সাথে বাইট-লেভেলে হুবহু</li>
+        <li>পেজ স্ট্যাটিক; SDK v10.12.2 gstatic থেকে; Firestore Listen/channel পেজ লোডেই চালু</li>
+        <li>ফর্ম সাবমিট হয় Firebase Auth + Firestore-এ — কোনো নিজস্ব API নয়</li>
+        <li>ভুল URL-এও <code>200</code> (soft-404)</li>
+        <li>ডিপ্লয় পাইপলাইন: repo → Actions → Hosting live</li>
+        <li>দ্বিতীয় origin (GitHub Pages) একই bytes সার্ভ করে</li>
+      </ol>
+    </div>
+    <div>
+      <h3>অনিশ্চিত / পাওয়া যায়নি</h3>
+      <table>
+        <thead><tr><th>বিষয়</th><th>লেবেল</th></tr></thead>
+        <tbody>
+          <tr><td>Hosting origin রিজিয়ন</td><td><span class="badge b-unk">অনিশ্চিত</span></td></tr>
+          <tr><td>Firestore ডেটাবেসের লোকেশন</td><td><span class="badge b-unk">অজানা</span></td></tr>
+          <tr><td>CDN লেয়ারটি Fastly কি না</td><td><span class="badge b-maybe">সম্ভাব্য</span></td></tr>
+          <tr><td>কে/কখন নতুন অ্যাডমিন বানিয়েছেন</td><td><span class="badge b-maybe">সম্ভাব্য</span></td></tr>
+          <tr><td>Cloud Storage ব্যবহৃত হচ্ছে কি না</td><td><span class="badge b-unk">অজানা</span></td></tr>
+          <tr><td>GitHub Pages-এর এজ নোড কোড</td><td><span class="badge b-unk">অংশত</span></td></tr>
+        </tbody>
+      </table>
+      <p class="sub"><span class="badge b-unk">অনিশ্চিত</span> মানে “হেডারে দেখা যায়নি” — অনুমান করে সত্য বলা হবে না।</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>১১. পুনরুৎপাদনের ধাপ</h2>
+<pre># ১) DNS + IP মালিকানা
+Resolve-DnsName nextgen-fund-2040.web.app -Type A        # 199.36.158.100
+Resolve-DnsName nextgen-fund-2040.web.app -Type AAAA     # 2620:0:890::100
+Resolve-DnsName web.app -Type SOA                        # ns1.googledomains.com
+Invoke-RestMethod "https://rdap.arin.net/registry/ip/199.36.158.100"   # name: GOOGLE
+
+# ২) হেডার + রিডাইরেক্ট চেইন
+curl.exe -sS -D - -o NUL https://nextgen-fund-2040.web.app/setup.html
+curl.exe -sS -o NUL -L -w "final=%{url_effective} code=%{http_code} redirects=%{num_redirects} ip=%{remote_ip}" ^
+          https://nextgen-fund-2040.web.app/setup.html
+
+# ৩) TLS · ৪) ফাইল হ্যাশ · ৫) ব্রাউজার ট্রেস (রিপো ফোল্ডারের স্ক্রিপ্ট দিয়ে)
+node docs/hosting-audit/tools/tls-dump.mjs manual nextgen-fund-2040.web.app iamatiq7.github.io
+node docs/hosting-audit/tools/fetch-live.mjs manual
+node docs/hosting-audit/tools/cdp-trace.mjs manual</pre>
+  <p>প্রতিটি স্ক্রিপ্টের আউটপুট <code>evidence/</code>-এ টাইমস্ট্যাম্পসহ সেভ হয়। দুইবার (run <code>a</code> ও <code>b</code>) চালিয়ে হোস্ট, IP, TLS চেইন ও ক্যাশ-নোড কোড একই পাওয়া গেছে — অর্থাৎ ফল পুনরুৎপাদনযোগ্য।</p>
+</section>
+
+<section>
+  <h2>১২. ঝুঁকি, সীমাবদ্ধতা ও হস্তান্তর</h2>
+  <table>
+    <thead><tr><th>#</th><th>পর্যবেক্ষণ</th><th>ঝুঁকি</th><th>সুপারিশ</th></tr></thead>
+    <tbody>
+      <tr><td>১</td><td>একই কনটেন্ট দুই হোস্টে (Firebase + GitHub Pages)</td><td>বিভ্রান্তি, দুই ক্যাশ, SEO</td><td>একটি অফিসিয়াল হোস্ট ঠিক করুন; অন্যটি বন্ধ/রিডাইরেক্ট</td></tr>
+      <tr><td>২</td><td>Soft-404 (সব পাথে 200)</td><td>মনিটরিং/SEO-তে ভুল সিগন্যাল</td><td>404 কনফিগ বা rewrite সীমিত করুন</td></tr>
+      <tr><td>৩</td><td>GitHub Secret = প্রশাসনিক service-account key</td><td>ফাঁস হলে পুরো প্রজেক্টে অ্যাডমিন প্রবেশ</td><td>শেয়ার না করলে ঠিক; সন্দেহ হলে key rotate করুন</td></tr>
+      <tr><td>৪</td><td>repo পাবলিক</td><td>সোর্স ও পাবলিক কনফিগ সবার দেখা</td><td>গোপন তথ্য কখনো কমিট করবেন না</td></tr>
+      <tr><td>৫</td><td>Firestore rules ডিফল্ট-ডিনাই</td><td>— (ভালো)</td><td>anonymous পড়া <code>403</code> — এটাই কাঙ্ক্ষিত; ঢিলা করবেন না</td></tr>
+      <tr><td>৬</td><td>Firestore লোকেশন অজানা</td><td>কমপ্লায়েন্স/লেটেন্সি</td><td>console → Firestore → Location দেখে নোট করুন</td></tr>
+      <tr><td>৭</td><td>Firebase-এ হোস্টিং origin রিজিয়ন</td><td>লেটেন্সি পরিকল্পনা</td><td>Measure: এজ ক্যাশ থেকে ঢাকার জন্য CCU-ই দিচ্ছে</td></tr>
+    </tbody>
+  </table>
+
+  <h3>হস্তান্তর চেকলিস্ট — কে কী করবে</h3>
+  <ul>
+    <li><strong>মালিক:</strong> Firestore-এর Location নোট করুন (রিপোর্টের “অজানা” অংশ পূরণ হবে)</li>
+    <li><strong>মালিক:</strong> কোন হোস্ট অফিসিয়াল (Firebase <code>web.app</code> নাকি GitHub Pages) ঠিক করুন</li>
+    <li><strong>মালিক:</strong> service-account key rotate করবেন কি না ঠিক করুন</li>
+    <li><strong>অপারেটর:</strong> ডিপ্লয়ের পর <code>last-modified</code> ও <code>x-served-by</code> মিলিয়ে দেখুন</li>
+    <li><strong>যে কেউ:</strong> “পুনরুৎপাদনের ধাপ” চালিয়ে ফল মিলান; না মিললে প্রমাণ ফাইলসহ জানান</li>
+  </ul>
+
+  <h3>কখন আবার যাচাই করতে হবে</h3>
+  <ul>
+    <li>প্রতিটি ডিপ্লয়ের পর — ফাইল হ্যাশ ও <code>last-modified</code> বদলেছে কি</li>
+    <li>TLS মেয়াদ শেষের ~৭ দিন আগে (Firebase 2026-10-18 · Pages 2026-10-31) — অটো-রিনিউ হচ্ছে কি</li>
+    <li>GitHub Secrets / Billing / হোস্টিং প্ল্যান বদলালে</li>
+    <li>নতুন কাস্টম ডোমেইন যোগ হলে (DNS A/CNAME/TXT আবার যাচাই)</li>
+  </ul>
+
+  <h3>রোলব্যাক</h3>
+  <p><strong>এই অডিট কোনো কনফিগ, DNS, কোড বা ডেটা বদলায়নি</strong> — শুধু পড়া হয়েছে, তাই ফেরানোর কিছু নেই। ভবিষ্যতের জন্য:</p>
+<pre># হোস্টিং কনটেন্ট আগের ভার্সনে
+firebase hosting:rollback --project nextgen-fund-2040        # CLI থাকলে
+# অথবা Firebase console → Hosting → Release history → Rollback
+# অথবা GitHub-এ revert করে push (CI আবার ডিপ্লয় করবে)
+git revert &lt;commit&gt; ; git push origin main
+# Firestore ডেটা ফেরানো (ব্যাকআপ থাকলে)
+node tools/db-reset.mjs --restore --from &lt;backup&gt;.json</pre>
+</section>
+
+<section>
+  <h2>১৩. প্রমাণ ফাইল সূচি</h2>
+  <table>
+    <thead><tr><th>ফাইল</th><th>কী আছে</th></tr></thead>
+    <tbody>
+      <tr><td class="ev">evidence/01-dns-http-headers.txt</td><td>DNS (A/AAAA/CNAME/NS/TXT/SOA) প্রতিটি হোস্টের, RDAP মালিকানা, curl হেডার ডাম্প, ৪০৪-প্রোব</td></tr>
+      <tr><td class="ev">evidence/02-tls-run-a.txt · -run-b.txt</td><td>TLS হ্যান্ডশেক, সার্টিফিকেট চেইন, মেয়াদ, ALPN — দুইবার মাপা</td></tr>
+      <tr><td class="ev">evidence/03-live-files-a.txt · -b.txt</td><td>সার্ভ করা ১২টি ফাইলের স্ট্যাটাস/হেডার/sha256 বনাম repo</td></tr>
+      <tr><td class="ev">evidence/04-http-detail-a.txt · -b.txt</td><td>রিকোয়েস্ট/রিডাইরেক্ট চেইন, হেডার সেট, soft-404, ALPN</td></tr>
+      <tr><td class="ev">evidence/05-code-analysis.txt</td><td>স্ট্যাটিক বিশ্লেষণ: হোস্ট, কালেকশন, ফর্ম ফিল্ড, setupAdmin কোড, ডিপ্লয় কনফিগ</td></tr>
+      <tr><td class="ev">evidence/06-browser-network-trace-a.txt</td><td>রিয়েল ব্রাউজারের ১৯টি রিকোয়েস্ট + IP + রেন্ডারড টেক্সট</td></tr>
+      <tr><td class="ev">evidence/07-rendered-dom.txt</td><td>হেডলেস Chromium DOM ডাম্প</td></tr>
+      <tr><td class="ev">evidence/08-page-state-a.txt · -b.txt</td><td>পেজের ভেতরে অ্যাপের নিজের ফাংশন চালিয়ে যাচাই (mode, adminExists(), form সংখ্যা, IndexedDB)</td></tr>
+      <tr><td class="ev">evidence/admin-scope/</td><td>অ্যাডমিন ক্রেডেনশিয়ালে পড়া স্ন্যাপশট — <strong>PII থাকায় পাবলিক রিপোতে রাখা হয়নি</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <p><strong>সততা নোট:</strong> রিপোর্টের প্রতিটি সংখ্যা প্রমাণ ফাইল থেকে নেওয়া; কোনো দাবি প্রমাণ ছাড়া নেই। যেখানে প্রমাণ নেই সেখানে স্পষ্টভাবে “অনিশ্চিত/অজানা/সম্ভাব্য” লেখা আছে। অডিট শুধু পাবলিক অনুরোধের মধ্যে সীমাবদ্ধ ছিল — কোনো লগইন ব্রুট-ফোর্স, স্ক্যানিং বা সুরক্ষিত অংশে প্রবেশ করা হয়নি।</p>
+  </div>
+</section>
+
+<footer class="doc">
+  <p>রিপোর্ট তৈরি: 2026-09-14 · প্রজেক্ট <code>nextgen-fund-2040</code> · একই ডেটার Markdown সংস্করণ: <code>docs/hosting-audit/nextgen-fund-where-it-runs.md</code></p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+=== live file fetch + deployment provenance - b ===
+timestamp: 2026-09-14T10:01:28.333Z
+hosting  : https://nextgen-fund-2040.web.app
+
+--- response headers, setup.html (fetch, no redirect follow) ---
+status: 200
+{
+  "accept-ranges": "bytes",
+  "alt-svc": "h3=\":443\";ma=86400,h3-29=\":443\";ma=86400,h3-27=\":443\";ma=86400",
+  "cache-control": "max-age=3600",
+  "connection": "keep-alive",
+  "content-encoding": "br",
+  "content-length": "374",
+  "content-type": "text/html; charset=utf-8",
+  "date": "Mon, 14 Sep 2026 10:01:28 GMT",
+  "etag": "\"7e4f56ca5519357b690913312ee20052bd7f5ec1498262bc65bff03a717a08f7-br\"",
+  "last-modified": "Mon, 14 Sep 2026 09:46:47 GMT",
+  "strict-transport-security": "max-age=31556926; includeSubDomains; preload",
+  "vary": "x-fh-requested-host, accept-encoding",
+  "x-cache": "HIT",
+  "x-cache-hits": "1",
+  "x-served-by": "cache-ccu830047-CCU",
+  "x-timer": "S1789380088.452646,VS0,VE1"
+}
+
+--- setup.html body + provenance ---
+status 200 | bytes 1461 | sha256 6221c6e22192b16276f433e07801618123fe5f6109920bb0671559399369e770 | line-endings sha256 6221c6e22192b16276f433e07801618123fe5f6109920bb0671559399369e770
+
+referenced local assets (11): assets/img/favicon.png, assets/img/apple-touch-icon.png, assets/css/style.css, assets/js/util.js, assets/js/i18n.js, assets/js/seed-data.js, assets/js/firebase-config.js, assets/js/store.js, assets/js/firebase-adapter.js, assets/js/common.js, assets/js/setup.js
+
+--- asset inventory: live vs repo ---
+200  assets/img/favicon.png                3892B  image/png                cache=public, max-age=600    etag="0c50fdbd233b20819  no repo copy
+200  assets/img/apple-touch-icon.png      17131B  image/png                cache=public, max-age=600    etag="cd9c6c13415c7d726  no repo copy
+200  assets/css/style.css                 21310B  text/css                 cache=public, max-age=600    etag="9c8e9549ec25df676  no repo copy
+200  assets/js/util.js                     9619B  text/javascript          cache=public, max-age=600    etag="69643ce70e67b1aa6  no repo copy
+200  assets/js/i18n.js                    76686B  text/javascript          cache=public, max-age=600    etag="ad4749c8f62f466dd  no repo copy
+200  assets/js/seed-data.js               53033B  text/javascript          cache=public, max-age=600    etag="f0739c21359391f18  no repo copy
+200  assets/js/firebase-config.js           671B  text/javascript          cache=public, max-age=600    etag="3f58e8879e8b3c2f3  no repo copy
+200  assets/js/store.js                   36824B  text/javascript          cache=public, max-age=600    etag="3c7be8e1500b16f98  no repo copy
+200  assets/js/firebase-adapter.js        37159B  text/javascript          cache=public, max-age=600    etag="00bbd0dd8f899a902  no repo copy
+200  assets/js/common.js                   5886B  text/javascript          cache=public, max-age=600    etag="a8d4f8b3532b88309  no repo copy
+200  assets/js/setup.js                    3106B  text/javascript          cache=public, max-age=600    etag="9035a3b8ef5a28249  no repo copy
+
+--- the other host serving the same repo (GitHub Pages) ---
+status 200 | bytes 1461 | sha256 6221c6e22192b16276f433e07801618123fe5f6109920bb0671559399369e770 | line-endings sha256 6221c6e22192b16276f433e07801618123fe5f6109920bb0671559399369e770
+headers: {
+  "accept-ranges": "bytes",
+  "access-control-allow-origin": "*",
+  "age": "58",
+  "cache-control": "max-age=600",
+  "connection": "keep-alive",
+  "content-encoding": "gzip",
+  "content-length": "589",
+  "content-type": "text/html; charset=utf-8",
+  "date": "Mon, 14 Sep 2026 10:01:28 GMT",
+  "etag": "W/\"6aa7c284-5b5\"",
+  "expires": "Mon, 14 Sep 2026 10:02:49 GMT",
+  "last-modified": "Mon, 14 Sep 2026 09:46:44 GMT",
+  "server": "GitHub.com",
+  "strict-transport-security": "max-age=31556952",
+  "vary": "Accept-Encoding",
+  "via": "1.1 varnish",
+  "x-cache": "HIT",
+  "x-cache-hits": "2",
+  "x-fastly-request-id": "290cd2bf7b57f4cdeae6a8e62a19b725f4da6fdc",
+  "x-github-edge-region": "centralindia",
+  "x-github-request-id": "134A:20D0BB:84C104:8E08BA:6AA7C3F0",
+  "x-proxy-cache": "MISS",
+  "x-served-by": "cache-ccu830043-CCU",
+  "x-timer": "S1789380089.770897,VS0,VE0"
+}
+identical to the Firebase Hosting copy (normalised): YES
+
+--- cache validators differ per host (evidence of two independent serving stacks) ---
+firebase hosting etag: "7e4f56ca5519357b690913312ee20052bd7f5ec1498262bc65bff03a717a08f7-br"
+firebase hosting cache-control: max-age=3600
+firebase hosting server header: (none)
+firebase hosting x-served-by / via: cache-ccu830044-CCU / -

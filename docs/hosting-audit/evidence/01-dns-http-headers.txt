@@ -1,0 +1,347 @@
+﻿=== RUN A: DNS / network ownership / HTTP headers ===
+timestamp   : 2026-09-14T16:00:16+06:00
+machine     : KAZI-ATIQUR-RAH
+public IP   : 182.160.110.156
+resolver    : 10.15.1.142, 8.8.8.8
+
+--- nextgen-fund-2040.web.app ---
+[A]
+
+Name                      Type IPAddress      NameHost NameExchange PrimaryServer  TTL
+----                      ---- ---------      -------- ------------ -------------  ---
+nextgen-fund-2040.web.app    A 199.36.158.100                                     5916
+[AAAA]
+
+Name                      Type IPAddress       NameHost NameExchange PrimaryServer   TTL
+----                      ---- ---------       -------- ------------ -------------   ---
+nextgen-fund-2040.web.app AAAA 2620:0:890::100                                     21599
+[CNAME]
+
+Name    Type IPAddress NameHost NameExchange PrimaryServer         TTL
+----    ---- --------- -------- ------------ -------------         ---
+web.app  SOA                                 ns1.googledomains.com 300
+[NS]
+
+Name    Type IPAddress NameHost NameExchange PrimaryServer         TTL
+----    ---- --------- -------- ------------ -------------         ---
+web.app  SOA                                 ns1.googledomains.com 300
+[TXT]
+
+Name    Type IPAddress NameHost NameExchange PrimaryServer         TTL
+----    ---- --------- -------- ------------ -------------         ---
+web.app  SOA                                 ns1.googledomains.com 300
+[SOA]
+
+Name    Type IPAddress NameHost NameExchange PrimaryServer         TTL
+----    ---- --------- -------- ------------ -------------         ---
+web.app  SOA                                 ns1.googledomains.com 300
+
+--- iamatiq7.github.io ---
+[A]
+
+Name               Type IPAddress       NameHost NameExchange PrimaryServer TTL
+----               ---- ---------       -------- ------------ ------------- ---
+iamatiq7.github.io    A 185.199.108.153                                     869
+iamatiq7.github.io    A 185.199.109.153                                     869
+iamatiq7.github.io    A 185.199.110.153                                     869
+iamatiq7.github.io    A 185.199.111.153                                     869
+[AAAA]
+
+Name               Type IPAddress           NameHost NameExchange PrimaryServer  TTL
+----               ---- ---------           -------- ------------ -------------  ---
+iamatiq7.github.io AAAA 2606:50c0:8003::153                                     3600
+iamatiq7.github.io AAAA 2606:50c0:8001::153                                     3600
+iamatiq7.github.io AAAA 2606:50c0:8002::153                                     3600
+iamatiq7.github.io AAAA 2606:50c0:8000::153                                     3600
+[CNAME]
+
+Name      Type IPAddress NameHost NameExchange PrimaryServer      TTL
+----      ---- --------- -------- ------------ -------------      ---
+github.io  SOA                                 dns1.p05.nsone.net 900
+[NS]
+
+Name      Type IPAddress NameHost NameExchange PrimaryServer      TTL
+----      ---- --------- -------- ------------ -------------      ---
+github.io  SOA                                 dns1.p05.nsone.net 900
+[TXT]
+
+Name      Type IPAddress NameHost NameExchange PrimaryServer      TTL
+----      ---- --------- -------- ------------ -------------      ---
+github.io  SOA                                 dns1.p05.nsone.net 900
+[SOA]
+
+Name      Type IPAddress NameHost NameExchange PrimaryServer       TTL
+----      ---- --------- -------- ------------ -------------       ---
+github.io  SOA                                 dns1.p05.nsone.net 1800
+
+--- nextgen-fund-2040.firebaseapp.com ---
+[A]
+
+Name                              Type IPAddress      NameHost NameExchange PrimaryServer TTL
+----                              ---- ---------      -------- ------------ ------------- ---
+nextgen-fund-2040.firebaseapp.com    A 199.36.158.100                                     300
+[AAAA]
+
+Name                              Type IPAddress       NameHost NameExchange PrimaryServer TTL
+----                              ---- ---------       -------- ------------ ------------- ---
+nextgen-fund-2040.firebaseapp.com AAAA 2620:0:890::100                                     299
+[CNAME]
+
+Name            Type IPAddress NameHost NameExchange PrimaryServer                 TTL
+----            ---- --------- -------- ------------ -------------                 ---
+firebaseapp.com  SOA                                 ns-cloud-c1.googledomains.com 300
+[NS]
+
+Name            Type IPAddress NameHost NameExchange PrimaryServer                 TTL
+----            ---- --------- -------- ------------ -------------                 ---
+firebaseapp.com  SOA                                 ns-cloud-c1.googledomains.com 300
+[TXT]
+
+Name                              Type IPAddress NameHost NameExchange PrimaryServer TTL
+----                              ---- --------- -------- ------------ ------------- ---
+nextgen-fund-2040.firebaseapp.com  TXT                                               300
+nextgen-fund-2040.firebaseapp.com  TXT                                               300
+[SOA]
+
+Name            Type IPAddress NameHost NameExchange PrimaryServer                 TTL
+----            ---- --------- -------- ------------ -------------                 ---
+firebaseapp.com  SOA                                 ns-cloud-c1.googledomains.com 300
+
+=== IP ownership (RDAP, public registry) ===
+--- 172.217.112.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.113.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.114.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.115.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.116.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.117.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.118.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.119.4 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 172.217.24.10 ---
+  handle       : NET-172-217-0-0-1
+  name         : GOOGLE
+  range        : 172.217.0.0 - 172.217.255.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+--- 185.199.108.153 ---
+  handle       : 185.199.108.0 - 185.199.111.255
+  name         : US-GITHUB-20170413
+  range        : 185.199.108.0 - 185.199.111.255
+  country      : US
+  entity       : GA9828-RIPE  roles=administrative  name=
+  entity       : NO1444-RIPE  roles=technical  name=
+  entity       : ORG-GI58-RIPE  roles=registrant  name=
+  entity       : RIPE-NCC-HM-MNT  roles=registrant  name=
+  entity       : us-github-1-mnt  roles=registrant  name=
+  entity       : AR39914-RIPE  roles=abuse  name=
+--- 185.199.109.153 ---
+  handle       : 185.199.108.0 - 185.199.111.255
+  name         : US-GITHUB-20170413
+  range        : 185.199.108.0 - 185.199.111.255
+  country      : US
+  entity       : GA9828-RIPE  roles=administrative  name=
+  entity       : NO1444-RIPE  roles=technical  name=
+  entity       : ORG-GI58-RIPE  roles=registrant  name=
+  entity       : RIPE-NCC-HM-MNT  roles=registrant  name=
+  entity       : us-github-1-mnt  roles=registrant  name=
+  entity       : AR39914-RIPE  roles=abuse  name=
+--- 185.199.110.153 ---
+  handle       : 185.199.108.0 - 185.199.111.255
+  name         : US-GITHUB-20170413
+  range        : 185.199.108.0 - 185.199.111.255
+  country      : US
+  entity       : GA9828-RIPE  roles=administrative  name=
+  entity       : NO1444-RIPE  roles=technical  name=
+  entity       : ORG-GI58-RIPE  roles=registrant  name=
+  entity       : RIPE-NCC-HM-MNT  roles=registrant  name=
+  entity       : us-github-1-mnt  roles=registrant  name=
+  entity       : AR39914-RIPE  roles=abuse  name=
+--- 185.199.111.153 ---
+  handle       : 185.199.108.0 - 185.199.111.255
+  name         : US-GITHUB-20170413
+  range        : 185.199.108.0 - 185.199.111.255
+  country      : US
+  entity       : GA9828-RIPE  roles=administrative  name=
+  entity       : NO1444-RIPE  roles=technical  name=
+  entity       : ORG-GI58-RIPE  roles=registrant  name=
+  entity       : RIPE-NCC-HM-MNT  roles=registrant  name=
+  entity       : us-github-1-mnt  roles=registrant  name=
+  entity       : AR39914-RIPE  roles=abuse  name=
+--- 199.36.158.100 ---
+  handle       : NET-199-36-152-0-1
+  name         : MEEBO
+  range        : 199.36.152.0 - 199.36.159.255
+  country      : 
+  entity       : GOGL  roles=registrant  name=
+
+=== HTTP response headers (curl.exe, no redirect following) ===
+--- https://nextgen-fund-2040.web.app/setup.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://nextgen-fund-2040.web.app/ ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://nextgen-fund-2040.web.app/assets/js/firebase-config.js ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://iamatiq7.github.io/nextgen-fund/setup.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://nextgen-fund-2040.firebaseapp.com/setup.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://nextgen-fund-2040.web.app/does-not-exist-404-check.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:72 char:13
++   Add-Line (curl.exe -sS -D - -o NUL --max-time 30 --http2 $u 2>&1 |  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+=== redirect chain + code (curl -L -w) ===
+https://nextgen-fund-2040.web.app/setup.html                           curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+https://nextgen-fund-2040.web.app/                                     curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+https://nextgen-fund-2040.web.app/assets/js/firebase-config.js         curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+https://iamatiq7.github.io/nextgen-fund/setup.html                     curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+https://nextgen-fund-2040.firebaseapp.com/setup.html                   curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+https://nextgen-fund-2040.web.app/does-not-exist-404-check.html        curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:78 char:10
++   $res = curl.exe -sS -o NUL -L --max-time 40 --http2 -w "final=%{url ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+=== HTTP/1.1 vs HTTP/2 + HEAD request ===
+--- https://nextgen-fund-2040.web.app/setup.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:86 char:13
++   Add-Line (curl.exe -sS -I --http2 --max-time 30 $u 2>&1 | Out-Strin ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
+--- https://iamatiq7.github.io/nextgen-fund/setup.html ---
+curl.exe : curl: option --http2: the installed libcurl version does not support this
+At C:\Users\SMART\.openclaw-autoclaw\agents\atiqv2\workspace\.openclaw\tmp\hosting\collect-01-dns-http.ps1:86 char:13
++   Add-Line (curl.exe -sS -I --http2 --max-time 30 $u 2>&1 | Out-Strin ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (curl: option --...ot support this:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+curl: try 'curl --help' for more information
+
