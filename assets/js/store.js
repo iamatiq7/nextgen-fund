@@ -138,26 +138,46 @@
   /* =============== shared calculations =============== */
   function computeBalance(user, payments, nowMonth) {
     var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
-    var paidDue = 0, advance = 0;
+    var paidDue = 0, advance = 0, pendingDue = 0, pendingAdvance = 0;
     (payments || []).forEach(function (p) {
-      if (p.status !== 'verified') return;
-      if (p.type === 'due') paidDue += Number(p.amount) || 0;
-      if (p.type === 'advance') advance += Number(p.amount) || 0;
+      var amt = Number(p.amount) || 0;
+      if (p.status === 'verified') {
+        if (p.type === 'due') paidDue += amt;
+        if (p.type === 'advance') advance += amt;
+      } else if (p.status === 'pending') {
+        if (p.type === 'due') pendingDue += amt;
+        if (p.type === 'advance') pendingAdvance += amt;
+      }
     });
+    /* A submitted (pending) due payment already reduces the outstanding due;
+       it only enters the fund total after the admin approves it. */
     return {
       expected: expected,
       paid: paidDue + advance,
       paidDue: paidDue,
       advance: advance,
-      due: Math.max(0, expected - paidDue)
+      pending: pendingDue + pendingAdvance,
+      pendingDue: pendingDue,
+      pendingAdvance: pendingAdvance,
+      due: Math.max(0, expected - paidDue - pendingDue),
+      dueVerified: Math.max(0, expected - paidDue)
     };
   }
 
   function snapshotFromData(db) {
     var months = {};
     (db.finance || []).forEach(function (f) {
-      var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0 });
+      var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0, deposits: 0 });
       m[f.kind] += Number(f.amount) || 0;
+    });
+    /* verified member deposits are fund income as well */
+    (db.payments || []).forEach(function (p) {
+      if (p.status !== 'verified' || p.type !== 'due') return;
+      var mk = String(p.date || '').slice(0, 7);
+      if (!mk) return;
+      var mm = months[mk] || (months[mk] = { month: mk, funding: 0, revenue: 0, loss: 0, deposits: 0 });
+      mm.funding += Number(p.amount) || 0;
+      mm.deposits = (mm.deposits || 0) + (Number(p.amount) || 0);
     });
     var totalFunding = 0, totalRevenue = 0, totalLoss = 0;
     Object.keys(months).sort().forEach(function (k) {
@@ -278,6 +298,21 @@
     getSession: async function () {
       if (Store.mode === 'firebase') return Store._fb.getSession();
       return Store._session;
+    },
+
+    updateMyName: async function (name) {
+      if (Store.mode === 'firebase') return Store._fb.updateMyName(name);
+      var clean = String(name || '').trim();
+      if (clean.length < 2) { var e0 = new Error('Enter your name (min 2 characters).'); e0.code = 'invalid'; throw e0; }
+      var db = Store._d();
+      var s0 = await Store.getSession();
+      if (!s0) { var e1 = new Error('Please log in.'); e1.code = 'forbidden'; throw e1; }
+      var u0 = db.users.filter(function (x) { return x.id === s0.uid; })[0];
+      if (!u0) throw new Error('Account not found');
+      u0.fullName = clean;
+      db.audit.unshift({ id: U.uid('a'), at: new Date().toISOString(), actor: u0.username, action: 'profile-updated', detail: 'display name changed' });
+      Store._save();
+      return { fullName: clean };
     },
 
     changePassword: async function (currentPw, newPw) {

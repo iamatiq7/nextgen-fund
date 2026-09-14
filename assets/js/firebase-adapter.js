@@ -54,6 +54,46 @@
     async function audit(actor, action, detail) {
       try { await fsMod.addDoc(col('audit'), { at: new Date().toISOString(), actor: actor || '', action: action, detail: detail || '' }); } catch (e) { /* non-fatal */ }
     }
+    /* Recompute the public fund totals: manual finance entries + VERIFIED member deposits.
+       Stored in settings/public so the (unauthenticated) dashboard can read them. */
+    async function syncPublicTotals() {
+      try {
+        var finance = await getAll('finance');
+        var pays = await getAll('payments');
+        var users = await getAll('users', fsMod.query(col('users'), fsMod.where('role', '==', 'member')));
+        var months = {};
+        finance.forEach(function (f) {
+          var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0, deposits: 0 });
+          m[f.kind] = (Number(m[f.kind]) || 0) + (Number(f.amount) || 0);
+        });
+        var depositTotal = 0, pendingDueTotal = 0;
+        pays.forEach(function (p) {
+          var amt = Number(p.amount) || 0;
+          if (p.status === 'pending' && p.type === 'due') pendingDueTotal += amt;
+          if (p.status !== 'verified') return;
+          if (p.type === 'advance') return; /* advances stay member credit, not fund income */
+          var mk = String(p.date || '').slice(0, 7);
+          if (!mk) return;
+          var mm = months[mk] || (months[mk] = { month: mk, funding: 0, revenue: 0, loss: 0, deposits: 0 });
+          mm.funding += amt;
+          mm.deposits = (mm.deposits || 0) + amt;
+          depositTotal += amt;
+        });
+        var tF = 0, tR = 0, tL = 0;
+        Object.keys(months).sort().forEach(function (k) { tF += months[k].funding; tR += months[k].revenue; tL += months[k].loss; });
+        await fsMod.setDoc(docIn('settings', 'public'), {
+          memberCount: users.filter(function (u) { return u.status === 'active'; }).length,
+          fundTotals: {
+            totalFunding: tF, totalRevenue: tR, totalLoss: tL, net: tF + tR - tL,
+            memberDeposits: depositTotal, pendingDue: pendingDueTotal,
+            months: Object.keys(months).sort().map(function (k) { return months[k]; }),
+            updatedAt: new Date().toISOString()
+          },
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) { /* non-fatal */ }
+    }
+
     /* keep the public member count in settings/public so non-admin viewers can read it */
     async function syncMemberCount() {
       try {
@@ -67,13 +107,30 @@
     function computeBalance(user, payments) {
       var nowMonth = U.currentMonth();
       var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
-      var paidDue = 0, advance = 0;
+      var paidDue = 0, advance = 0, pendingDue = 0, pendingAdvance = 0;
       (payments || []).forEach(function (p) {
-        if (p.status !== 'verified') return;
-        if (p.type === 'due') paidDue += Number(p.amount) || 0;
-        if (p.type === 'advance') advance += Number(p.amount) || 0;
+        var amt = Number(p.amount) || 0;
+        if (p.status === 'verified') {
+          if (p.type === 'due') paidDue += amt;
+          if (p.type === 'advance') advance += amt;
+        } else if (p.status === 'pending') {
+          if (p.type === 'due') pendingDue += amt;
+          if (p.type === 'advance') pendingAdvance += amt;
+        }
       });
-      return { expected: expected, paid: paidDue + advance, paidDue: paidDue, advance: advance, due: Math.max(0, expected - paidDue) };
+      /* A submitted (pending) due payment already reduces the outstanding due;
+         it only enters the fund total after the admin approves it. */
+      return {
+        expected: expected,
+        paid: paidDue + advance,
+        paidDue: paidDue,
+        advance: advance,
+        pending: pendingDue + pendingAdvance,
+        pendingDue: pendingDue,
+        pendingAdvance: pendingAdvance,
+        due: Math.max(0, expected - paidDue - pendingDue),
+        dueVerified: Math.max(0, expected - paidDue)
+      };
     }
 
     async function myPaymentsFor(uid) {
@@ -85,6 +142,21 @@
       /* ---------- public ---------- */
       getPublicSnapshot: async function () {
         var settings = await getDoc('settings', 'public');
+        var agg = settings && settings.fundTotals;
+        if (agg && agg.months) {
+          return {
+            fundName: (settings && settings.fundName) || 'NextGen Fund', currency: 'BDT',
+            nextMeeting: settings && settings.nextMeeting, meetingNote: settings && settings.meetingNote,
+            totalFunding: Number(agg.totalFunding) || 0, totalRevenue: Number(agg.totalRevenue) || 0,
+            totalLoss: Number(agg.totalLoss) || 0, net: Number(agg.net) || 0,
+            memberDeposits: Number(agg.memberDeposits) || 0, pendingDue: Number(agg.pendingDue) || 0,
+            months: agg.months,
+            memberCount: Number(settings && settings.memberCount) || 0,
+            monthlyPerShare: settings && settings.monthlyPerShare,
+            content: (settings && settings.content) || {},
+            updatedAt: agg.updatedAt || (settings && settings.updatedAt)
+          };
+        }
         var finance = await getAll('finance');
         var usersPub = [];
         try { usersPub = await getAll('users', fsMod.query(col('users'), fsMod.where('role', '==', 'member'))); } catch (e) { usersPub = []; }
@@ -253,12 +325,22 @@
         });
       },
 
+      updateMyName: async function (name) {
+        var uid = await myUid();
+        var clean = String(name || '').trim();
+        if (clean.length < 2) throw err('invalid', 'Enter your name (min 2 characters).');
+        await fsMod.updateDoc(docIn('users', uid), { fullName: clean });
+        await audit(clean, 'profile-updated', 'display name changed');
+        return { fullName: clean };
+      },
+
       changePassword: async function (currentPw, newPw) {
         var cu = auth.currentUser;
         if (!cu) throw err('unauthenticated', 'Please log in');
         var cred = authMod.EmailAuthProvider.credential(cu.email, currentPw);
         await authMod.reauthenticateWithCredential(cu, cred);
         await authMod.updatePassword(cu, newPw);
+        await audit((me && me.user && me.user.username) || '', 'password-changed', 'own password changed');
         return { ok: true };
       },
 
@@ -292,7 +374,7 @@
           });
         }
         await audit(uname, 'admin-created', 'bootstrap claim');
-        await syncMemberCount();
+        await syncPublicTotals();
         return { ok: true };
       },
 
@@ -364,7 +446,7 @@
           joinMonth: approve ? U.currentMonth() : '',
           monthlyDue: approve ? (r.shares * ((await fb.getSettings()).monthlyPerShare || 1000)) : 0
         });
-        await syncMemberCount();
+        await syncPublicTotals();
         await audit(me.user.username, approve ? 'registration-approved' : 'registration-rejected', r.username + (note ? ' — ' + note : ''));
         return { ok: true, decidedAt: new Date().toISOString() };
       },
@@ -399,7 +481,7 @@
         }
         if (patch.monthlyDue !== undefined) allowed.monthlyDue = Number(patch.monthlyDue) || 0;
         await fsMod.updateDoc(docIn('users', memberId), allowed);
-        await syncMemberCount();
+        await syncPublicTotals();
         await audit(me.user.username, 'member-updated', memberId);
         return { ok: true };
       },
@@ -417,6 +499,7 @@
           status: 'verified', verifiedAt: new Date().toISOString(), verifiedBy: me.user.username || 'admin'
         });
         await audit(me.user.username, 'payment-verified', paymentId);
+        await syncPublicTotals();
         return { ok: true };
       },
 
@@ -426,6 +509,7 @@
           status: 'rejected', verifiedAt: new Date().toISOString(), verifiedBy: me.user.username || 'admin', rejectReason: reason || ''
         });
         await audit(me.user.username, 'payment-rejected', paymentId + ' ' + (reason || ''));
+        await syncPublicTotals();
         return { ok: true };
       },
 
@@ -446,6 +530,7 @@
         };
         var created = await fsMod.addDoc(col('payments'), p);
         await audit(me.user.username, 'payment-recorded-manually', u.username + ' ' + amount);
+        await syncPublicTotals();
         return { ok: true, paymentId: created.id };
       },
 
@@ -464,6 +549,7 @@
         if (entry.id) await fsMod.setDoc(docIn('finance', entry.id), body, { merge: true });
         else await fsMod.addDoc(col('finance'), body);
         await audit(me.user.username, entry.id ? 'finance-updated' : 'finance-added', entry.kind + ' ' + entry.month);
+        await syncPublicTotals();
         return { ok: true };
       },
 
@@ -471,6 +557,7 @@
         var me = await requireAdminUid();
         await fsMod.deleteDoc(docIn('finance', id));
         await audit(me.user.username, 'finance-deleted', id);
+        await syncPublicTotals();
         return { ok: true };
       },
 
@@ -479,6 +566,7 @@
         patch.updatedAt = new Date().toISOString();
         await fsMod.setDoc(docIn('settings', 'public'), patch, { merge: true });
         await audit(me.user.username, 'settings-updated', Object.keys(patch).join(', '));
+        await syncPublicTotals();
         return { ok: true };
       },
 

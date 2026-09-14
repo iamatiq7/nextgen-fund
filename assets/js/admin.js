@@ -319,8 +319,18 @@
       ('<div class="notice">' + U.esc(L.t('adm.demoNotice')) +
       ' <a href="' + GUIDE_URL + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.demoNoticeLink')) + '</a></div>') :
       ('<div class="notice ok">' + U.esc(L.t('adm.liveNotice')) + '</div>');
+    var sess = await S.getSession();
     body.innerHTML =
       modeNotice +
+      '<div class="card" style="max-width:820px"><h2>' + U.esc(L.t('adm.pfTitle')) + '</h2>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfName')) + '</span><input type="text" id="pf-name" value="' + U.esc((sess && sess.fullName) || '') + '"></label>' +
+      '<p><button type="button" class="btn" id="pf-save-name">' + U.esc(L.t('adm.pfNameSave')) + '</button> <span class="hint" id="pf-name-msg"></span></p>' +
+      '<h3 style="margin-top:8px">' + U.esc(L.t('adm.pfPwTitle')) + '</h3>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfCur')) + '</span><input type="password" id="pf-cur" autocomplete="current-password"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfNew')) + '</span><input type="password" id="pf-new" autocomplete="new-password"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfNew2')) + '</span><input type="password" id="pf-new2" autocomplete="new-password"></label>' +
+      '<p><button type="button" class="btn" id="pf-save-pw">' + U.esc(L.t('adm.pfPwSave')) + '</button> <span class="hint" id="pf-pw-msg"></span></p>' +
+      '</div>' +
       '<div class="card" style="max-width:820px"><form id="set-form" novalidate>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stFundName')) + '</span><input type="text" id="st-name" value="' + U.esc(s.fundName || 'NextGen Fund') + '"></label>' +
@@ -361,6 +371,37 @@
       '</div></div>' +
       '<div id="st-err" class="err"></div>' +
       '<button class="btn" type="submit">' + U.esc(L.t('adm.stSave')) + '</button></form></div>';
+
+    var pfNameBtn = document.getElementById('pf-save-name');
+    if (pfNameBtn) pfNameBtn.onclick = async function () {
+      var msg = document.getElementById('pf-name-msg');
+      try {
+        var r = await S.updateMyName(document.getElementById('pf-name').value);
+        msg.textContent = L.t('adm.pfNameSaved');
+        var who = document.getElementById('nav-who');
+        if (who) who.textContent = r.fullName + ' (admin)';
+      } catch (e) { msg.textContent = e.message || 'Error'; }
+    };
+    var pfPwBtn = document.getElementById('pf-save-pw');
+    if (pfPwBtn) pfPwBtn.onclick = async function () {
+      var msg = document.getElementById('pf-pw-msg');
+      var cur = document.getElementById('pf-cur').value;
+      var n1 = document.getElementById('pf-new').value;
+      var n2 = document.getElementById('pf-new2').value;
+      if (n1.length < 8) { msg.textContent = L.t('adm.pfNew'); return; }
+      if (n1 !== n2) { msg.textContent = L.t('adm.pfNoMatch'); return; }
+      msg.textContent = '...';
+      try {
+        await S.changePassword(cur, n1);
+        msg.textContent = L.t('adm.pfPwSaved');
+        document.getElementById('pf-cur').value = '';
+        document.getElementById('pf-new').value = '';
+        document.getElementById('pf-new2').value = '';
+      } catch (e) {
+        var code = String((e && (e.code || e.message)) || '');
+        msg.textContent = /wrong-password|invalid-credential|invalid-login/i.test(code) ? L.t('adm.pfWrongCur') : (e.message || 'Error');
+      }
+    };
 
     document.getElementById('set-form').addEventListener('submit', async function (ev) {
       ev.preventDefault();

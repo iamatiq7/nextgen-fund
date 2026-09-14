@@ -208,7 +208,7 @@ ok('members CSV has 14 seeded + 1 new member rows', memCsv.trim().split('\n').le
 const payLines = payCsv.trim().split('\n');
 ok('payments CSV = 106 seeded + 8 new + header', payLines.length === 115, 'lines=' + payLines.length);
 ok('payments CSV carries methods/refs/status', payCsv.includes('TXN-A1') && payCsv.includes('bkash') && payCsv.includes('verified') && payCsv.includes('rejected'));
-ok('finance CSV contains seeded funding + test revenue', finCsv.includes('funding,2026-01,21000') && finCsv.includes('revenue,2026-09,5000'));
+ok('finance CSV contains the test revenue entry', finCsv.includes('revenue,2026-09,5000'));
 
 console.log('== 13 · audit trail ==');
 const audit = await Store.listAudit();

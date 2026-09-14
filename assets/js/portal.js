@@ -20,9 +20,11 @@
     set('bal-paid', U.fmtBDT(b.paid));
     set('bal-paid-sub', L.t('por.paidSub', { amt: U.fmtBDT(b.expected) }));
     set('bal-due', U.fmtBDT(b.due));
-    set('bal-due-sub', b.due > 0
-      ? L.t('por.dueSub', { e: U.fmtBDT(b.expected), p: U.fmtBDT(b.paidDue) })
-      : L.t('por.dueOk'));
+    var dueSub = b.due > 0
+      ? L.t('por.dueSub', { e: U.fmtBDT(b.expected), p: U.fmtBDT(b.paidDue + (b.pendingDue || 0)) })
+      : (b.pendingDue > 0 ? L.t('por.dueCovered') : L.t('por.dueOk'));
+    if ((b.pendingDue || 0) > 0) dueSub += ' ' + L.t('por.pendingDue', { amt: U.fmtBDT(b.pendingDue) });
+    set('bal-due-sub', dueSub);
     document.getElementById('bal-due-card').className = 'card stat ' + (b.due > 0 ? 'tone-red' : 'tone-green');
     set('bal-advance', U.fmtBDT(b.advance));
     set('bal-monthly', U.fmtBDT(profile.monthlyDue));
@@ -39,7 +41,7 @@
       var btn = document.getElementById('use-due');
       if (btn) btn.onclick = function () { document.getElementById('py-amount').value = balance.due; };
     } else if (type === 'due') {
-      el.textContent = L.t('por.dueOk');
+      el.textContent = (balance.pendingDue > 0) ? L.t('por.dueCovered') : L.t('por.dueOk');
     } else {
       el.textContent = '';
     }

@@ -15,6 +15,7 @@ await Store.init();
 
 // capture admin-owned state baseline
 await Store.login('admin', 'nextgen2026');
+await Store.upsertFinanceEntry({ kind: 'revenue', month: '2026-09', amount: 5000, note: 'isolation baseline' });
 const settingsBefore = await Store.getSettings();
 const membersBefore = await Store.listMembers();
 const paysBefore = await Store.listPayments();

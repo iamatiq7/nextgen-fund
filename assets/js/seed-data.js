@@ -1954,71 +1954,7 @@ return {
    "verifiedBy": "seed-import"
   }
  ],
- "finance": [
-  {
-   "id": "f-2026-01",
-   "kind": "funding",
-   "month": "2026-01",
-   "amount": 21000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-02",
-   "kind": "funding",
-   "month": "2026-02",
-   "amount": 21000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-03",
-   "kind": "funding",
-   "month": "2026-03",
-   "amount": 21000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-04",
-   "kind": "funding",
-   "month": "2026-04",
-   "amount": 20000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-05",
-   "kind": "funding",
-   "month": "2026-05",
-   "amount": 20000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-06",
-   "kind": "funding",
-   "month": "2026-06",
-   "amount": 20000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-07",
-   "kind": "funding",
-   "month": "2026-07",
-   "amount": 19000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-08",
-   "kind": "funding",
-   "month": "2026-08",
-   "amount": 13000.0,
-   "note": "Member deposits"
-  },
-  {
-   "id": "f-2026-09",
-   "kind": "funding",
-   "month": "2026-09",
-   "amount": 7000.0,
-   "note": "Member deposits"
-  }
- ],
+ "finance": [],
  "audit": [
   {
    "id": "a-seed",
