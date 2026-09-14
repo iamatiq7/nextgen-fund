@@ -1,0 +1,17 @@
+=== NextGen Fund database reset report (CI) ===
+project        : nextgen-fund-2040
+mode           : backup
+confirmed wipe : no
+target         : LIVE Firebase (admin credentials, security rules bypassed)
+started        : 2026-09-14T09:29:32.095Z
+result         : PASS
+
+counts         : {"payments":6,"registrations":7,"audit":23,"usernames":8,"users":8,"finance":0,"settings":2}
+backup file    : ops/db-reset/backup-2026-09-14T0929.json
+backup sha256  : b54dfe00f9de7e1fd589f9b6d02d608d336aa8578f5714851ce7c2802044377c
+backup bytes   : 20866
+backup counts  : {"payments":6,"registrations":7,"audit":23,"usernames":8,"users":8,"finance":0,"settings":2}
+backup total   : 54 document(s)
+auth accounts  : 9 (ids BvTyCq…, C6gGdC…, Eua4Gi…, R34hkL…, VFB64S…, fXPjYU…, n2tUgl…, nfj01j…, whH1e0…)
+note           : read-only run, nothing was deleted
+finished       : 2026-09-14T09:29:32.095Z
