@@ -185,7 +185,7 @@ advance: advance                                       <span class="bad">// due-
 </div>
 
 <!-- ================= TESTS ================= -->
-<h2><span class="n">04</span>পরীক্ষা — ১৯টি কেস ও ওরের ফলাফল</h2>
+<h2><span class="n">04</span>পরীক্ষা — কেস ও ওরের ফলাফল</h2>
 <table>
   <caption>পুনরুৎপাদন ও মূল কেস (tests/advance.test.mjs)</caption>
   <thead><tr><th style="width:10%">ID</th><th>যা পরীক্ষা করা হলো</th><th style="width:16%">ফল</th></tr></thead>
@@ -214,7 +214,8 @@ advance: advance                                       <span class="bad">// due-
     <tr><td>E2E-5</td><td>verify করার পর fund totals স্বয়ংক্রিয় (totalFunding/memberDeposits ৳1,000)</td><td><span class="pill ok">PASS</span></td></tr>
     <tr><td>E2E-5b</td><td><b>অতিরিক্ত ৳1,000 জমা → advance ৳1,000</b>, advanceMonths 1, memberAdvance ৳1,000</td><td><span class="pill ok">PASS</span></td></tr>
     <tr><td>E2E-7</td><td>সদস্য নিজে verify/settings/finance/approve করতে পারে না (rules)</td><td><span class="pill ok">PASS</span></td></tr>
-    <tr><td>রিগ্রেশন</td><td>store 60 · access 12 · isolation 14 · fixes 22 · advance 21 = <b>১২৯ চেক</b></td><td><span class="pill ok">ALL PASS</span></td></tr>
+    <tr><td>রিগ্রেশন</td><td>store 60 · access 12 · isolation 14 · fixes 22 · advance 32 = <b>১৪০ চেক</b></td><td><span class="pill ok">ALL PASS</span></td></tr>
+    <tr><td>মোট</td><td>উপরের ৩৫টি E2E + ১৪০টি লোকাল = <b>১৭৫টি যাচাই</b></td><td><span class="pill ok">ALL PASS</span></td></tr>
   </tbody>
 </table>
 
@@ -244,6 +245,24 @@ advance: advance                                       <span class="bad">// due-
     <figcaption>পরে · paid ৳2,000 · due ৳0 · <b class="fixc">advance ৳1,000</b> — “covers 1 month ahead”</figcaption>
   </figure>
 </div>
+
+<!-- ================= REVIEW ================= -->
+<h2><span class="n">08</span>স্বাধীন রিভিউ — ২ এজেন্ট, ৭টি সমস্যা ধরা, সব ঠিক</h2>
+<p class="sub">ফিক্স শেষে দুটি স্বতন্ত্র এজেন্ট নিয়োগ করা হয়েছিল: একজনের কাজ ছিল লজিক ভেঙে ফেলার চেষ্টা করা (র্যান্ডমাইজড ২৪,০০০+ ডেটা, pure ফর্মুলা + আসল API), আরেকজনের কাজ ছিল লেখা নিয়ম ও কোড হুবহু মেলে কি না যাচাই করা।</p>
+<table>
+  <caption>ধরা পড়া সমস্যা ও অবস্থা</caption>
+  <thead><tr><th style="width:8%">#</th><th>সমস্যা</th><th style="width:12%">গুরুত্ব</th><th style="width:14%">অবস্থা</th></tr></thead>
+  <tbody>
+    <tr><td>A1</td><td><code>pendingDue + pendingAdvance</code> মিলে <code>pending</code>-এর চেয়ে বেশি হয়ে ডাবল-কাউন্ট (বাকি থাকা সদস্যের ক্ষেত্রে)</td><td>HIGH</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>A2</td><td>ভাঙা <code>joinMonth</code> (যেমন “junk”) NaN হয়ে ব্যালেন্স NaN/৳০ দেখাতে পারত</td><td>MEDIUM</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>A3</td><td>suspended সদস্যের অগ্রিমও ফান্ডের অগ্রিম পুলে গোনা হচ্ছিল</td><td>LOW</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>A4</td><td>তারিখ-হীন পেমেন্ট total-এ ঢুকছিল কিন্তু মাসের রো-তে নয় → দুই ভিউ অমিল</td><td>LOW</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>B1</td><td>পেমেন্ট ফর্মের হিন্ট টেক্সট পুরোনো নিয়ম বলত: “অগ্রিম পেমেন্ট বকেয়া কমায় না”</td><td>HIGH</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>B2</td><td>README-তে পুরোনো ডিউ-নিয়ম লেখা ছিল</td><td>MEDIUM</td><td><span class="pill ok">FIXED</span></td></tr>
+    <tr><td>B3</td><td>অগ্রিম কার্ডের নিচের লাইন দুইবার দেখাচ্ছিল</td><td>MEDIUM</td><td><span class="pill ok">FIXED</span></td></tr>
+  </tbody>
+</table>
+<p class="sub">প্রতিটির জন্য রিগ্রেশন টেস্ট যোগ করা হয়েছে (B13–B18, B5d–B5f): ভাঙা ডেটায় NaN না হওয়া, পুল থেকে suspended বাদ পড়া, deposits == মাসের রো-সমষ্টি, আর pending ভাগ না বেড়ে যাওয়া।</p>
 
 <!-- ================= DEPLOY ================= -->
 <h2><span class="n">07</span>ডিপ্লয়, রোলব্যাক ও হ্যান্ডঅভার</h2>
@@ -285,6 +304,8 @@ advance: advance                                       <span class="bad">// due-
     <li>নিয়মপত্র: <span class="mono">docs/advance-rule-spec.md</span> · হ্যান্ডঅভার: <span class="mono">docs/advance-fix-handover.md</span></li>
     <li>প্রমাণচিত্র: <span class="mono">docs/evidence/advance-before.png</span>, <span class="mono">docs/evidence/advance-after.png</span></li>
     <li>চালানোর কমান্ড: <span class="mono">node tests/advance.test.mjs</span> · E2E: emulator চালু করে <span class="mono">node tests/e2e-emulator/fixes-live-e2e.mjs</span></li>
+    <li>স্বাধীন রিভিউ প্রতিবেদন: <span class="mono">.openclaw/tmp/advance-review/a-adversarial.md</span>, <span class="mono">b-spec-code-match.md</span> (দুই এজেন্টের আসল কমান্ড ও আউটপুট সহ)</li>
+    <li>এই রিপোর্ট লাইভ: <span class="mono">https://iamatiq7.github.io/nextgen-fund/docs/advance-fix-report.html</span></li>
   </ol>
 </div>
 
