@@ -1,0 +1,49 @@
+=== Firestore security model: hand verification in the emulator (test project) ===
+timestamp : 2026-09-14T10:33:13.679Z
+project   : demo-nextgen-fund  (emulator only - the live database was never touched)
+rules     : C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund\firestore.rules
+rules sha256: d3b813c9b90b598232a2b2193434ea25ce88cf682384532e666e23b8e7e0c85a
+
+seeded: settings/bootstrap + settings/public + 2 users + 1 username + 1 payment + 1 registration + 1 audit row
+
+--- anonymous visitor (not signed in) ---
+PASS  anonymous CANNOT read another person's user document
+PASS  anonymous CANNOT list the users collection
+PASS  anonymous CANNOT list payments
+PASS  anonymous CANNOT list registrations
+PASS  anonymous CANNOT list the audit log
+PASS  anonymous CANNOT overwrite the public settings
+PASS  anonymous CAN read the public settings (by design, for the public dashboard)
+
+--- signed-in member (the curious-member case) ---
+PASS  member CAN read their own profile
+PASS  member CANNOT read another member's profile
+PASS  member CANNOT list all users
+PASS  member CANNOT list all payments
+PASS  member CAN read their own payment row
+PASS  member CANNOT read someone else's payment row
+PASS  member CANNOT self-approve a payment (write status=verified)
+PASS  member CAN submit a pending payment of their own
+PASS  member CANNOT submit a payment without the explicit verifiedAt/verifiedBy nulls (rules validate shape)
+PASS  member CANNOT promote themselves to admin
+PASS  member CANNOT change their own shares (money field frozen)
+PASS  member CANNOT delete the audit log
+PASS  member CANNOT write the public settings
+PASS  member CAN read the public settings
+PASS  member CAN read a username row (needed to sign in)
+
+--- the admin account (what the owner has) ---
+PASS  admin CAN list all users
+PASS  admin CAN list all payments
+PASS  admin CAN list registrations
+PASS  admin CAN read the audit log
+PASS  admin CAN update the public settings
+PASS  admin CAN filter payments by member (the admin console query)
+PASS  admin CAN delete an audit row (added in the reset revision; NOT deployed live)
+
+--- what is deliberately public (documented, not a leak) ---
+PASS  usernames/{name} is readable so the login form can map a username to an email
+PASS  settings/public is readable so the public dashboard can render
+
+checks: 31   pass: 31   fail: 0
+RESULT: ALL PASS
