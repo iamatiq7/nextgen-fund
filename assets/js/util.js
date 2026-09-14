@@ -103,6 +103,64 @@
   U.validUsername = function (u) { return /^[a-z0-9]([a-z0-9._-]{2,30})[a-z0-9]$/.test(u); };
   U.validEmail = function (e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e); };
 
+  /* ============================================================
+     Payment state — ONE implementation shared by the demo store and
+     the Firebase adapter, so both backends can never disagree and a
+     mistyped filter can never silently return every record.
+     ============================================================ */
+  U.PAY_STATUSES = ['pending', 'verified', 'rejected'];
+
+  /* Accepts 'pending' | {status:'pending'} | null/undefined.
+     Anything else is a programming error, so it fails loudly:
+     the old code ignored the whole filter when handed a plain string,
+     which is what made the admin dashboard count ALL payments as
+     pending ("Verify 6 submitted payment(s)" forever). */
+  U.normPayFilter = function (filter) {
+    var st = (filter && typeof filter === 'object') ? filter.status : filter;
+    if (st === undefined || st === null || st === '') return null;
+    if (U.PAY_STATUSES.indexOf(st) === -1) {
+      throw new Error('Unknown payment status filter: ' + st);
+    }
+    return st;
+  };
+
+  /* Single source of truth for every payment count / amount shown anywhere.
+     Accepts the raw payment records and returns bucketed counts + money. */
+  U.summarisePayments = function (list) {
+    var stats = {
+      counts: { pending: 0, verified: 0, rejected: 0, other: 0, all: 0 },
+      amounts: { pending: 0, verified: 0, rejected: 0, other: 0, all: 0 },
+      pendingOldest: null,
+      pendingMembers: 0,
+      duplicates: []
+    };
+    var seen = {}, pendMembers = {};
+    (list || []).forEach(function (p) {
+      var amt = Number(p.amount) || 0;
+      var st = U.PAY_STATUSES.indexOf(p && p.status) === -1 ? 'other' : p.status;
+      stats.counts[st] += 1; stats.amounts[st] += amt;
+      stats.counts.all += 1; stats.amounts.all += amt;
+      if (st === 'pending') {
+        var at = p.submittedAt || '';
+        if (at && (!stats.pendingOldest || at < stats.pendingOldest)) stats.pendingOldest = at;
+        pendMembers[p.memberId || p.memberName || '?'] = 1;
+      }
+      var ref = String((p && p.ref) || '').trim().toLowerCase();
+      if (ref) {
+        var key = (p.memberId || p.memberName || '?') + '|' + ref;
+        var g = seen[key] || (seen[key] = {
+          memberId: p.memberId, memberName: p.memberName, ref: p.ref,
+          count: 0, amount: 0, statuses: [], ids: []
+        });
+        g.count += 1; g.amount += amt; g.statuses.push(p.status); g.ids.push(p.id);
+      }
+    });
+    stats.pendingMembers = Object.keys(pendMembers).length;
+    Object.keys(seen).forEach(function (k) { if (seen[k].count > 1) stats.duplicates.push(seen[k]); });
+    stats.duplicates.sort(function (a, b) { return b.count - a.count; });
+    return stats;
+  };
+
   U.csv = function (rows) {
     return rows.map(function (r) {
       return r.map(function (c) {
@@ -118,6 +176,26 @@
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 400);
+  };
+
+  /* built-in self test (used by tests/pending.test.mjs) */
+  U.summarisePayments.selfCheck = function () {
+    var s = U.summarisePayments([
+      { id: 'a', status: 'pending', amount: 1000, memberId: 'm1', ref: 'X1', submittedAt: '2026-09-01T00:00:00Z' },
+      { id: 'b', status: 'pending', amount: 2000, memberId: 'm2', ref: 'X2', submittedAt: '2026-09-02T00:00:00Z' },
+      { id: 'c', status: 'verified', amount: 1000, memberId: 'm1', ref: 'X1' },
+      { id: 'd', status: 'rejected', amount: 3000, memberId: 'm3', ref: 'X3' },
+      { id: 'e', status: 'garbage', amount: 500, memberId: 'm4', ref: '' }
+    ]);
+    return s.counts.pending === 2 && s.amounts.pending === 3000 &&
+      s.counts.verified === 1 && s.counts.rejected === 1 && s.counts.other === 1 &&
+      s.counts.all === 5 && s.amounts.all === 7500 &&
+      s.duplicates.length === 1 && s.duplicates[0].ref === 'X1' &&
+      s.pendingOldest === '2026-09-01T00:00:00Z' && s.pendingMembers === 2 &&
+      U.normPayFilter('pending') === 'pending' &&
+      U.normPayFilter({ status: 'verified' }) === 'verified' &&
+      U.normPayFilter(null) === null &&
+      (function () { try { U.normPayFilter('nope'); return false; } catch (e) { return true; } })();
   };
 
   return U;

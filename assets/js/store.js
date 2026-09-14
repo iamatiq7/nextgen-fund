@@ -518,8 +518,17 @@
       if (Store.mode === 'firebase') return Store._fb.listPayments(filter);
       Store._requireAdmin();
       var list = Store._d().payments.slice();
-      if (filter && filter.status) list = list.filter(function (p) { return p.status === filter.status; });
+      var st = U.normPayFilter(filter);
+      if (st) list = list.filter(function (p) { return p.status === st; });
       return list.sort(function (a, b) { return (b.submittedAt || '').localeCompare(a.submittedAt || ''); });
+    },
+
+    /* Every admin surface reads its pending/verified/rejected numbers from
+       here, so no caller can drift from the raw records. */
+    paymentStats: async function () {
+      if (Store.mode === 'firebase') return Store._fb.paymentStats();
+      Store._requireAdmin();
+      return U.summarisePayments(Store._d().payments);
     },
 
     verifyPayment: async function (paymentId) {
@@ -558,11 +567,22 @@
       var amount = Number(data.amount);
       if (!(amount > 0)) { var e1 = new Error('Amount must be > 0.'); e1.code = 'invalid'; throw e1; }
       if (amount % 1000 !== 0 || amount < 1000) { var e1b = new Error('Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).'); e1b.code = 'invalid'; throw e1b; }
+      var method = METHODS.indexOf(data.method) >= 0 ? data.method : 'cash';
+      var ref = (data.ref || '').trim();
+      /* same rule as a member submission: one transaction ID = one payment row,
+         otherwise the same money is counted twice in the fund totals. */
+      if (ref) {
+        var dupRef = db.payments.find(function (x) {
+          return x.memberId === u.id && x.method === method && x.status !== 'rejected' &&
+            String(x.ref || '').toLowerCase() === ref.toLowerCase();
+        });
+        if (dupRef) { var e2d = new Error('This transaction ID is already recorded for this member.'); e2d.code = 'dup-ref'; throw e2d; }
+      }
       var p = {
         id: U.uid('p'), memberId: u.id, memberName: u.fullName,
         type: data.type === 'advance' ? 'advance' : 'due',
-        method: METHODS.indexOf(data.method) >= 0 ? data.method : 'cash',
-        amount: amount, date: data.date || U.todayISO(), ref: (data.ref || '').trim(),
+        method: method,
+        amount: amount, date: data.date || U.todayISO(), ref: ref,
         senderNumber: '', note: (data.note || '').trim() + ' (recorded by admin)',
         status: 'verified', submittedAt: new Date().toISOString(),
         verifiedAt: new Date().toISOString(), verifiedBy: Store._session.username, rejectReason: ''

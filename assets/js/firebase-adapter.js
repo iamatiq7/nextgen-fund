@@ -510,8 +510,15 @@
       listPayments: async function (filter) {
         await requireAdminUid();
         var list = await getAll('payments');
-        if (filter && filter.status) list = list.filter(function (p) { return p.status === filter.status; });
+        var st = U.normPayFilter(filter);
+        if (st) list = list.filter(function (p) { return p.status === st; });
         return list.sort(function (a, b) { return (b.submittedAt || '').localeCompare(a.submittedAt || ''); });
+      },
+
+      /* Same numbers as the demo backend — one shared implementation. */
+      paymentStats: async function () {
+        await requireAdminUid();
+        return U.summarisePayments(await getAll('payments'));
       },
 
       verifyPayment: async function (paymentId) {
@@ -541,10 +548,21 @@
         var amount = Number(data.amount);
         if (!(amount > 0)) throw err('invalid', 'Amount must be > 0.');
         if (amount % 1000 !== 0 || amount < 1000) throw err('invalid', 'Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).');
+        var method = S.METHODS.indexOf(data.method) >= 0 ? data.method : 'cash';
+        var ref = (data.ref || '').trim();
+        /* one transaction ID = one payment row, exactly like a member submission */
+        if (ref) {
+          var allPays = await getAll('payments');
+          var dupRef = allPays.filter(function (x) {
+            return x.memberId === data.memberId && x.method === method && x.status !== 'rejected' &&
+              String(x.ref || '').toLowerCase() === ref.toLowerCase();
+          })[0];
+          if (dupRef) throw err('dup-ref', 'This transaction ID is already recorded for this member.');
+        }
         var p = {
           memberId: data.memberId, memberName: u.fullName, type: data.type === 'advance' ? 'advance' : 'due',
-          method: S.METHODS.indexOf(data.method) >= 0 ? data.method : 'cash', amount: amount,
-          date: data.date || U.todayISO(), ref: (data.ref || '').trim(), senderNumber: '',
+          method: method, amount: amount,
+          date: data.date || U.todayISO(), ref: ref, senderNumber: '',
           note: ((data.note || '').trim() + ' (recorded by admin)').trim(),
           status: 'verified', submittedAt: new Date().toISOString(),
           verifiedAt: new Date().toISOString(), verifiedBy: me.user.username || 'admin', rejectReason: ''

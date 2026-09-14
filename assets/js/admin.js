@@ -10,21 +10,37 @@
   /* ---------------- overview ---------------- */
   async function tabOverview() {
     var regs = await S.listRegistrations('pending');
-    var pays = await S.listPayments('pending');
+    /* counts come from the shared summariser - never from a hand-made filter */
+    var stats = await S.paymentStats();
+    var rawStats = U.summarisePayments(await S.listPayments());
     var members = await S.listMembers();
     var snap = await S.getPublicSnapshot();
     var dueTotal = members.reduce(function (a, m) { return a + m.balance.due; }, 0);
+    var pendC = stats.counts.pending, pendA = stats.amounts.pending;
+    var membersPaid = members.reduce(function (a, m) { return a + (m.balance.paid || 0); }, 0);
+    var unassigned = rawStats.amounts.verified - membersPaid;
+    /* the numbers shown must equal a fresh scan of the raw records */
+    var statsMatch = rawStats.counts.pending === stats.counts.pending &&
+      rawStats.counts.verified === stats.counts.verified &&
+      rawStats.counts.rejected === stats.counts.rejected &&
+      rawStats.amounts.all === stats.amounts.all;
+    var nice = {
+      pc: stats.counts.pending, pa: U.fmtBDT(stats.amounts.pending),
+      vc: stats.counts.verified, va: U.fmtBDT(stats.amounts.verified),
+      rc: stats.counts.rejected, ra: U.fmtBDT(stats.amounts.rejected),
+      ac: stats.counts.all, aa: U.fmtBDT(stats.amounts.all)
+    };
     body.innerHTML =
       '<section class="grid stats" style="margin-bottom:16px">' +
       stat('adm.ovPendingRegs', regs.length, 'adm.ovPendingRegsSub', 'blue') +
-      stat('adm.ovPendingPays', pays.length, 'adm.ovPendingPaysSub', 'red') +
+      stat('adm.ovPendingPays', pendC, 'adm.ovPendAmt', 'red', { amt: U.fmtBDT(pendA) }) +
       stat('adm.ovMembers', members.length, '', 'green') +
       stat('adm.ovDueTotal', U.fmtBDT(dueTotal), 'adm.ovDueSub', 'yellow') +
       '</section>' +
       '<div class="grid two">' +
       '<div class="card"><h2>' + U.esc(L.t('adm.ovDoNext')) + '</h2><ul class="clean">' +
       '<li><a href="#" data-go="registrations">' + U.esc(L.t('adm.ovGoRegs', { n: regs.length })) + '</a></li>' +
-      '<li><a href="#" data-go="payments">' + U.esc(L.t('adm.ovGoPays', { n: pays.length })) + '</a></li>' +
+      '<li><a href="#" data-go="payments">' + U.esc(pendC ? L.t('adm.ovGoPays', { n: pendC }) : L.t('adm.ovGoPaysNone')) + '</a></li>' +
       '<li><a href="#" data-go="finance">' + U.esc(L.t('adm.ovGoFinance')) + '</a></li>' +
       '<li><a href="#" data-go="settings">' + U.esc(L.t('adm.ovGoSettings')) + '</a></li>' +
       '</ul></div>' +
@@ -34,13 +50,21 @@
       '<li>' + U.esc(L.t('adm.ovLossTotal')) + ' — <strong class="num">' + U.fmtBDT(snap.totalLoss) + '</strong></li>' +
       '<li>' + U.esc(L.t('adm.ovNet')) + ' — <strong class="num">' + U.fmtBDT(snap.net) + '</strong></li>' +
       '<li>' + U.esc(L.t('adm.ovMeeting')) + ' — <strong>' + (snap.nextMeeting ? U.fmtDate(snap.nextMeeting) : U.esc(L.t('adm.ovNotSet'))) + '</strong></li>' +
-      '</ul></div></div>';
+      '</ul></div></div>' +
+      '<div class="card" style="margin-top:16px"><h2>' + U.esc(L.t('adm.ovCheck')) + '</h2>' +
+      '<p class="num">' + U.esc(L.t('adm.ovCheckLine', nice)) + '</p>' +
+      '<p class="foot">' + U.esc(L.t('adm.ovCheckSum', { v: U.fmtBDT(rawStats.amounts.verified), d: U.fmtBDT(membersPaid), diff: U.fmtBDT(unassigned) })) + '</p>' +
+      '<p class="foot">' + U.esc(L.t('adm.ovCheckSumNote')) + '</p>' +
+      (rawStats.duplicates.length ? '<p class="foot">' + U.esc(L.t('adm.ovCheckDup', { n: rawStats.duplicates.length })) + '</p>' : '') +
+      (pendC ? '<p class="foot">' + U.esc(L.t('adm.ovCheckOldest', { d: U.fmtDate(rawStats.pendingOldest) })) + '</p>' : '') +
+      '<p style="margin-top:10px"><span class="chip ' + (statsMatch ? 'clear' : 'rejected') + '">' + U.esc(L.t(statsMatch ? 'adm.ovCheckOk' : 'adm.ovCheckBad')) + '</span></p>' +
+      '</div>';
     body.querySelectorAll('[data-go]').forEach(function (a) {
       a.addEventListener('click', function (ev) { ev.preventDefault(); selectTab(a.getAttribute('data-go')); });
     });
   }
-  function stat(k, v, s, tone) {
-    return '<div class="card stat' + (tone ? ' tone-' + tone : '') + '"><span class="k">' + U.esc(L.t(k)) + '</span><span class="v num">' + v + '</span>' + (s ? '<span class="s">' + U.esc(L.t(s)) + '</span>' : '') + '</div>';
+  function stat(k, v, s, tone, params) {
+    return '<div class="card stat' + (tone ? ' tone-' + tone : '') + '"><span class="k">' + U.esc(L.t(k)) + '</span><span class="v num">' + v + '</span>' + (s ? '<span class="s">' + U.esc(L.t(s, params || {})) + '</span>' : '') + '</div>';
   }
 
   /* ---------------- registrations ---------------- */
@@ -114,12 +138,27 @@
 
   /* ---------------- payments ---------------- */
   async function tabPayments() {
+    var stats = await S.paymentStats();
     var list = await S.listPayments(state.payFilter === 'all' ? null : { status: state.payFilter });
-    var counts = { pending: 0, verified: 0, rejected: 0 };
-    (await S.listPayments()).forEach(function (p) { counts[p.status] = (counts[p.status] || 0) + 1; });
+    var counts = stats.counts;
     var members = await S.listMembers();
+    var dupKeys = {};
+    stats.duplicates.forEach(function (d) { dupKeys[String(d.memberId || d.memberName || '?') + '|' + String(d.ref || '').trim().toLowerCase()] = true; });
 
     body.innerHTML =
+      '<div class="card" style="margin-bottom:12px"><h2>' + U.esc(L.t('adm.ovCheck')) + '</h2>' +
+      '<p class="num">' + U.esc(L.t('adm.ovCheckLine', {
+        pc: stats.counts.pending, pa: U.fmtBDT(stats.amounts.pending),
+        vc: stats.counts.verified, va: U.fmtBDT(stats.amounts.verified),
+        rc: stats.counts.rejected, ra: U.fmtBDT(stats.amounts.rejected),
+        ac: stats.counts.all, aa: U.fmtBDT(stats.amounts.all)
+      })) + '</p></div>' +
+      (stats.duplicates.length
+        ? '<div class="notice warn" style="margin-bottom:12px"><strong>' + U.esc(L.t('adm.pyDupTitle')) + '</strong><ul class="clean">' +
+          stats.duplicates.map(function (d) {
+            return '<li>' + U.esc(L.t('adm.pyDupLine', { name: d.memberName || d.memberId || '', ref: d.ref, n: d.count, amt: U.fmtBDT(d.amount) })) + '</li>';
+          }).join('') + '</ul><p class="foot">' + U.esc(L.t('adm.pyDupNote')) + '</p></div>'
+        : '') +
       '<div class="row-flex" style="margin-bottom:12px">' +
       ['pending', 'verified', 'rejected', 'all'].map(function (f) {
         var n = f === 'all' ? counts.pending + counts.verified + counts.rejected : (counts[f] || 0);
@@ -135,7 +174,7 @@
           return '<tr><td><strong>' + U.esc(p.memberName) + '</strong>' + (mem && mem.phone ? '<span class="sub"><br>' + U.esc(mem.phone) + '</span>' : '') + '</td><td>' + (p.type === 'advance' ? U.esc(L.t('st.advance')) : U.esc(L.t('st.due'))) + '</td>' +
             '<td>' + U.esc(C.methodLabel(p.method)) + '<span class="sub"><br>' + U.esc(p.senderNumber || '') + '</span></td>' +
             '<td class="n">' + U.fmtBDT(p.amount) + '</td><td class="num">' + U.fmtDate(p.date) + '</td>' +
-            '<td class="mono">' + U.esc(p.ref || '—') + '</td><td>' + C.chip(p.status) +
+            '<td class="mono">' + U.esc(p.ref || '—') + (dupKeys[String(p.memberId || p.memberName || '?') + '|' + String(p.ref || '').trim().toLowerCase()] ? ' <span class="chip pending">' + U.esc(L.t('adm.pyDupChip')) + '</span>' : '') + '</td><td>' + C.chip(p.status) +
             (p.status === 'verified' ? '<span class="sub"><br>' + U.esc(L.t('adm.pyBy', { b: p.verifiedBy || '' })) + '</span>' : '') + '</td>' +
             '<td>' + (p.status === 'pending'
               ? '<div class="btn-row"><button class="btn sm ok" data-v="' + p.id + '">' + U.esc(L.t('adm.pyVerify')) + '</button><button class="btn sm danger" data-r="' + p.id + '">' + U.esc(L.t('adm.pyReject')) + '</button></div>'
@@ -503,9 +542,9 @@
     });
 
     var regs = await S.listRegistrations('pending');
-    var pays = await S.listPayments('pending');
+    var bootStats = await S.paymentStats();
     document.getElementById('tab-reg-n').textContent = regs.length ? '(' + regs.length + ')' : '';
-    document.getElementById('tab-pay-n').textContent = pays.length ? '(' + pays.length + ')' : '';
+    document.getElementById('tab-pay-n').textContent = bootStats.counts.pending ? '(' + bootStats.counts.pending + ')' : '';
 
     selectTab('overview');
   }

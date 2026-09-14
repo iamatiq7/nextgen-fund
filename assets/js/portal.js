@@ -64,11 +64,8 @@
           (x.status === 'rejected' && x.rejectReason ? '<span class="sub"><br>' + U.esc(x.rejectReason) + '</span>' : '') + '</td></tr>';
       }).join('');
     }
-    set('history-foot', L.t('por.hFoot', {
-      n: payments.length,
-      v: payments.filter(function (x) { return x.status === 'verified'; }).length,
-      p: payments.filter(function (x) { return x.status === 'pending'; }).length
-    }));
+    var hStats = U.summarisePayments(payments);
+    set('history-foot', L.t('por.hFoot', { n: hStats.counts.all, v: hStats.counts.verified, p: hStats.counts.pending }));
     var lg = document.getElementById('pay-legend');
     if (lg) lg.textContent = L.t('pay.legend');
   }
