@@ -1,0 +1,30 @@
+=== 06. hosting / runtime facts behind this decision document ===
+source: docs/hosting-audit/nextgen-fund-where-it-runs.md (full report + raw evidence)
+measured: 2026-09-14, from Dhaka (public requests only)
+
+site            : https://nextgen-fund-2040.web.app/  (and nextgen-fund-2040.firebaseapp.com)
+platform        : Firebase Hosting (project nextgen-fund-2040, Google)
+evidence        : response header  vary: x-fh-requested-host, accept-encoding
+                  zone SOA of web.app -> ns1.googledomains.com
+                  TLS certificate  CN=web.app, issuer Google Trust Services (WR4)
+                  IP ownership: 199.36.158.100 in NET-172-217-0-0-1 (registrant GOOGLE)
+dns             : A 199.36.158.100   AAAA 2620:0:890::100
+edge            : x-served-by: cache-ccu830031-CCU  ->  Kolkata cache node;  x-cache: HIT
+tls             : TLSv1.3 / TLS_AES_128_GCM_SHA256 / ALPN h2 / alt-svc h3 advertised
+                  certificate valid 2026-07-20 -> 2026-10-18 (auto-managed)
+headers         : strict-transport-security: max-age=31556926; includeSubDomains; preload
+                  cache-control: HTML max-age=3600, assets max-age=600 (from firebase.json)
+                  content-encoding: br
+static          : setup.html 1461 bytes, sha256 6221c6e2... = repo HEAD byte-for-byte;
+                  all 11 referenced assets identical to the repo
+runtime         : no server-side runtime. The page loads the Firebase JS SDK v10.12.2 from
+                  www.gstatic.com and talks to identitytoolkit.googleapis.com (Auth) and
+                  firestore.googleapis.com (Firestore) inside the same project. 19 browser
+                  requests recorded, none to a third-party analytics or tracking host.
+deploy pipeline : repo github.com/iamatiq7/nextgen-fund -> GitHub Actions
+                  (.github/workflows/firebase-hosting.yml, service-account secret,
+                  channelId live) -> Firebase Hosting;  last-modified 2026-09-14 09:46:47 UTC
+second origin   : the same repository is also served by GitHub Pages
+                  (iamatiq7.github.io/nextgen-fund) - same bytes, different stack
+                  (server: GitHub.com, etag W/"6aa7c284-5b5", cache-control max-age=600)
+soft 404        : any unknown path returns 200 with index.html (rewrite ** -> /index.html)
