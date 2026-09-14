@@ -82,6 +82,7 @@
         var tF = 0, tR = 0, tL = 0;
         Object.keys(months).sort().forEach(function (k) { tF += months[k].funding; tR += months[k].revenue; tL += months[k].loss; });
         users.forEach(function (u) {
+          if (u.status !== 'active') return; /* suspended members are not counted in the pool */
           memberAdvance += computeBalance(u, pays.filter(function (p) { return p.memberId === u.id; })).advance;
         });
         await fsMod.setDoc(docIn('settings', 'public'), {
@@ -109,7 +110,10 @@
     /* ---- balance calc (shared formula) ---- */
     function computeBalance(user, payments) {
       var nowMonth = U.currentMonth();
-      var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
+      var perMonth = Number(user.monthlyDue) || 0;
+      var months = U.monthsInclusive(user.joinMonth, nowMonth);
+      if (!isFinite(months) || months < 1) months = 1; /* guard a malformed joinMonth */
+      var expected = months * perMonth;
       var paidDue = 0, paidAdvance = 0, pendingDue = 0, pendingAdvance = 0;
       (payments || []).forEach(function (p) {
         var amt = Number(p.amount) || 0;
@@ -127,7 +131,6 @@
       var pendingReceived = pendingDue + pendingAdvance;
       var dueVerified = Math.max(0, expected - received);
       var advance = Math.max(0, received - expected);
-      var perMonth = Number(user.monthlyDue) || 0;
       /* A submitted (pending) payment already reduces the outstanding due;
          it only enters the fund total after the admin approves it. */
       return {
@@ -137,7 +140,7 @@
         advance: advance,
         advanceMonths: perMonth > 0 ? Math.floor(advance / perMonth) : 0,
         pending: pendingReceived,
-        pendingDue: pendingDue,
+        pendingDue: pendingReceived - Math.max(0, pendingReceived - dueVerified),
         pendingAdvance: Math.max(0, pendingReceived - dueVerified),
         due: Math.max(0, expected - received - pendingReceived),
         dueVerified: dueVerified

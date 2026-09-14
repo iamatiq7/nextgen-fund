@@ -55,11 +55,18 @@ Admin → Finance  adds monthly revenue/loss and funding entries + the meeting d
    → the public dashboard chart/table/stat cards update instantly (no redeploy)
 ```
 
-**How "due" is calculated** (shown on every member card):
-`months from join month to this month × monthly due − verified due payments`.
-Members may hold several **shares** (× monthly per-share amount). Payments of type
-*advance* build an advance balance and never reduce the due figure — useful when members
-pay ahead.
+**How "due" and "advance" are calculated** (shown on every member card):
+
+```
+expected = months from join month to this month x monthly due
+paid     = all verified payments (due + advance types)
+advance  = max(0, paid - expected)                  # money paid beyond what is billed so far
+due      = max(0, expected - paid - pending)        # pending = submitted, awaiting admin approval
+```
+
+Members may hold several **shares** (x monthly per-share amount). Every verified taka counts as
+money received: whatever goes beyond the amount billed so far stays as the member's **advance**
+credit and is applied automatically to future months. Full rule: `docs/advance-rule-spec.md`.
 
 ## Project layout
 
@@ -77,7 +84,7 @@ pay ahead.
 │   │   └── portal.js · admin.js · setup.js
 │   └── img/favicon.svg
 ├── firestore.rules          Firestore security rules (paste into Firebase)
-├── tests/store.test.mjs     end-to-end test suite — `node tests/store.test.mjs` (53 checks)
+├── tests/store.test.mjs     end-to-end test suite — `node tests/store.test.mjs` (60 checks)
 └── docs/                    HANDOVER.md · FIREBASE_SETUP.md · DEPLOY_GITHUB.md
 ```
 
@@ -92,31 +99,11 @@ pay ahead.
   Members / Payments which is the supported way once live. Regenerate `seed-data.js` from
   the spreadsheet with `.openclaw/tmp/make_seed.py` + `gen_seed_js.py` if needed.
 
-## Access control & credit rule (v3, 2026-09-10)
-
-- **Dashboard requires login** - logged-out visitors are sent to the login page.
-- **Members** see Dashboard + My Fund and can never open the admin panel
-  (a direct URL bounces them back). **Admins** see Dashboard + Admin - the
-  My Fund tab and the footer Admin/Setup links are hidden from everyone else.
-- **Credits are only accepted in whole multiples of 1,000 tk** (1x1000,
-  2x1000, 3x1000, ...). 100/500/1500 tk etc. are rejected with a clear
-  message - enforced in the data store, in the UI, and (for Firebase live
-  mode) in `firestore.rules`.
-
-## Deploy (GitHub Pages)
-
-1. Commit the changes: `git add -A && git commit -m "v3: access control + credit rule"`
-2. Push: `git push origin main`
-3. Pages rebuilds automatically in about 1 minute (https://iamatiq7.github.io/nextgen-fund/).
-4. Rollback: `git revert <commit>` + push, or restore a previous file state and redeploy.
-
 ## Testing
 
 ```bash
 node tests/store.test.mjs
 ```
-
-Also: `node tests/access.test.mjs` (credit-rule matrix, 12 assertions) and `node tests/reseed.harness.mjs` (13 assertions).
 
 Covers: registration with documents → admin accept/reject → login rules → due/advance
 payments via 5+ methods → verification → balance maths → access isolation → password

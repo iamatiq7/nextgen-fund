@@ -23,7 +23,7 @@
     var dueSub = b.due > 0
       ? L.t('por.dueSub', { e: U.fmtBDT(b.expected), p: U.fmtBDT((b.paid || 0) + (b.pending || 0)) })
       : (b.pendingDue > 0 ? L.t('por.dueCovered') : L.t('por.dueOk'));
-    if ((b.pendingDue || 0) > 0) dueSub += ' ' + L.t('por.pendingDue', { amt: U.fmtBDT(b.pendingDue) });
+    if ((b.pending || 0) > 0) dueSub += ' ' + L.t('por.pendingDue', { amt: U.fmtBDT(b.pending) });
     set('bal-due-sub', dueSub);
     document.getElementById('bal-due-card').className = 'card stat ' + (b.due > 0 ? 'tone-red' : 'tone-green');
     set('bal-advance', U.fmtBDT(b.advance));

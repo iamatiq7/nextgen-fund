@@ -98,7 +98,26 @@ await Store.submitPayment({ type: 'due', method: 'nagad', amount: 3000, date: '2
 const pendBal = (await Store.getMyAccount()).balance;
 step('pending 3,000 -> due=৳' + pendBal.due + ' pendingDue=৳' + pendBal.pendingDue + ' pendingAdvance=৳' + pendBal.pendingAdvance + ' advance=৳' + pendBal.advance);
 check('B4 pending money does not create verified advance yet', pendBal.advance === 2000, 'advance=' + pendBal.advance);
+/* This member is already ahead (verified 3,000 vs billed 1,000), so nothing is outstanding:
+   the whole pending amount is future credit and none of it "covers a due". */
 check('B5 the excess of a pending payment is flagged as future advance', pendBal.pendingAdvance === 3000, 'pendingAdvance=' + pendBal.pendingAdvance);
+check('B5b the pending buckets never double-count', pendBal.pendingDue + pendBal.pendingAdvance === pendBal.pending, 'due=' + pendBal.pendingDue + ' adv=' + pendBal.pendingAdvance + ' total=' + pendBal.pending);
+check('B5c nothing is claimed to cover a due that does not exist', pendBal.pendingDue === 0, 'pendingDue=' + pendBal.pendingDue);
+
+console.log('== STEP 8b: reviewer case - a member who owes 1,000 submits 3,000 as pending ==');
+await Store.login('admin', 'nextgen2026');
+await Store.register({ fullName: 'Split Case', username: 'adv.split', email: 'adv.split@nextgen.local', phone: '01711777777', shares: 1, password: 'AdvPass1234', docs: [] });
+const regS = (await Store.listRegistrations()).filter((r) => r.username === 'adv.split')[0];
+await Store.decideRegistration(regS.id, true);
+const meS = (await Store.listMembers()).filter((m) => m.username === 'adv.split')[0];
+await Store.logout();
+await Store.login('adv.split', 'AdvPass1234');
+await Store.submitPayment({ type: 'due', method: 'bkash', amount: 3000, date: '2026-09-12', ref: 'ADV-SPLIT' });
+const split = (await Store.getMyAccount()).balance;
+step('owes 1,000, submitted 3,000 pending -> pending=' + split.pending + ' pendingDue=' + split.pendingDue + ' pendingAdvance=' + split.pendingAdvance);
+check('B5d pending split: 1,000 covers the due, 2,000 is advance-to-be', split.pendingDue === 1000 && split.pendingAdvance === 2000, JSON.stringify(split));
+check('B5e invariant: pendingDue + pendingAdvance === pending', split.pendingDue + split.pendingAdvance === split.pending);
+check('B5f the due is covered immediately by the pending submission', split.due === 0);
 
 console.log('== STEP 9: rejected payment recalculation (refund / cancellation path) ==');
 await Store.login('admin', 'nextgen2026');
@@ -146,6 +165,41 @@ step('fund snapshot -> deposits=৳' + snapshot.memberDeposits + ' advance=৳' 
 const pkBal = (await Store.getMemberDetail(PK)).balance;
 const me2Bal = (await Store.getMemberDetail(me2.id)).balance;
 check('B12 fund totals expose the advance pool too', snapshot.memberAdvance === pkBal.advance + me2Bal.advance, 'memberAdvance=' + snapshot.memberAdvance + ' = ' + pkBal.advance + ' + ' + me2Bal.advance);
+
+console.log('== STEP 13: review-driven guards (malformed data, suspended members, dateless entries) ==');
+await Store.login('admin', 'nextgen2026');
+const dbx = Store._d();
+const victim = dbx.users.filter((u) => u.username === 'adv.case')[0];
+const keepJoin = victim.joinMonth;
+victim.joinMonth = 'junk';
+Store._save();
+const bj = (await Store.getMemberDetail(PK)).balance;
+step('joinMonth="junk" -> expected=' + bj.expected + ' advance=' + bj.advance + ' due=' + bj.due);
+check('B13 a malformed join month cannot produce NaN balances', isFinite(bj.expected) && isFinite(bj.advance) && isFinite(bj.due) && bj.expected >= 0);
+victim.joinMonth = keepJoin;
+Store._save();
+const bj2 = (await Store.getMemberDetail(PK)).balance;
+check('B14 the original balances return once the data is fixed', bj2.expected === bj.expected && bj2.advance === bj.advance);
+
+/* dateless verified payment must not desync the deposit total from the month rows */
+const snapBefore = await Store.getPublicSnapshot();
+await Store.addManualPayment({ memberId: PK, type: 'due', method: 'cash', amount: 1000, date: '', ref: 'ADV-NODATE' });
+const snapAfter = await Store.getPublicSnapshot();
+const monthSum = snapAfter.months.reduce((a, m) => a + (m.deposits || 0), 0);
+step('dateless payment added -> memberDeposits=' + snapAfter.memberDeposits + ' month-row sum=' + monthSum);
+check('B15 memberDeposits always equals the sum of the month rows', snapAfter.memberDeposits === monthSum, 'deposits=' + snapAfter.memberDeposits + ' rows=' + monthSum);
+check('B16 a dateless payment still counts as money received (paid grows)', (await Store.getMemberDetail(PK)).balance.paid === bj2.paid + 1000);
+
+/* suspended members drop out of the advance pool */
+const suspendBefore = (await Store.getPublicSnapshot()).memberAdvance;
+const me3 = (await Store.listMembers()).filter((m) => m.username === 'adv.monthend')[0];
+await Store.updateMember(me3.id, { status: 'suspended' });
+const suspendAfter = await Store.getPublicSnapshot();
+step('suspend the 2,000-advance member -> memberAdvance ' + suspendBefore + ' -> ' + suspendAfter.memberAdvance + ' (memberCount ' + snapAfter.memberCount + ' -> ' + suspendAfter.memberCount + ')');
+check('B17 a suspended member is not counted in the advance pool', suspendAfter.memberAdvance === suspendBefore - 2000, 'advance pool=' + suspendAfter.memberAdvance);
+await Store.updateMember(me3.id, { status: 'active' });
+const restored = (await Store.getPublicSnapshot()).memberAdvance;
+check('B18 re-activating puts the credit back in the pool', restored === suspendBefore, 'pool=' + restored);
 
 console.log(fails === 0 ? 'ADVANCE TESTS: ALL PASS (' + n + ' checks)' : 'ADVANCE TESTS: ' + fails + ' FAILURES of ' + n);
 process.exit(fails === 0 ? 0 : 1);

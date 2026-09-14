@@ -137,7 +137,10 @@
 
   /* =============== shared calculations =============== */
   function computeBalance(user, payments, nowMonth) {
-    var expected = U.monthsInclusive(user.joinMonth, nowMonth) * (Number(user.monthlyDue) || 0);
+    var perMonth = Number(user.monthlyDue) || 0;
+    var months = U.monthsInclusive(user.joinMonth, nowMonth);
+    if (!isFinite(months) || months < 1) months = 1; /* guard a malformed joinMonth */
+    var expected = months * perMonth;
     var paidDue = 0, paidAdvance = 0, pendingDue = 0, pendingAdvance = 0;
     (payments || []).forEach(function (p) {
       var amt = Number(p.amount) || 0;
@@ -155,7 +158,6 @@
     var pendingReceived = pendingDue + pendingAdvance;
     var dueVerified = Math.max(0, expected - received);
     var advance = Math.max(0, received - expected);
-    var perMonth = Number(user.monthlyDue) || 0;
     /* A submitted (pending) payment already reduces the outstanding due;
        it only enters the fund total after the admin approves it. */
     return {
@@ -165,7 +167,7 @@
       advance: advance,
       advanceMonths: perMonth > 0 ? Math.floor(advance / perMonth) : 0,
       pending: pendingReceived,
-      pendingDue: pendingDue,
+      pendingDue: pendingReceived - Math.max(0, pendingReceived - dueVerified),
       pendingAdvance: Math.max(0, pendingReceived - dueVerified),
       due: Math.max(0, expected - received - pendingReceived),
       dueVerified: dueVerified
@@ -183,9 +185,9 @@
     var memberDeposits = 0;
     (db.payments || []).forEach(function (p) {
       if (p.status !== 'verified') return;
-      memberDeposits += Number(p.amount) || 0;
       var mk = String(p.date || '').slice(0, 7);
-      if (!mk) return;
+      if (!mk) return; /* a dateless payment cannot be placed in a month row */
+      memberDeposits += Number(p.amount) || 0;
       var mm = months[mk] || (months[mk] = { month: mk, funding: 0, revenue: 0, loss: 0, deposits: 0 });
       mm.funding += Number(p.amount) || 0;
       mm.deposits = (mm.deposits || 0) + (Number(p.amount) || 0);
@@ -196,7 +198,7 @@
     });
     var memberCount = (db.users || []).filter(function (u) { return u.role === 'member' && u.status === 'active'; }).length;
     var memberAdvance = 0, pendingDue = 0;
-    (db.users || []).filter(function (u) { return u.role === 'member'; }).forEach(function (u) {
+    (db.users || []).filter(function (u) { return u.role === 'member' && u.status === 'active'; }).forEach(function (u) {
       var mine = (db.payments || []).filter(function (p) { return p.memberId === u.id; });
       var bal = computeBalance(u, mine, U.currentMonth());
       memberAdvance += bal.advance;
