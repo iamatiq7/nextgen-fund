@@ -1,2 +1,0 @@
-wipe 2026-09-14
-# exact first line required by the guard step in .github/workflows/db-reset.yml
