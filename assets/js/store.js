@@ -424,6 +424,35 @@
       row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';
       save(db); return true;
     },
+    /* The Drive uploader is independent of the data store: it always talks to the endpoint,
+       in demo mode as well, so the same code path can be tested and used. */
+    uploadToDrive: async function (username, docs) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.uploadToDrive) return Store._fb.uploadToDrive(username, docs);
+      var endpoint = await Store.getDriveEndpoint();
+      if (!endpoint) return { ok: false, reason: 'drive-endpoint-missing' };
+      function ext(mime, name) {
+        var m = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+        if (m[mime]) return m[mime];
+        var x = String(name || '').match(/\.([a-z0-9]{2,4})$/i);
+        return x ? x[1].toLowerCase() : 'jpg';
+      }
+      var files = [];
+      for (var i = 0; i < docs.length; i += 1) {
+        var f = docs[i].file;
+        var b64 = await new Promise(function (res, rej) {
+          var r = new FileReader();
+          r.onload = function () { res(String(r.result).split(',')[1] || ''); };
+          r.onerror = rej;
+          r.readAsDataURL(f);
+        });
+        files.push({ name: docs[i].key + '.' + ext(f.type, f.name), mime: f.type || 'image/jpeg', bytes: f.size, base64: b64 });
+      }
+      var res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ username: String(username || '').toLowerCase(), files: files }) });
+      if (!res.ok) return { ok: false, reason: 'drive-http-' + res.status };
+      var out = await res.json();
+      if (!out || out.ok === false) return { ok: false, reason: (out && out.error) || 'drive-error' };
+      return { ok: true, folderId: out.folderId, folderUrl: out.folderUrl, files: out.files || [] };
+    },
     getDriveEndpoint: async function () {
       if (Store.mode === 'firebase') return Store._fb.getDriveEndpoint();
       return load().driveEndpoint || '';
