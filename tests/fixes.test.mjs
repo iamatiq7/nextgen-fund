@@ -3,6 +3,11 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const Store = require('../assets/js/store.js');
 
+const tinyDocs = ['nid-front', 'nid-back', 'profile-picture', 'nominee-passport-photo'].map((k) => ({
+  kind: k, name: k + '.png', mime: 'image/png', size: 96,
+  data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+}));
+
 let fails = 0;
 function check(name, cond, extra) { console.log((cond ? 'PASS' : 'FAIL') + ' ' + name + (extra ? ' | ' + extra : '')); if (!cond) fails++; }
 async function expectThrow(name, fn, code) {
@@ -14,7 +19,7 @@ Store._demoReset();
 await Store.init();
 
 /* ---- member: register -> approve ---- */
-await Store.register({ fullName: 'Fix Test Member', username: 'fix.test', email: 'fix.test@nextgen.local', phone: '01711111111', occupation: '', nominee: '', nomineeAddress: 'Test address', joinMonth: '2026-01', address: '', shares: 1, password: 'FixPass1234', docs: [] });
+await Store.register({ fullName: 'Fix Test Member', username: 'fix.test', email: 'fix.test@nextgen.local', phone: '01711111111', occupation: '', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: '2026-01', address: '', shares: 1, password: 'FixPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 await Store.login('admin', 'nextgen2026');
 const regs = await Store.listRegistrations();
 const reg = regs.find((r) => r.username === 'fix.test');

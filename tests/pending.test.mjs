@@ -13,6 +13,11 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const Store = require('../assets/js/store.js');
+
+const tinyDocs = ['nid-front', 'nid-back', 'profile-picture', 'nominee-passport-photo'].map((k) => ({
+  kind: k, name: k + '.png', mime: 'image/png', size: 96,
+  data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+}));
 const U = require('../assets/js/util.js');
 
 let fails = 0, n = 0;
@@ -43,7 +48,7 @@ step('baseline: pending ' + base.counts.pending + ' (' + base.amounts.pending + 
 check('P2 the baseline book has no pending payments to start with', base.counts.pending === 0 && base.amounts.pending === 0);
 
 console.log('== STEP 3: reproduce the reported bug with the old filter ==');
-await Store.register({ fullName: 'Pending Case', username: 'pend.case', email: 'pend.case@nextgen.local', phone: '01711000001', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'PendPass1234', docs: [] });
+await Store.register({ fullName: 'Pending Case', username: 'pend.case', email: 'pend.case@nextgen.local', phone: '01711000001', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'PendPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 const reg = (await Store.listRegistrations()).filter((r) => r.username === 'pend.case')[0];
 await Store.decideRegistration(reg.id, true);
 const member = (await Store.listMembers()).filter((m) => m.username === 'pend.case')[0];
