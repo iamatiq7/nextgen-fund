@@ -41,3 +41,15 @@
 5. পরীক্ষা: একটি আবেদন Submit করে Drive-এ `NextGen Fund members/<username>/` ফোল্ডারে চারটি ফাইল দেখুন।
 
 URL না বসানো থাকলে সাইট Firebase Storage-এ আপলোড করার চেষ্টা করে (কোটা লাগে) — কিন্তু ডকুমেন্ট হারায় না।
+
+
+## ৩. যাচাই ও দুটি জরুরি কথা
+
+**প্রমাণ:** `tools/drive-upload/drive-e2e-proof.txt` — একটি নকল (mock) Apps Script endpoint দিয়ে বাস্তব ব্রাউজারে পরীক্ষা:
+৯/৯ চেক পাস। endpoint ঠিক যা পেয়েছে: ফোল্ডার `drive.test`, এবং ঠিক চারটি ফাইল —
+`nid-front.jpg`, `nid-back.jpg`, `profile-picture.png`, `nominee-passport-photo.jpg` (সবই বৈধ base64, সঠিক mime), আর অ্যাপDrive-এর ফিরতি লিংক রেকর্ড করেছে। এই পরীক্ষা নিজে চালাতে:
+`node tools/drive-upload/drive-e2e.mjs <repo> <out.txt>`
+
+**১) CORS:** Apps Script অবশ্যই **Who has access: Anyone** দিয়ে ডিপ্লয় করতে হবে, নইলে ব্রাউজার ফাইল পাঠালেও উত্তর পড়তে পারবে না (পরীক্ষায় ঠিক এই কারণেই প্রথমে দুটি চেক আটকেছিল)। আপলোডে "Failed to fetch" এলে ডিপ্লয়মেন্টটি আবার Anyone দিয়ে করুন।
+
+**২) endpoint বসানোর জায়গা:** অ্যাডমিন প্যানেল → **Settings → "সদস্যের ডকুমেন্ট (Google Drive)"** ঘরে /exec URL বসিয়ে Save করুন — কোড এডিট বা নতুন ডিপ্লয় লাগবে না। খালি রাখলে Firebase Storage-এ fallback করবে।
