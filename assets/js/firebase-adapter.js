@@ -101,14 +101,19 @@ function withTimeout(p, ms, tag) {
     async function saveDriveEndpoint(url) {
       var clean = String(url || '').trim();
       if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('The endpoint must start with https://');
+      var stored = 'settings/drive';
       try {
         await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
       } catch (e) {
-        if (String(e && e.code) === 'permission-denied') throw err('denied', 'Only the fund admin account can change the Drive folder setting (deployed rules allow the admin only). The value was saved inside the main settings as a fallback.');
-        throw err('denied', (e && e.message) || 'Could not save the Drive endpoint.');
+        if (String(e && e.code) !== 'permission-denied') throw err('denied', (e && e.message) || 'Could not save the Drive endpoint.');
+        /* The dedicated document is not writable with the deployed rules (the release needs the
+           firebaserules.releases.create permission). The settings form also mirrors this value into
+           settings/public, which the admin CAN write, and getDriveEndpoint() reads that mirror - so
+           the endpoint works today. No error is shown: the save really did happen. */
+        stored = 'settings/public (mirror)';
       }
       driveEndpointCache = clean;
-      return clean;
+      return { ok: true, endpoint: clean, storedIn: stored };
     }
 
     async function uploadToDrive(username, docs) {
