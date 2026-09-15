@@ -74,6 +74,19 @@
   async function run() {
     document.title = L.t('idx.title');
     await C.boot('index.html');
+  /* A signed-in person (member or admin) never sees the join/payment-channel blocks:
+     they already have an account. Guests still see them, and they disappear the moment
+     somebody signs in. */
+  try {
+    var sess = await S.getSession();
+    if (sess) {
+      ['sec-member', 'sec-methods'].forEach(function (cls) {
+        Array.prototype.forEach.call(document.getElementsByClassName(cls), function (el) {
+          el.classList.add('hide');
+        });
+      });
+    }
+  } catch (e) { /* a failed session read must never break the public dashboard */ }
     var sess = await S.getSession();
     if (!sess) { location.replace('login.html?next=index.html'); return; }
     document.getElementById('mode-badge').innerHTML = C.modeBadge();

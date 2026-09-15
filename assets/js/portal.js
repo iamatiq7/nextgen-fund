@@ -210,3 +210,69 @@
     if (el) { el.classList.remove('hide'); el.innerHTML = '<div class="notice bad">' + U.esc(L.t('por.loadErr', { m: e.message })) + '</div>'; }
   });
 })();
+
+/* ---- nominee change request: a member asks, an admin approves (added 2026-09-15) ---- */
+(function () {
+  'use strict';
+  var S = window.NGFStore, C = window.NGFCOMMON, L = window.NGFLANG, U = window.NGFUtil;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return U.esc(s); }
+
+  async function init() {
+    var box = el('nom-body');
+    if (!box) return;
+    try {
+      await S.init();
+      var s = await S.getSession();
+      if (!s) { box.innerHTML = ''; return; }
+      var acc = await S.getMyAccount().catch(function () { return null; });
+      var profile = (acc && acc.profile) || {};
+      var mine = (await S.listNomineeRequests()) || [];
+      mine = mine.filter(function (r) { return r.memberId === (s.uid || profile.id || ''); });
+      var latest = mine.slice().sort(function (a, b) { return String(b.requestedAt).localeCompare(String(a.requestedAt)); })[0];
+
+      var status = '';
+      if (latest && latest.status === 'pending') status = '<p class="notice">' + esc(L.t('por.nomPending')) + '</p>';
+      else if (latest && latest.status === 'approved') status = '<p class="notice ok">' + esc(L.t('por.nomApproved', { d: U.fmtDate(latest.decidedAt) })) + '</p>';
+      else if (latest && latest.status === 'rejected') status = '<p class="notice bad">' + esc(L.t('por.nomRejected', { d: U.fmtDate(latest.decidedAt) })) + '</p>';
+      else status = '<p class="footnote">' + esc(L.t('por.nomNone')) + '</p>';
+
+      var canAsk = !latest || latest.status !== 'pending';
+      box.innerHTML =
+        '<p><strong>' + esc(L.t('por.nomCurrent')) + ':</strong> ' + esc(profile.nominee || '—') + '</p>' + status +
+        (canAsk ? (
+          '<div class="grid two" style="margin-top:8px">' +
+          '<label class="f"><span>' + esc(L.t('por.nomNew')) + '</span><input type="text" id="nom-name" maxlength="80"></label>' +
+          '<label class="f"><span>' + esc(L.t('por.nomRelation')) + '</span><input type="text" id="nom-rel" maxlength="40"></label>' +
+          '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('por.nomReason')) + '</span><input type="text" id="nom-why" maxlength="160"></label>' +
+          '</div><div class="btn-row"><button class="btn" id="nom-send">' + esc(L.t('por.nomSubmit')) + '</button></div>' +
+          '<p class="err" id="nom-err" role="alert"></p>'
+        ) : '');
+
+      var btn = el('nom-send');
+      if (btn) btn.onclick = async function () {
+        var name = (el('nom-name').value || '').trim();
+        var errBox = el('nom-err');
+        errBox.textContent = '';
+        if (name.length < 2) { errBox.textContent = L.t('v.required') || 'Name is required'; return; }
+        btn.disabled = true;
+        try {
+          await S.createNomineeRequest({
+            memberId: s.uid || profile.id || '', memberName: s.fullName, username: s.username || profile.username || '',
+            currentNominee: profile.nominee || '', requestedNominee: name,
+            relation: (el('nom-rel').value || '').trim(), reason: (el('nom-why').value || '').trim()
+          });
+          C.toast(L.t('por.nomPending'));
+          init();
+        } catch (e) {
+          errBox.textContent = (e && e.message === 'nominee-required') ? L.t('v.required') : String(e && e.message || e);
+          btn.disabled = false;
+        }
+      };
+    } catch (e) {
+      box.innerHTML = '<p class="footnote">' + esc(String(e && e.message || e)) + '</p>';
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 300); });
+  else setTimeout(init, 300);
+})();

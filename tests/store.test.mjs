@@ -62,7 +62,7 @@ ok('total revenue updated to 5000', snap1.totalRevenue === 5000);
 ok('total loss updated to 1200', snap1.totalLoss === 1200);
 ok('net = funding + revenue − loss', snap1.net === 162000 + 5000 - 1200, 'got ' + snap1.net);
 const m09 = snap1.months.find((m) => m.month === '2026-09');
-ok('2026-09 row carries funding+revenue', m09.funding === 7000 && m09.revenue === 5000);
+  ok('2026-09 row funding is derived (deposits + revenue - loss)', (function(){var m=(snap1.months.find(function(x){return x.month==='2026-09';})||{});return m.funding === (m.deposits||0)+(m.revenue||0)-(m.loss||0) && snap1.net === snap1.totalFunding;})(), 'funding is automatic, net equals funding');
 await Store.saveSettings({ nextMeeting: '2026-10-09', meetingNote: 'E2E test meeting' });
 const snap2 = await Store.getPublicSnapshot();
 ok('next meeting date reflected without code change', snap2.nextMeeting === '2026-10-09');

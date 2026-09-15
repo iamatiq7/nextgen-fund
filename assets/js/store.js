@@ -177,6 +177,9 @@
   function snapshotFromData(db) {
     var months = {};
     (db.finance || []).forEach(function (f) {
+      /* funding is never typed by hand now: legacy 'funding' rows are ignored so they cannot
+         double count against the member deposits below. */
+      if (f.kind === 'funding') return;
       var m = months[f.month] || (months[f.month] = { month: f.month, funding: 0, revenue: 0, loss: 0, deposits: 0 });
       m[f.kind] += Number(f.amount) || 0;
     });
@@ -194,6 +197,9 @@
     });
     var totalFunding = 0, totalRevenue = 0, totalLoss = 0;
     Object.keys(months).sort().forEach(function (k) {
+      /* funding = verified member money + revenue - loss, all automatic */
+      months[k].funding = (months[k].deposits || 0) + (months[k].revenue || 0) - (months[k].loss || 0);
+      months[k].net = months[k].funding;
       totalFunding += months[k].funding; totalRevenue += months[k].revenue; totalLoss += months[k].loss;
     });
     var memberCount = (db.users || []).filter(function (u) { return u.role === 'member' && u.status === 'active'; }).length;
@@ -209,7 +215,7 @@
       fundName: db.settings.fundName, currency: db.settings.currency || 'BDT',
       nextMeeting: db.settings.nextMeeting, meetingNote: db.settings.meetingNote,
       totalFunding: totalFunding, totalRevenue: totalRevenue, totalLoss: totalLoss,
-      net: totalFunding + totalRevenue - totalLoss,
+      net: totalFunding, /* funding already nets revenue and loss */
       months: list, memberCount: memberCount,
       memberDeposits: memberDeposits, memberAdvance: memberAdvance, pendingDue: pendingDue,
       monthlyPerShare: db.settings.monthlyPerShare,
@@ -393,6 +399,31 @@
       };
     },
 
+    createNomineeRequest: async function (data) {
+      if (Store.mode === 'firebase') return Store._fb.createNomineeRequest(data);
+      var db = load();
+      db.nomineeRequests = db.nomineeRequests || [];
+      var row = { id: 'nr-' + Date.now().toString(36), memberId: data.memberId || 'demo', status: 'pending', requestedAt: new Date().toISOString(), memberName: data.memberName || '', username: data.username || '', currentNominee: data.currentNominee || '', requestedNominee: data.requestedNominee || '', relation: data.relation || '', reason: data.reason || '' };
+      if (!row.requestedNominee) throw new Error('nominee-required');
+      db.nomineeRequests.push(row); save(db); return row;
+    },
+    listNomineeRequests: async function (status) {
+      if (Store.mode === 'firebase') return Store._fb.listNomineeRequests(status);
+      var rows = (load().nomineeRequests || []).slice();
+      return status ? rows.filter(function (r) { return r.status === status; }) : rows;
+    },
+    decideNomineeRequest: async function (id, approve, byName) {
+      if (Store.mode === 'firebase') return Store._fb.decideNomineeRequest(id, approve, byName);
+      var db = load();
+      var row = (db.nomineeRequests || []).filter(function (r) { return r.id === id; })[0];
+      if (!row) throw new Error('not-found');
+      if (approve) {
+        (db.users || []).forEach(function (u) { if (u.id === row.memberId) { u.nominee = row.requestedNominee; u.nomineeUpdatedAt = new Date().toISOString(); } });
+      }
+      row.status = approve ? 'approved' : 'rejected';
+      row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';
+      save(db); return true;
+    },
     getMyPayments: async function () {
       if (Store.mode === 'firebase') return Store._fb.getMyPayments();
       var s = Store._requireLogin();

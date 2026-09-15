@@ -306,7 +306,7 @@
       '<div class="card"><h2>' + U.esc(L.t('adm.fiAdd')) + '</h2><form id="fin-form" novalidate>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.fiKind')) + '</span><select id="fi-kind">' +
-      '<option value="funding">' + U.esc(L.t('adm.fiKFunding')) + '</option>' +
+      
       '<option value="revenue">' + U.esc(L.t('adm.fiKRevenue')) + '</option>' +
       '<option value="loss">' + U.esc(L.t('adm.fiKLoss')) + '</option></select></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.fiMonth')) + '</span><input type="month" id="fi-month" value="' + U.currentMonth() + '"></label>' +
@@ -369,7 +369,7 @@
     var modeNotice = C.isDemo() ?
       ('<div class="notice">' + U.esc(L.t('adm.demoNotice')) +
       ' <a href="' + GUIDE_URL + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.demoNoticeLink')) + '</a></div>') :
-      ('<div class="notice ok">' + U.esc(L.t('adm.liveNotice')) + '</div>');
+      ('');
     var sess = await S.getSession();
     body.innerHTML =
       modeNotice +
@@ -550,4 +550,68 @@
   }
 
   run().catch(function (e) { console.error(e); });
+})();
+
+/* ---- nominee change approvals (added 2026-09-15): member asks, admin decides ---- */
+(function () {
+  'use strict';
+  var S = window.NGFStore, C = window.NGFCOMMON, L = window.NGFLANG, U = window.NGFUtil;
+  function el(id) { return document.getElementById(id); }
+
+  function row(r) {
+    return '<tr><td><strong>' + U.esc(r.memberName || r.username || r.memberId) + '</strong><span class="sub"><br>' +
+      U.esc(r.username || '') + '</span></td>' +
+      '<td>' + U.esc(r.currentNominee || '—') + '</td>' +
+      '<td><strong>' + U.esc(r.requestedNominee) + '</strong>' + (r.relation ? '<span class="sub"><br>' + U.esc(r.relation) + '</span>' : '') + '</td>' +
+      '<td>' + U.esc(r.reason || '') + '</td>' +
+      '<td class="sub">' + U.esc(U.fmtDate ? U.fmtDate(r.requestedAt) : r.requestedAt) + '</td>' +
+      '<td><div class="btn-row"><button class="btn sm" data-ok="' + U.esc(r.id) + '">' + U.esc(L.t('adm.nomApprove')) + '</button>' +
+      '<button class="btn sm subtle" data-no="' + U.esc(r.id) + '">' + U.esc(L.t('adm.nomReject')) + '</button></div></td></tr>';
+  }
+
+  async function render() {
+    var body = el('tab-body');
+    if (!body) return;
+    var rows = [], history = [];
+    try { rows = (await S.listNomineeRequests('pending')) || []; history = (await S.listNomineeRequests()) || []; } catch (e) { rows = []; }
+    body.innerHTML = '<h2>' + U.esc(L.t('adm.nomTitle')) + '</h2>' +
+      '<div class="tablewrap"><table class="data"><thead><tr><th>Member</th><th>Current</th><th>Requested</th><th>Reason</th><th>When</th><th></th></tr></thead>' +
+      '<tbody>' + (rows.length ? rows.map(row).join('') : '<tr><td colspan="6" class="loading">' + U.esc(L.t('adm.nomNone')) + '</td></tr>') + '</tbody></table></div>' +
+      (history.filter(function (h) { return h.status !== 'pending'; }).length
+        ? '<h3 style="margin-top:14px">History</h3><div class="tablewrap"><table class="data"><thead><tr><th>Member</th><th>Requested</th><th>Status</th><th>Decided</th></tr></thead><tbody>' +
+          history.filter(function (h) { return h.status !== 'pending'; }).map(function (h) {
+            return '<tr><td>' + U.esc(h.memberName || h.username || '') + '</td><td>' + U.esc(h.requestedNominee) + '</td><td>' + C.chip(h.status) + '</td><td class="sub">' + U.esc(U.fmtDate ? U.fmtDate(h.decidedAt) : (h.decidedAt || '')) + '</td></tr>';
+          }).join('') + '</tbody></table></div>'
+        : '');
+
+    Array.prototype.forEach.call(body.querySelectorAll('[data-ok],[data-no]'), function (b) {
+      b.onclick = async function () {
+        var id = b.getAttribute('data-ok') || b.getAttribute('data-no');
+        var approve = !!b.getAttribute('data-ok');
+        b.disabled = true;
+        try {
+          await S.decideNomineeRequest(id, approve, 'admin');
+          C.toast(approve ? L.t('adm.nomDone') : L.t('adm.nomRejected'));
+          render();
+        } catch (e) { b.disabled = false; C.toast(String(e && e.message || e), true); }
+      };
+    });
+  }
+
+  function wire() {
+    var btn = document.querySelector('[data-tab="nominee"]');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (x) { x.setAttribute('aria-selected', 'false'); });
+      btn.setAttribute('aria-selected', 'true');
+      render();
+    });
+    /* pending count on the tab, so an admin sees it without opening the tab */
+    S.listNomineeRequests('pending').then(function (rows) {
+      var n = (rows || []).length;
+      if (n) { var box = el('tab-nom-n'); if (box) box.textContent = '(' + n + ')'; }
+    }).catch(function () {});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(wire, 600); });
+  else setTimeout(wire, 600);
 })();

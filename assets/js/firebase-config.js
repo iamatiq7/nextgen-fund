@@ -13,3 +13,11 @@ window.NGF_FIREBASE_CONFIG = {
   messagingSenderId: "179987100574",
   appId: "1:179987100574:web:59e573836e329901e7dc8f"
 };
+
+
+/* ---------------------------------------------------------------------------
+   Member documents -> Google Drive (added 2026-09-15)
+   Deploy tools/drive-upload/Code.gs as a Web app (Execute as: me, access: anyone)
+   and paste the /exec URL below. Empty = the site keeps using Firebase Storage.
+   --------------------------------------------------------------------------- */
+window.NGF_DRIVE_ENDPOINT = '';

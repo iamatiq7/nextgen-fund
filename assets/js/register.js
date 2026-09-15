@@ -6,7 +6,7 @@
 
   function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
 
-  function docField(kind) {
+  function docField(kind, labelKey, required) {
     var wrap = document.createElement('label');
     wrap.className = 'f';
     wrap.innerHTML = '<span>' + U.esc(kind) + ' *</span>' +
@@ -39,13 +39,28 @@
     document.title = L.t('reg.title2');
     await C.boot('register.html');
     var settings = await S.getSettings();
-    var reqs = settings.docRequirements || ['Photo ID (NID / Birth Certificate)', 'Passport-size Photograph'];
+    /* The owner asked for four named documents, uploaded to Google Drive under a folder named
+     after the username. The keys double as the file names inside that folder. */
+  var DOCS = [
+    { key: 'nid-front', label: 'reg.docNidFront', required: true },
+    { key: 'nid-back', label: 'reg.docNidBack', required: true },
+    { key: 'profile-picture', label: 'reg.docPhoto', required: true },
+    { key: 'nominee-passport-photo', label: 'reg.docNomineePhoto', required: true }
+  ];
+  var reqs = settings.docRequirements || [];
     var per = settings.monthlyPerShare || 1000;
 
     document.getElementById('reg-intro').innerHTML = '<strong>' + U.esc(L.t('reg.glance', { amt: U.fmtBDT(per) })) + '</strong>';
 
     var docsBox = document.getElementById('doc-fields');
-    reqs.forEach(function (kind) { docsBox.appendChild(docField(kind)); });
+    DOCS.forEach(function (d) {
+      docsBox.appendChild(docField(d.key, d.label, d.required));
+      reqs.push(d.key); /* the four named documents are mandatory */
+    });
+    /* anything the admin added in settings stays optional and keeps its own label */
+    (settings.docRequirements || []).forEach(function (kind) {
+      if (reqs.indexOf(kind) === -1) { docsBox.appendChild(docField(kind, null, false)); }
+    });
 
     var sel = document.getElementById('rg-shares');
     Array.prototype.forEach.call(sel.options, function (o) {

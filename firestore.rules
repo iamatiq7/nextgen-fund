@@ -119,6 +119,17 @@ service cloud.firestore {
     }
 
     // Audit log: append-only in normal operation (read/delete: admin only).
+    /* ---- nominee change requests: the member asks, only an admin decides ---- */
+    match /nomineeRequests/{id} {
+      allow create: if signedIn()
+        && request.resource.data.memberId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.requestedNominee is string
+        && request.resource.data.requestedNominee.size() > 1;
+      allow get, list: if isAdmin() || (signedIn() && resource.data.memberId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
     match /audit/{id} {
       allow read: if isAdmin();
       allow create: if isSignedIn();

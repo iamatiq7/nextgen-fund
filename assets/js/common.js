@@ -4,7 +4,9 @@
   var U = window.NGFUtil, S = window.NGFStore, L = window.NGFLANG;
 
   window.NGFCOMMON = {
-    modeLabel: function () { return S.mode === 'firebase' ? L.t('mode.live') : L.t('mode.demo'); },
+    /* the owner asked for no infrastructure badge on the live site;
+       the label is only kept for the local demo mode. */
+    modeLabel: function () { return S.mode === 'firebase' ? '' : L.t('mode.demo'); },
     isDemo: function () { return S.mode !== 'firebase'; },
 
     esc: U.esc, fmtBDT: U.fmtBDT, fmtDate: U.fmtDate, fmtMonth: U.fmtMonth, t: function (k, v) { return L.t(k, v); },
@@ -107,13 +109,14 @@
       S.getSession().then(function (s) {
         if (!s || s.role !== 'admin') return;
         var box = document.getElementById('footer-admin');
-        box.innerHTML = '<a href="admin.html">' + U.esc(L.t('nav.admin')) + '</a> &middot; <a href="setup.html">Setup</a>';
+        box.innerHTML = '<a href="admin.html">' + U.esc(L.t('nav.admin')) + '</a>';
         box.classList.remove('hide');
       }).catch(function () {});
     },
 
     modeBadge: function () {
-      return '<span class="chip ' + (S.mode === 'firebase' ? 'verified' : 'demo') + '">' + U.esc(NGFCOMMON.modeLabel()) + '</span>';
+      var label = NGFCOMMON.modeLabel();
+      return label ? '<span class="chip demo">' + U.esc(label) + '</span>' : '';
     },
 
     boot: async function (active) {

@@ -538,5 +538,33 @@
     has: function (k) { return !!(dict.en[k]); }
   };
 
+  /* ---- strings added with the 2026-09-15 change set (documents, nominee workflow) ---- */
+  Object.assign(dict.en, {
+    'reg.docNidFront': 'NID — front side (photograph + name)', 'reg.docNidBack': 'NID — back side',
+    'reg.docPhoto': 'Passport-size photograph', 'reg.docNomineePhoto': "Nominee's passport-size photograph",
+    'reg.docRequired': 'required', 'reg.docsNamed': 'Files are stored in a Google Drive folder named after your username, renamed to nid-front, nid-back, profile-picture and nominee-passport-photo.',
+    'reg.uploading': 'Uploading to Drive…', 'reg.uploadOk': 'Saved to your Drive folder', 'reg.uploadFail': 'Drive upload failed — the admin will collect the files',
+    'por.nomTitle': 'Nominee', 'por.nomCurrent': 'Current nominee', 'por.nomNew': 'New nominee name', 'por.nomRelation': 'Relation to you',
+    'por.nomReason': 'Reason (optional)', 'por.nomSubmit': 'Request change', 'por.nomPending': 'Waiting for admin approval.',
+    'por.nomNone': 'No change requested.', 'por.nomApproved': 'Approved on {d}', 'por.nomRejected': 'Rejected on {d}',
+    'por.nomHint': 'A nominee change takes effect only after the fund admin approves it.',
+    'adm.nomTitle': 'Nominee change requests', 'adm.nomNone': 'No pending requests.', 'adm.nomFrom': 'from',
+    'adm.nomTo': 'to', 'adm.nomApprove': 'Approve', 'adm.nomReject': 'Reject', 'adm.nomDone': 'Nominee updated.',
+    'adm.nomRejected': 'Request rejected.', 'adm.tabNominee': 'Nominee'
+  });
+  Object.assign(dict.bn, {
+    'reg.docNidFront': 'এনআইডি — সামনের দিক (ছবি + নাম)', 'reg.docNidBack': 'এনআইডি — পেছনের দিক',
+    'reg.docPhoto': 'পাসপোর্ট সাইজ ছবি', 'reg.docNomineePhoto': 'নমিনির পাসপোর্ট সাইজ ছবি',
+    'reg.docRequired': 'আবশ্যক', 'reg.docsNamed': 'ফাইলগুলো আপনার ইউজারনেম নামের একটি Google Drive ফোল্ডারে রাখা হয় — নাম বদলে nid-front, nid-back, profile-picture ও nominee-passport-photo করা হয়।',
+    'reg.uploading': 'Drive-এ আপলোড হচ্ছে…', 'reg.uploadOk': 'আপনার Drive ফোল্ডারে সংরক্ষিত', 'reg.uploadFail': 'Drive আপলোড ব্যর্থ — অ্যাডমিন ফাইলগুলো সংগ্রহ করবেন',
+    'por.nomTitle': 'নমিনি', 'por.nomCurrent': 'বর্তমান নমিনি', 'por.nomNew': 'নতুন নমিনির নাম', 'por.nomRelation': 'আপনার সাথে সম্পর্ক',
+    'por.nomReason': 'কারণ (ঐচ্ছিক)', 'por.nomSubmit': 'পরিবর্তনের অনুরোধ', 'por.nomPending': 'অ্যাডমিন অনুমোদনের অপেক্ষায়।',
+    'por.nomNone': 'কোনো পরিবর্তনের অনুরোধ নেই।', 'por.nomApproved': '{d} তারিখে অনুমোদিত', 'por.nomRejected': '{d} তারিখে প্রত্যাখ্যাত',
+    'por.nomHint': 'নমিনি পরিবর্তন কার্যকর হবে কেবল ফান্ড অ্যাডমিন অনুমোদন করলে।',
+    'adm.nomTitle': 'নমিনি পরিবর্তনের অনুরোধ', 'adm.nomNone': 'কোনো অপেক্ষমাণ অনুরোধ নেই।', 'adm.nomFrom': 'নমিনি',
+    'adm.nomTo': 'হবে', 'adm.nomApprove': 'অনুমোদন', 'adm.nomReject': 'প্রত্যাখ্যান', 'adm.nomDone': 'নমিনি হালনাগাদ হয়েছে।',
+    'adm.nomRejected': 'অনুরোধ প্রত্যাখ্যাত।', 'adm.tabNominee': 'নমিনি'
+  });
+
   return L;
 });
