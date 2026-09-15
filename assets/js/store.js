@@ -783,6 +783,27 @@
 
     /* ---------- test/dev helpers ---------- */
     _demoReset: function () { Store._resetDemo(); },
+
+  /* ---------- database reset (admin only) ----------
+     The real implementation lives in the Firebase backend; this facade must expose it, otherwise
+     the reset screen fails with "S.resetDatabase is not a function". */
+  resetInventory: async function () {
+    if (Store.mode === 'firebase') return Store._fb.resetInventory();
+    var db = Store._d();
+    return {
+      users: (db.users || []).length, payments: (db.payments || []).length,
+      registrations: (db.registrations || []).length, audit: (db.audit || []).length,
+      usernames: (db.usernames || []).length, finance: (db.finance || []).length
+    };
+  },
+
+  resetDatabase: async function (opts) {
+    if (Store.mode === 'firebase') return Store._fb.resetDatabase(opts || {});
+    /* demo mode: clearing the local book is the equivalent, and it keeps the screen usable */
+    Store._requireAdmin();
+    Store._resetDemo();
+    return { deleted: 0, errors: [], accountDeleted: false, demo: true };
+  },
     _computeBalance: computeBalance
   };
 
