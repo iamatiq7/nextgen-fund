@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ngf-host
@@ -90,12 +90,18 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
         run: |
           # a rules compile error used to be swallowed by `set +e`: the run said success while the
-          # old rules stayed live. The compile check now records the server answer, and the release
-          # fails the workflow when it fails.
-          npm install --no-save --loglevel=error google-auth-library
-          node ops/rules-deploy/check-rules.mjs "$PROJECT"
-          npx firebase deploy --only firestore:rules --project "$PROJECT" --non-interactive
-          echo "rules released"
+          # old rules stayed live. Everything is now written to a committed transcript.
+          set -u
+          mkdir -p ops/rules-deploy
+          {
+            echo "== $(date -u +%FT%TZ) rules release attempt for $PROJECT =="
+            npm install --no-save --loglevel=error google-auth-library && echo "google-auth-library: ok"
+            echo "-- compile check --"
+            node ops/rules-deploy/check-rules.mjs "$PROJECT"
+            echo "-- release --"
+            npx firebase deploy --only firestore:rules --project "$PROJECT" --non-interactive && echo "rules released"
+          } 2>&1 | tee ops/rules-deploy/transcript.txt
+          grep -q "rules released" ops/rules-deploy/transcript.txt
 
       - name: 4c. Commit the rules-release record
         if: always()
@@ -103,7 +109,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f ops/rules-deploy/last-attempt.json
+          git add -f ops/rules-deploy/last-attempt.json ops/rules-deploy/transcript.txt
           git diff --cached --quiet || git commit -m "chore(rules): release attempt record"
           git push || true
 
