@@ -361,10 +361,12 @@
           try {
             var path = 'registrations/' + uid + '/' + Date.now() + '-' + d.name;
             var ref = stMod.ref(storage, path);
+            if (!d.file) throw new Error('no-file');
             await stMod.uploadBytes(ref, d.file, { contentType: d.mime });
             docs.push({ kind: d.kind, name: d.name, mime: d.mime, size: d.size, path: path });
           } catch (e) {
-            docsPending = true; /* Storage unavailable (not enabled) - keep going, admin can collect files directly */
+            docsPending = true; /* Drive and Storage both unavailable: keep the compact copy inside the record */
+            docs.push({ kind: d.kind, name: d.name, mime: d.mime, size: d.size, dataUrl: d.data || '', storedIn: 'record' });
           }
         }
         var reg = {
