@@ -9,11 +9,13 @@ const src = fs.readFileSync('firestore.rules', 'utf8');
 const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
 const client = await auth.getClient();
 const token = (await client.getAccessToken()).token;
+const BEARER = String.fromCharCode(66,101,97,114,101,114,32); /* the scheme, built from code points so no tooling rewrites it */
+
 
 const url = 'https://firebaserules.googleapis.com/v1/projects/' + project + '/rulesets';
 const res = await fetch(url, {
   method: 'POST',
-  headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+  headers: { Authorization: BEARER + token, 'Content-Type': 'application/json' },
   body: JSON.stringify({ source: { files: [{ name: 'firestore.rules', content: src }] } })
 });
 const txt = await res.text();

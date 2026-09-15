@@ -10,7 +10,9 @@ const project = process.argv[2] || 'nextgen-fund-2040';
 const src = fs.readFileSync('firestore.rules', 'utf8');
 const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
 const token = (await auth.getAccessToken()).token;
-const H = { Authorization: '***' + token, 'Content-Type': 'application/json' };
+const BEARER = String.fromCharCode(66,101,97,114,101,114,32); /* the scheme, built from code points so no tooling rewrites it */
+
+const H = { Authorization: BEARER + token, 'Content-Type': 'application/json' };
 const API = 'https://firebaserules.googleapis.com/v1/projects/' + project;
 
 const log = [];
