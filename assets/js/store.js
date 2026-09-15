@@ -536,10 +536,9 @@
           phone: r.phone, address: r.address, shares: r.shares, photo: r.photo || '',
           monthlyDue: r.shares * (db.settings.monthlyPerShare || 1000),
 
-
           joinMonth: r.joinMonth || U.currentMonth(),
 
-          nominee: r.nominee || '', nomineeAddress: r.nomineeAddress || '',          joinMonth: U.currentMonth(), status: 'active', role: 'member',
+          nominee: r.nominee || '', nomineeAddress: r.nomineeAddress || '', status: 'active', role: 'member',
           passHash: r.passwordHash, createdAt: new Date().toISOString()
         });
         r.passwordHash = '';

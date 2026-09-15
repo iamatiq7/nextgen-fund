@@ -25,7 +25,7 @@ await Store.init();
 
 console.log('== STEP 1: admin approves a member who joins in September ==');
 await Store.login('admin', 'nextgen2026');
-await Store.register({ fullName: 'Advance Case', username: 'adv.case', email: 'adv.case@nextgen.local', phone: '01711999999', shares: 1, password: 'AdvPass1234', docs: [] });
+await Store.register({ fullName: 'Advance Case', username: 'adv.case', email: 'adv.case@nextgen.local', phone: '01711999999', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: [] });
 const regs = await Store.listRegistrations();
 const reg = regs.filter((r) => r.username === 'adv.case')[0];
 await Store.decideRegistration(reg.id, true);
@@ -106,7 +106,7 @@ check('B5c nothing is claimed to cover a due that does not exist', pendBal.pendi
 
 console.log('== STEP 8b: reviewer case - a member who owes 1,000 submits 3,000 as pending ==');
 await Store.login('admin', 'nextgen2026');
-await Store.register({ fullName: 'Split Case', username: 'adv.split', email: 'adv.split@nextgen.local', phone: '01711777777', shares: 1, password: 'AdvPass1234', docs: [] });
+await Store.register({ fullName: 'Split Case', username: 'adv.split', email: 'adv.split@nextgen.local', phone: '01711777777', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: [] });
 const regS = (await Store.listRegistrations()).filter((r) => r.username === 'adv.split')[0];
 await Store.decideRegistration(regS.id, true);
 const meS = (await Store.listMembers()).filter((m) => m.username === 'adv.split')[0];
