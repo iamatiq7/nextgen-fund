@@ -36,6 +36,13 @@ service cloud.firestore {
     }
 
     // Public settings: dashboard reads; only admin writes (delete included).
+    // Drive upload endpoint (added 2026-09-15): register.html reads it before sign-in,
+    // so the read is public; only the fund admin may change it.
+    match /settings/drive {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /settings/public {
       allow get, list: if true;
       allow write: if isAdmin();

@@ -10,83 +10,6 @@
   'use strict';
   var driveEndpointCache = null;
 
-  /* ---------- nominee changes + Drive uploads (added 2026-09-15) ---------- */
-  async function createNomineeRequest(data) {
-    var uid = await myUid();
-    if (!uid) throw new Error('not-signed-in');
-    if (!String(data.requestedNominee || '').trim()) throw new Error('nominee-required');
-    return addDoc('nomineeRequests', {
-      memberId: uid, memberName: (data.memberName || '').trim(), username: (data.username || '').trim(),
-      currentNominee: (data.currentNominee || '').trim(), requestedNominee: (data.requestedNominee || '').trim(),
-      relation: (data.relation || '').trim(), reason: (data.reason || '').trim(),
-      status: 'pending', requestedAt: new Date().toISOString()
-    });
-  }
-  async function listNomineeRequests(status) {
-    var all = (await getAll('nomineeRequests')) || [];
-    var rows = all.slice().sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
-    return status ? rows.filter(function (r) { return r.status === status; }) : rows;
-  }
-  async function decideNomineeRequest(id, approve, byName) {
-    var row = ((await getAll('nomineeRequests')) || []).filter(function (r) { return r.id === id; })[0];
-    if (!row) throw new Error('not-found');
-    if (approve) {
-      var snap = await fsMod.getDoc(docIn('users', row.memberId));
-      var cur = snap.exists() ? (snap.data() || {}) : {};
-      await fsMod.updateDoc(docIn('users', row.memberId), { nominee: row.requestedNominee, nomineeRelation: row.relation || '', nomineeUpdatedAt: new Date().toISOString() });
-      await writeAudit({ action: 'nominee.approve', memberId: row.memberId, detail: 'nominee: ' + (cur.nominee || '(none)') + ' -> ' + row.requestedNominee, by: byName || 'admin' });
-    } else {
-      await writeAudit({ action: 'nominee.reject', memberId: row.memberId, detail: 'nominee change to ' + row.requestedNominee + ' rejected', by: byName || 'admin' });
-    }
-    await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || 'admin' });
-    return true;
-  }
-  function fileExt(mime, fallbackName) {
-    var map = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
-    if (map[mime]) return map[mime];
-    var m = String(fallbackName || '').match(/\.([a-z0-9]{2,4})$/i);
-    return m ? m[1].toLowerCase() : 'jpg';
-  }
-  async function getDriveEndpoint() {
-    if (driveEndpointCache !== null) return driveEndpointCache;
-    driveEndpointCache = '';
-    try {
-      var snap = await fsMod.getDoc(docIn('settings', 'drive'));
-      if (snap.exists()) driveEndpointCache = String((snap.data() || {}).endpoint || '').trim();
-    } catch (e) { /* fall through to the build-time value */ }
-    if (!driveEndpointCache) driveEndpointCache = window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
-    return driveEndpointCache;
-  }
-
-  async function saveDriveEndpoint(url) {
-    var clean = String(url || '').trim();
-    if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('bad-url');
-    await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
-    driveEndpointCache = clean;
-    return clean;
-  }
-
-  async function uploadToDrive(username, docs) {
-    var endpoint = await getDriveEndpoint();
-    if (!endpoint) return { ok: false, reason: 'drive-endpoint-missing' };
-    var files = [];
-    for (var i = 0; i < docs.length; i += 1) {
-      var f = docs[i].file;
-      var b64 = await new Promise(function (res, rej) {
-        var r = new FileReader();
-        r.onload = function () { res(String(r.result).split(',')[1] || ''); };
-        r.onerror = rej;
-        r.readAsDataURL(f);
-      });
-      files.push({ name: docs[i].key + '.' + fileExt(f.type, f.name), mime: f.type || 'image/jpeg', bytes: f.size, base64: b64 });
-    }
-    var res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ username: String(username || '').toLowerCase(), files: files }) });
-    if (!res.ok) return { ok: false, reason: 'drive-http-' + res.status };
-    var out = await res.json();
-    if (!out || out.ok === false) return { ok: false, reason: (out && out.error) || 'drive-error' };
-    return { ok: true, folderId: out.folderId, folderUrl: out.folderUrl, files: out.files || [] };
-  }
-
   if (typeof window === 'undefined' || !window.NGFStore || !window.NGFUtil) return;
 
   var cfg = window.NGF_FIREBASE_CONFIG || {};
@@ -114,6 +37,85 @@ function withTimeout(p, ms, tag) {
 }
     var U = window.NGFUtil;
     var S = window.NGFStore;
+
+    /* ---------- nominee changes + Drive uploads ----------
+       These need fsMod/docIn/getAll/myUid, so they must live inside this factory. */
+    /* ---------- nominee changes + Drive uploads (added 2026-09-15) ---------- */
+    async function createNomineeRequest(data) {
+      var uid = await myUid();
+      if (!uid) throw new Error('not-signed-in');
+      if (!String(data.requestedNominee || '').trim()) throw new Error('nominee-required');
+      return addDoc('nomineeRequests', {
+        memberId: uid, memberName: (data.memberName || '').trim(), username: (data.username || '').trim(),
+        currentNominee: (data.currentNominee || '').trim(), requestedNominee: (data.requestedNominee || '').trim(),
+        relation: (data.relation || '').trim(), reason: (data.reason || '').trim(),
+        status: 'pending', requestedAt: new Date().toISOString()
+      });
+    }
+    async function listNomineeRequests(status) {
+      var all = (await getAll('nomineeRequests')) || [];
+      var rows = all.slice().sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
+      return status ? rows.filter(function (r) { return r.status === status; }) : rows;
+    }
+    async function decideNomineeRequest(id, approve, byName) {
+      var row = ((await getAll('nomineeRequests')) || []).filter(function (r) { return r.id === id; })[0];
+      if (!row) throw new Error('not-found');
+      if (approve) {
+        var snap = await fsMod.getDoc(docIn('users', row.memberId));
+        var cur = snap.exists() ? (snap.data() || {}) : {};
+        await fsMod.updateDoc(docIn('users', row.memberId), { nominee: row.requestedNominee, nomineeRelation: row.relation || '', nomineeUpdatedAt: new Date().toISOString() });
+        await writeAudit({ action: 'nominee.approve', memberId: row.memberId, detail: 'nominee: ' + (cur.nominee || '(none)') + ' -> ' + row.requestedNominee, by: byName || 'admin' });
+      } else {
+        await writeAudit({ action: 'nominee.reject', memberId: row.memberId, detail: 'nominee change to ' + row.requestedNominee + ' rejected', by: byName || 'admin' });
+      }
+      await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || 'admin' });
+      return true;
+    }
+    function fileExt(mime, fallbackName) {
+      var map = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+      if (map[mime]) return map[mime];
+      var m = String(fallbackName || '').match(/\.([a-z0-9]{2,4})$/i);
+      return m ? m[1].toLowerCase() : 'jpg';
+    }
+    async function getDriveEndpoint() {
+      if (driveEndpointCache !== null) return driveEndpointCache;
+      driveEndpointCache = '';
+      try {
+        var snap = await fsMod.getDoc(docIn('settings', 'drive'));
+        if (snap.exists()) driveEndpointCache = String((snap.data() || {}).endpoint || '').trim();
+      } catch (e) { /* fall through to the build-time value */ }
+      if (!driveEndpointCache) driveEndpointCache = window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
+      return driveEndpointCache;
+    }
+
+    async function saveDriveEndpoint(url) {
+      var clean = String(url || '').trim();
+      if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('bad-url');
+      await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
+      driveEndpointCache = clean;
+      return clean;
+    }
+
+    async function uploadToDrive(username, docs) {
+      var endpoint = await getDriveEndpoint();
+      if (!endpoint) return { ok: false, reason: 'drive-endpoint-missing' };
+      var files = [];
+      for (var i = 0; i < docs.length; i += 1) {
+        var f = docs[i].file;
+        var b64 = await new Promise(function (res, rej) {
+          var r = new FileReader();
+          r.onload = function () { res(String(r.result).split(',')[1] || ''); };
+          r.onerror = rej;
+          r.readAsDataURL(f);
+        });
+        files.push({ name: docs[i].key + '.' + fileExt(f.type, f.name), mime: f.type || 'image/jpeg', bytes: f.size, base64: b64 });
+      }
+      var res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ username: String(username || '').toLowerCase(), files: files }) });
+      if (!res.ok) return { ok: false, reason: 'drive-http-' + res.status };
+      var out = await res.json();
+      if (!out || out.ok === false) return { ok: false, reason: (out && out.error) || 'drive-error' };
+      return { ok: true, folderId: out.folderId, folderUrl: out.folderUrl, files: out.files || [] };
+    }
 
     /* ---- helpers ---- */
     function col(name) { return fsMod.collection(db, name); }
