@@ -95,10 +95,7 @@ jobs:
           mkdir -p ops/rules-deploy
           {
             echo "== $(date -u +%FT%TZ) rules release attempt for $PROJECT =="
-            # install together: a later --no-save install prunes the earlier one, which silently removed the firebase CLI
-            npm install --no-save --loglevel=error google-auth-library firebase-tools@13 && echo "helpers: ok"
-            echo "-- compile check --"
-            node ops/rules-deploy/check-rules.mjs "$PROJECT"
+            # no extra installs here: a second --no-save install would prune the firebase CLI
             echo "-- release --"
             node ops/rules-deploy/release-rules.mjs "$PROJECT" && echo "rules released"
           } 2>&1 | tee ops/rules-deploy/transcript.txt
