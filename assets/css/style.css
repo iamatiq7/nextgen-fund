@@ -468,3 +468,6 @@ table.data { font-size: 14.5px; }
   .pf-view .pf-big { width: 120px; height: 120px; }
   .pf-view { gap: 12px; }
 }
+
+/* a field that failed validation keeps a visible red ring until it is corrected */
+.f input.bad, .f select.bad { border-color: var(--loss, #b4553f); box-shadow: 0 0 0 2px rgba(180,85,63,.12); }

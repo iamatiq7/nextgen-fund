@@ -220,5 +220,14 @@
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  /* Mobile numbers: accept Bangla or English digits, ignore spaces, dashes and brackets,
+     so the rule (11 digits starting 01) is checked on the digits the member actually typed. */
+  U.normPhone = function (value) {
+    var s = String(value == null ? '' : value);
+    s = s.replace(/[\u09e6-\u09ef]/g, function (ch) { return String(ch.charCodeAt(0) - 0x09e6); });
+    return s.replace(/[^0-9]/g, '');
+  };
+  U.validPhone = function (value) { return /^01[0-9]{9}$/.test(U.normPhone(value)); };
+
   return U;
 });

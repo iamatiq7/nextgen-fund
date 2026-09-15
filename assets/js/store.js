@@ -255,7 +255,12 @@
       var uname = (data.username || '').trim().toLowerCase();
       if (!U.validUsername(uname)) errs.push('Username must be 4\u201332 characters (letters, numbers, dot, dash).');
       if (!U.validEmail(data.email || '')) errs.push('A valid email is required.');
-      if (!data.phone || data.phone.replace(/\D/g, '').length < 10) errs.push('A valid mobile number is required.');
+      var phoneDigits = U.normPhone ? U.normPhone(data.phone) : String(data.phone || '').replace(/\D/g, '');
+      if (!/^01[0-9]{9}$/.test(phoneDigits)) errs.push('Wrong mobile number - it must be exactly 11 digits and start with 01.');
+      if (!data.nominee || !String(data.nominee).trim()) errs.push('Nominee name is required.');
+      if (!data.nomineeAddress || !String(data.nomineeAddress).trim()) errs.push('Nominee address is required.');
+      if (data.nomineePhone && !/^01[0-9]{9}$/.test(U.normPhone ? U.normPhone(data.nomineePhone) : String(data.nomineePhone))) errs.push('Wrong nominee mobile number - it must be 11 digits and start with 01.');
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(data.joinMonth || ''))) errs.push('Join month is required - pick the month the accounting starts.');
       if (!data.password || data.password.length < 8) errs.push('Password must be at least 8 characters.');
       var shares = parseInt(data.shares, 10);
       if (!(shares >= 1 && shares <= 10)) errs.push('Shares must be between 1 and 10.');
@@ -267,6 +272,10 @@
         var limit = mode === 'firebase' ? DOC_MAX_LIVE : DOC_MAX_DEMO;
         if (d.size > limit) errs.push('File too large (max ' + Math.round(limit / 1048576) + ' MB): ' + d.name);
       });
+      var needDocs = ['nid-front', 'nid-back', 'profile-picture', 'nominee-passport-photo'];
+      var haveKinds = (data.docs || []).map(function (d) { return d && d.kind; });
+      var missingDocs = needDocs.filter(function (k) { return haveKinds.indexOf(k) === -1; });
+      if (missingDocs.length) errs.push('Required documents are missing: ' + missingDocs.join(', '));
       if (errs.length) { var e = new Error(errs.join(' ')); e.code = 'invalid'; throw e; }
 
       if (mode === 'firebase') return Store._fb.register(data, uname);
@@ -281,8 +290,9 @@
       }
       var reg = {
         id: U.uid('reg'), fullName: data.fullName.trim(), username: uname, email: data.email.trim(),
-        phone: data.phone.trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
-        nominee: (data.nominee || '').trim(), shares: shares,
+        phone: (U.normPhone ? U.normPhone(data.phone) : data.phone).trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
+        nominee: (data.nominee || '').trim(), nomineeAddress: (data.nomineeAddress || '').trim(),
+        nomineePhone: (data.nomineePhone || '').trim(), joinMonth: String(data.joinMonth || '').trim(), shares: shares,
         passwordHash: U.sha256(data.password),
         docs: docs.map(function (d) { return { kind: d.kind, name: d.name, mime: d.mime, size: d.size, data: d.data }; }),
         photo: (function () { var pd = (docs || []).filter(function (x) { return x && x.kind === 'profile-picture'; })[0]; return pd ? (pd.driveFileId || pd.driveUrl || pd.data || '') : ''; })(),
@@ -525,7 +535,11 @@
           id: U.uid('m'), username: r.username, email: r.email, fullName: r.fullName,
           phone: r.phone, address: r.address, shares: r.shares, photo: r.photo || '',
           monthlyDue: r.shares * (db.settings.monthlyPerShare || 1000),
-          joinMonth: U.currentMonth(), status: 'active', role: 'member',
+
+
+          joinMonth: r.joinMonth || U.currentMonth(),
+
+          nominee: r.nominee || '', nomineeAddress: r.nomineeAddress || '',          joinMonth: U.currentMonth(), status: 'active', role: 'member',
           passHash: r.passwordHash, createdAt: new Date().toISOString()
         });
         r.passwordHash = '';
@@ -675,7 +689,7 @@
       Store._requireAdmin();
       var db = Store._d();
       if (['funding', 'revenue', 'loss'].indexOf(entry.kind) < 0) { var e = new Error('Invalid kind.'); e.code = 'invalid'; throw e; }
-      if (!/^\d{4}-\d{2}$/.test(entry.month || '')) { var e1 = new Error('Pick a month.'); e1.code = 'invalid'; throw e1; }
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(entry.month || '')) { var e1 = new Error('Pick a month.'); e1.code = 'invalid'; throw e1; }
       var amount = Number(entry.amount);
       if (!(amount > 0)) { var e2 = new Error('Amount must be greater than 0.'); e2.code = 'invalid'; throw e2; }
       var existing = entry.id ? db.finance.find(function (f) { return f.id === entry.id; }) : null;

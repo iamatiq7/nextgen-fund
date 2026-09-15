@@ -409,7 +409,9 @@ function withTimeout(p, ms, tag) {
         var reg = {
           fullName: data.fullName.trim(), username: uname, email: data.email.trim(),
           phone: data.phone.trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
-          nominee: (data.nominee || '').trim(), shares: parseInt(data.shares, 10),
+          nominee: (data.nominee || '').trim(), nomineeAddress: (data.nomineeAddress || '').trim(),
+          nomineePhone: (data.nomineePhone || '').trim(), joinMonth: String(data.joinMonth || '').trim(),
+          shares: parseInt(data.shares, 10),
           docs: docs, docsPending: docsPending, status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
         };
         try {
@@ -422,7 +424,9 @@ function withTimeout(p, ms, tag) {
         await fsMod.setDoc(docIn('users', uid), {
           role: 'member', status: 'pending', username: uname, email: data.email.trim(),
           photo: photoOfDocs(reg.docs),
-          fullName: data.fullName.trim(), phone: data.phone.trim(), address: reg.address,
+          fullName: data.fullName.trim(), phone: (U.normPhone ? U.normPhone(data.phone) : data.phone), address: reg.address,
+          nominee: reg.nominee, nomineeAddress: reg.nomineeAddress || '', nomineePhone: reg.nomineePhone || '',
+          joinMonth: reg.joinMonth || '',
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
           joinMonth: '', createdAt: new Date().toISOString()
         });
@@ -613,7 +617,7 @@ function withTimeout(p, ms, tag) {
         });
         var memberPatch = {
           status: approve ? 'active' : 'rejected',
-          joinMonth: approve ? U.currentMonth() : '',
+          joinMonth: approve ? ((r && r.joinMonth) || U.currentMonth()) : '',
           monthlyDue: approve ? (r.shares * ((await fb.getSettings()).monthlyPerShare || 1000)) : 0
         };
         /* approvals also refresh the uploaded profile picture on the member record */
@@ -797,7 +801,7 @@ function withTimeout(p, ms, tag) {
       upsertFinanceEntry: async function (entry) {
         var me = await requireAdminUid();
         if (['funding', 'revenue', 'loss'].indexOf(entry.kind) < 0) throw err('invalid', 'Invalid kind.');
-        if (!/^\d{4}-\d{2}$/.test(entry.month || '')) throw err('invalid', 'Pick a month.');
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(entry.month || '')) throw err('invalid', 'Pick a month.');
         if (!(Number(entry.amount) > 0)) throw err('invalid', 'Amount must be greater than 0.');
         var body = { kind: entry.kind, month: entry.month, amount: Number(entry.amount), note: entry.note || '' };
         if (entry.id) await fsMod.setDoc(docIn('finance', entry.id), body, { merge: true });

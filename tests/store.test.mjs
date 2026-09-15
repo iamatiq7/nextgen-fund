@@ -71,11 +71,14 @@ console.log('== 4 · registrations with documents ==');
 const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 const regA = {
   fullName: 'Test Member One', username: 'test.member.one', email: 'test.one@example.com',
-  phone: '01711111111', address: 'Dhaka', occupation: 'Engineer', nominee: 'Test Nominee', shares: '1',
+  phone: '01711111111', address: 'Dhaka', occupation: 'Engineer', nominee: 'Test Nominee',
+  nomineeAddress: 'Dhaka', joinMonth: '2026-01', shares: '1',
   password: 'testpass123',
   docs: [
-    { kind: 'Photo ID (NID / Birth Certificate)', name: 'id.png', mime: 'image/png', size: 96, data: tinyPng },
-    { kind: 'Passport-size Photograph', name: 'photo.png', mime: 'image/png', size: 96, data: tinyPng }
+    { kind: 'nid-front', name: 'nid-front.png', mime: 'image/png', size: 96, data: tinyPng },
+    { kind: 'nid-back', name: 'nid-back.png', mime: 'image/png', size: 96, data: tinyPng },
+    { kind: 'profile-picture', name: 'profile-picture.png', mime: 'image/png', size: 96, data: tinyPng },
+    { kind: 'nominee-passport-photo', name: 'nominee-passport-photo.png', mime: 'image/png', size: 96, data: tinyPng }
   ]
 };
 const regB = { ...regA, fullName: 'Test Member Two', username: 'test.member.two', email: 'test.two@example.com', phone: '01722222222' };
@@ -83,10 +86,10 @@ await Store.register(regA);
 await Store.register(regB);
 const pend = await Store.listRegistrations('pending');
 ok('2 new registrations pending (plus 1 seeded sample)', pend.length === 3, 'got ' + pend.length);
-ok('documents stored with the pending record', pend.find((r) => r.username === 'test.member.one').docs.length === 2);
-await Store.register({ ...regA, username: 'nodocs.member', email: 'nodocs.member@nextgen.local', docs: [] });
+ok('documents stored with the pending record', pend.find((r) => r.username === 'test.member.one').docs.length === 4);
+await throws(() => Store.register({ ...regA, username: 'nodocs.member', email: 'nodocs.member@nextgen.local', docs: [] }), 'Required documents', 'a registration without the four documents is refused');
 const nod = (await Store.listRegistrations()).find((r) => r.username === 'nodocs.member');
-ok('registration without documents now allowed (admin collects files directly)', !!nod && nod.docs.length === 0);
+ok('no half record was created for the refused registration', !nod);
 await throws(() => Store.register({ ...regA, username: 'test.member.one', email: 'other@x.com' }), 'taken', 'duplicate username rejected');
 
 console.log('== 5 · admin accept / reject decisions ==');

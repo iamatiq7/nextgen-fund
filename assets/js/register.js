@@ -99,6 +99,9 @@
       });
     });
 
+    var joinInput = document.getElementById('rg-join');
+    if (joinInput && !joinInput.value) joinInput.value = U.currentMonth();
+
     var form = document.getElementById('reg-form');
     var errBox = document.getElementById('reg-err');
     var btn = document.getElementById('reg-btn');
@@ -114,10 +117,13 @@
         fullName: document.getElementById('rg-name').value.trim(),
         username: document.getElementById('rg-username').value.trim(),
         email: document.getElementById('rg-email').value.trim(),
-        phone: document.getElementById('rg-phone').value.trim(),
+        phone: (U.normPhone ? U.normPhone(document.getElementById('rg-phone').value) : document.getElementById('rg-phone').value.replace(/\D/g, '')),
         occupation: document.getElementById('rg-occupation').value.trim(),
         nominee: document.getElementById('rg-nominee').value.trim(),
+        nomineeAddress: document.getElementById('rg-nominee-address').value.trim(),
+        nomineePhone: (U.normPhone ? U.normPhone(document.getElementById('rg-nominee-phone').value) : ''),
         address: document.getElementById('rg-address').value.trim(),
+        joinMonth: document.getElementById('rg-join').value,
         shares: sel.value,
         password: pw,
         docs: docs
@@ -141,11 +147,42 @@
 
       var local = [];
       if (pw !== pw2) local.push(L.t('reg.errMatch'));
+      /* mobile number: exactly 11 digits, starting with 01 (Bangla digits are accepted) */
+      var phoneField = document.getElementById('rg-phone');
+      var phoneOk = U.validPhone ? U.validPhone(data.phone) : /^01[0-9]{9}$/.test(data.phone);
+      phoneField.classList.toggle('bad', !phoneOk);
+      if (!phoneOk) local.push(L.t('reg.errPhone'));
+      var nomField = document.getElementById('rg-nominee');
+      var nomAddrField = document.getElementById('rg-nominee-address');
+      var nomPhoneField = document.getElementById('rg-nominee-phone');
+      var joinField = document.getElementById('rg-join');
+      if (nomPhoneField) {
+        var nomPhoneOk = !data.nomineePhone || (U.validPhone ? U.validPhone(data.nomineePhone) : /^01[0-9]{9}$/.test(data.nomineePhone));
+        nomPhoneField.classList.toggle('bad', !nomPhoneOk);
+        if (!nomPhoneOk) local.push(L.t('reg.errNomineePhone'));
+      }
+      nomField.classList.toggle('bad', !data.nominee);
+      if (!data.nominee) local.push(L.t('reg.errNominee'));
+      nomAddrField.classList.toggle('bad', !data.nomineeAddress);
+      if (!data.nomineeAddress) local.push(L.t('reg.errNomineeAddr'));
+      if (!data.address) local.push(L.t('reg.errAddress'));
+      var joinOk = /^\d{4}-(0[1-9]|1[0-2])$/.test(data.joinMonth || '');
+      joinField.classList.toggle('bad', !joinOk);
+      if (!joinOk) local.push(L.t('reg.errJoin'));
       /* Documents are optional while Firebase Storage is not enabled:
          the registration still goes through; the admin collects files directly. */
       var missing = reqs.filter(function (k) { return !pickedDocs[k]; });
       var docsMissingCount = missing.length;
-      if (local.length) { errBox.textContent = local.join(' '); return; }
+      if (missing.length) {
+        var docLabels = missing.map(function (k) {
+          var d = DOCS.filter(function (x) { return x.key === k; })[0];
+          return d ? L.t(d.label) : k;
+        });
+        local.push(L.t('reg.errDocs', { list: docLabels.join(', ') }));
+      }
+      var firstBad = document.querySelector('#reg-form .bad');
+      if (firstBad) { try { firstBad.focus(); } catch (e) { } }
+      if (local.length) { errBox.textContent = local.join(' '); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
 
       btn.disabled = true; btn.textContent = L.t('reg.submit') + '…';
       try {
