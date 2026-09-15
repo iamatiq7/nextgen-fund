@@ -455,7 +455,8 @@
     },
     getDriveEndpoint: async function () {
       if (Store.mode === 'firebase') return Store._fb.getDriveEndpoint();
-      return load().driveEndpoint || '';
+      /* the admin-panel value wins, then the build-time config, then the global */
+      return load().driveEndpoint || window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
     },
     saveDriveEndpoint: async function (url) {
       if (Store.mode === 'firebase') return Store._fb.saveDriveEndpoint(url);
