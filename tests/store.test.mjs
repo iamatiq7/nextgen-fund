@@ -87,10 +87,10 @@ await Store.register(regB);
 const pend = await Store.listRegistrations('pending');
 ok('2 new registrations pending (plus 1 seeded sample)', pend.length === 3, 'got ' + pend.length);
 ok('documents stored with the pending record', pend.find((r) => r.username === 'test.member.one').docs.length === 4);
-await throws(() => Store.register({ ...regA, username: 'nodocs.member', email: 'nodocs.member@nextgen.local', docs: [], fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother'}), 'Required documents', 'a registration without the four documents is refused');
+await throws(() => Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', ...regA, username: 'nodocs.member', email: 'nodocs.member@nextgen.local', docs: [], fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother'}), 'Required documents', 'a registration without the four documents is refused');
 const nod = (await Store.listRegistrations()).find((r) => r.username === 'nodocs.member');
 ok('no half record was created for the refused registration', !nod);
-await throws(() => Store.register({ ...regA, username: 'test.member.one', email: 'other@x.com', fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother'}), 'taken', 'duplicate username rejected');
+await throws(() => Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', ...regA, username: 'test.member.one', email: 'other@x.com', fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother'}), 'taken', 'duplicate username rejected');
 
 console.log('== 5 · admin accept / reject decisions ==');
 const regAid = pend.find((r) => r.username === 'test.member.one').id;

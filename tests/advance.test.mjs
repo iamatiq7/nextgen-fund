@@ -30,7 +30,7 @@ await Store.init();
 
 console.log('== STEP 1: admin approves a member who joins in September ==');
 await Store.login('admin', 'nextgen2026');
-await Store.register({ fullName: 'Advance Case', username: 'adv.case', email: 'adv.case@nextgen.local', phone: '01711999999', nominee: 'Test Nominee', nomineeAddress: 'Test address', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
+await Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', fullName: 'Advance Case', username: 'adv.case', email: 'adv.case@nextgen.local', phone: '01711999999', nominee: 'Test Nominee', nomineeAddress: 'Test address', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 const regs = await Store.listRegistrations();
 const reg = regs.filter((r) => r.username === 'adv.case')[0];
 await Store.decideRegistration(reg.id, true);
@@ -111,7 +111,7 @@ check('B5c nothing is claimed to cover a due that does not exist', pendBal.pendi
 
 console.log('== STEP 8b: reviewer case - a member who owes 1,000 submits 3,000 as pending ==');
 await Store.login('admin', 'nextgen2026');
-await Store.register({ fullName: 'Split Case', username: 'adv.split', email: 'adv.split@nextgen.local', phone: '01711777777', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
+await Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', fullName: 'Split Case', username: 'adv.split', email: 'adv.split@nextgen.local', phone: '01711777777', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), shares: 1, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 const regS = (await Store.listRegistrations()).filter((r) => r.username === 'adv.split')[0];
 await Store.decideRegistration(regS.id, true);
 const meS = (await Store.listMembers()).filter((m) => m.username === 'adv.split')[0];
@@ -143,7 +143,7 @@ check('B7 explicit advance payments count as received money', afterExplicit.adva
 check('B8 invariants hold in every bucket', afterExplicit.due === Math.max(0, afterExplicit.expected - afterExplicit.paid - afterExplicit.pending) && afterExplicit.advance >= 0);
 
 console.log('== STEP 11: late-month join, multi-share member ==');
-await Store.register({ fullName: 'Month End Case', username: 'adv.monthend', email: 'adv.monthend@nextgen.local', phone: '01711888888', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', shares: 3, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
+await Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', fullName: 'Month End Case', username: 'adv.monthend', email: 'adv.monthend@nextgen.local', phone: '01711888888', nominee: 'Test Nominee', nomineeAddress: 'Test address', joinMonth: U.currentMonth(), nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', shares: 3, password: 'AdvPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 const reg2 = (await Store.listRegistrations()).filter((r) => r.username === 'adv.monthend')[0];
 await Store.decideRegistration(reg2.id, true);
 const me2 = (await Store.listMembers()).filter((m) => m.username === 'adv.monthend')[0];

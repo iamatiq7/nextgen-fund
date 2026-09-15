@@ -19,7 +19,7 @@ Store._demoReset();
 await Store.init();
 
 /* ---- member: register -> approve ---- */
-await Store.register({ fullName: 'Fix Test Member', username: 'fix.test', email: 'fix.test@nextgen.local', phone: '01711111111', occupation: '', nominee: 'Test Nominee', nomineeAddress: 'Test address', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', joinMonth: new Date().toISOString().slice(0, 7), address: '', shares: 1, password: 'FixPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
+await Store.register({ fatherName: 'Father Name', motherName: 'Mother Name', nomineeRelation: 'Brother', fullName: 'Fix Test Member', username: 'fix.test', email: 'fix.test@nextgen.local', phone: '01711111111', occupation: '', nominee: 'Test Nominee', nomineeAddress: 'Test address', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', joinMonth: new Date().toISOString().slice(0, 7), address: '', shares: 1, password: 'FixPass1234', docs: tinyDocs.map((d) => Object.assign({}, d)) });
 await Store.login('admin', 'nextgen2026');
 const regs = await Store.listRegistrations();
 const reg = regs.find((r) => r.username === 'fix.test');
