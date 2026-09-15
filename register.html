@@ -27,69 +27,72 @@
 
   <form id="reg-form" class="card" novalidate>
     <h2 data-i18n="reg.details"></h2>
-    <div class="grid form2">
-      <label class="f"><span data-i18n="reg.name"></span>
-        <input type="text" id="rg-name" autocomplete="name" placeholder="e.g. Kazi Rafiul Islam" data-i18n-ph="ph.name" required>
-      </label>
-      <label class="f"><span data-i18n="reg.username"></span>
-        <input type="text" id="rg-username" autocomplete="off" placeholder="e.g. kazi.rafi (4-32 chars)" data-i18n-ph="ph.usernameReg" required>
-        <span class="hint" data-i18n="reg.userHint"></span>
-      </label>
-      <label class="f"><span data-i18n="reg.email"></span>
-        <input type="email" id="rg-email" autocomplete="email" placeholder="you@example.com" data-i18n-ph="ph.email" required>
-      </label>
-      <label class="f"><span data-i18n="reg.phone"></span>
-        <input type="tel" id="rg-phone" autocomplete="tel" placeholder="01XXXXXXXXX" data-i18n-ph="ph.phone" required
-               maxlength="11" inputmode="numeric" pattern="01[0-9]{9}" aria-describedby="rg-phone-hint">
-        <span class="hint" id="rg-phone-hint" data-i18n="reg.phoneHint"></span>
-      </label>
-      <label class="f"><span data-i18n="reg.occupation"></span>
-        <input type="text" id="rg-occupation" placeholder="e.g. Service, Business, Student" data-i18n-ph="ph.occupation">
-      </label>
-      <label class="f"><span data-i18n="reg.fatherName"></span>
-        <input type="text" id="rg-father" placeholder="Father's full name" data-i18n-ph="ph.fatherName">
-      </label>
-      <label class="f"><span data-i18n="reg.motherName"></span>
-        <input type="text" id="rg-mother" placeholder="Mother's full name" data-i18n-ph="ph.motherName">
-      </label>
-      <label class="f"><span data-i18n="reg.nominee"></span>
-        <input type="text" id="rg-nominee" placeholder="Your nominee's full name" data-i18n-ph="ph.nominee">
-      </label>
-      <label class="f"><span data-i18n="reg.nomineeRelation"></span>
-        <input type="text" id="rg-nominee-relation" placeholder="e.g. Brother, Spouse, Father" data-i18n-ph="ph.nomineeRelation">
-      </label>
-      <label class="f"><span data-i18n="reg.nomineeAddress"></span>
-        <input type="text" id="rg-nominee-address" placeholder="Nominee's village / street, thana, district" data-i18n-ph="ph.nomineeAddress">
-      </label>
-      <label class="f"><span data-i18n="reg.nomineePhone"></span>
-        <input type="tel" id="rg-nominee-phone" placeholder="01XXXXXXXXX (optional)" data-i18n-ph="ph.nomineePhone" maxlength="11" inputmode="numeric">
-      </label>
-      <label class="f"><span data-i18n="reg.joinMonth"></span>
-        <input type="month" id="rg-join" min="2020-01" aria-describedby="rg-join-hint">
-        <span class="hint" id="rg-join-hint" data-i18n="reg.joinHint"></span>
-      </label>
-      <label class="f" style="grid-column:1/-1"><span data-i18n="reg.address"></span>
-        <input type="text" id="rg-address" placeholder="Village / Street, Thana, District" data-i18n-ph="ph.address">
-      </label>
-      <label class="f"><span data-i18n="reg.shares"></span>
-        <select id="rg-shares">
-          <option value="1"></option>
-          <option value="2"></option>
-          <option value="3"></option>
-          <option value="4"></option>
-          <option value="5"></option>
-        </select>
-        <span class="hint" data-i18n="reg.shareHint"></span>
-      </label>
-      <label class="f"><span data-i18n="reg.pass"></span>
-        <input type="password" id="rg-pass" autocomplete="new-password" placeholder="Min 8 characters" data-i18n-ph="ph.passNew" required>
-      </label>
-      <label class="f" style="grid-column:1/-1"><span data-i18n="reg.pass2"></span>
-        <input type="password" id="rg-pass2" autocomplete="new-password" placeholder="Repeat password" data-i18n-ph="ph.passConfirm" required>
-      </label>
-    </div>
-
-    <h2 style="margin-top:10px" data-i18n="reg.docsTitle"></h2>
+          <h2 data-i18n="reg.secMember"></h2>
+      <div class="grid form2">
+        <label class="f"><span data-i18n="reg.name"></span>
+          <input type="text" id="rg-name" autocomplete="name" placeholder="e.g. Kazi Rafiul Islam" data-i18n-ph="ph.name" required>
+        </label>
+        <label class="f"><span data-i18n="reg.username"></span>
+          <input type="text" id="rg-username" autocomplete="off" placeholder="e.g. kazi.rafi (4-32 chars)" data-i18n-ph="ph.usernameReg" required>
+          <span class="hint" data-i18n="reg.userHint"></span>
+        </label>
+        <label class="f"><span data-i18n="reg.email"></span>
+          <input type="email" id="rg-email" autocomplete="email" placeholder="you@example.com" data-i18n-ph="ph.email" required>
+        </label>
+        <label class="f"><span data-i18n="reg.phone"></span>
+          <input type="tel" id="rg-phone" autocomplete="tel" placeholder="01XXXXXXXXX" data-i18n-ph="ph.phone" required
+                 maxlength="11" inputmode="numeric" pattern="01[0-9]{9}" aria-describedby="rg-phone-hint">
+          <span class="hint" id="rg-phone-hint" data-i18n="reg.phoneHint"></span>
+        </label>
+        <label class="f"><span data-i18n="reg.fatherName"></span>
+          <input type="text" id="rg-father" placeholder="Father's full name" data-i18n-ph="ph.fatherName">
+        </label>
+        <label class="f"><span data-i18n="reg.motherName"></span>
+          <input type="text" id="rg-mother" placeholder="Mother's full name" data-i18n-ph="ph.motherName">
+        </label>
+        <label class="f" style="grid-column:1/-1"><span data-i18n="reg.address"></span>
+          <input type="text" id="rg-address" placeholder="Village / Street, Thana, District" data-i18n-ph="ph.address">
+        </label>
+        <label class="f"><span data-i18n="reg.occupation"></span>
+          <input type="text" id="rg-occupation" placeholder="e.g. Service, Business, Student" data-i18n-ph="ph.occupation">
+        </label>
+        <label class="f"><span data-i18n="reg.shares"></span>
+          <select id="rg-shares">
+            <option value="1"></option>
+            <option value="2"></option>
+            <option value="3"></option>
+            <option value="4"></option>
+            <option value="5"></option>
+          </select>
+          <span class="hint" data-i18n="reg.shareHint"></span>
+        </label>
+        <label class="f"><span data-i18n="reg.joinMonth"></span>
+          <input type="month" id="rg-join" min="2020-01" aria-describedby="rg-join-hint">
+          <span class="hint" id="rg-join-hint" data-i18n="reg.joinHint"></span>
+        </label>
+        <label class="f"><span data-i18n="reg.pass"></span>
+          <input type="password" id="rg-pass" autocomplete="new-password" placeholder="Min 8 characters" data-i18n-ph="ph.passNew" required>
+        </label>
+        <label class="f"><span data-i18n="reg.pass2"></span>
+          <input type="password" id="rg-pass2" autocomplete="new-password" placeholder="Repeat password" data-i18n-ph="ph.passConf" required>
+        </label>
+      </div>
+      <h2 style="margin-top:18px" data-i18n="reg.secNominee"></h2>
+      <div class="grid form2">
+        <label class="f"><span data-i18n="reg.nominee"></span>
+          <input type="text" id="rg-nominee" placeholder="Nominee's full name" data-i18n-ph="ph.nominee">
+        </label>
+        <label class="f"><span data-i18n="reg.nomineeRelation"></span>
+          <input type="text" id="rg-nominee-relation" placeholder="e.g. Brother, Spouse, Father" data-i18n-ph="ph.nomineeRelation">
+        </label>
+        <label class="f"><span data-i18n="reg.nomineePhone"></span>
+          <input type="tel" id="rg-nominee-phone" placeholder="01XXXXXXXXX (optional)" data-i18n-ph="ph.nomineePhone" maxlength="11" inputmode="numeric">
+        </label>
+        <label class="f" style="grid-column:1/-1"><span data-i18n="reg.nomineeAddress"></span>
+          <input type="text" id="rg-nominee-address" placeholder="Nominee's village / street, thana, district" data-i18n-ph="ph.nomineeAddress">
+        </label>
+      </div>
+      <h2 style="margin-top:18px" data-i18n="reg.docsTitle"></h2>
     <p class="footnote" data-i18n="reg.docsHint"></p>
     <div id="doc-fields"></div>
 

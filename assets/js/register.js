@@ -7,10 +7,10 @@
 
   function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
 
-  function docField(kind, labelKey, required) {
+  function docField(kind, labelKey, required, num) {
     var wrap = document.createElement('label');
     wrap.className = 'f';
-    wrap.innerHTML = '<span>' + U.esc(labelKey ? L.t(labelKey) : kind) + (required ? ' *' : '') + '</span>' +
+    wrap.innerHTML = '<span>' + (num ? num + '. ' : '') + U.esc(labelKey ? L.t(labelKey) : kind) + (required ? ' *' : '') + '</span>' +
       '<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" data-kind="' + U.esc(kind) + '">' +
       '<span class="hint" data-hint="' + U.esc(kind) + '">' + U.esc(L.t('reg.docHint')) + '</span>';
     wrap.querySelector('input').addEventListener('change', function (ev) {
@@ -90,11 +90,12 @@
     document.getElementById('reg-intro').innerHTML = '<strong>' + U.esc(L.t('reg.glance', { amt: U.fmtBDT(per) })) + '</strong>';
 
     var docsBox = document.getElementById('doc-fields');
-    DOCS.forEach(function (d) {
-      docsBox.appendChild(docField(d.key, d.label, d.required));
+    /* exactly the four named documents, in the owner's order and numbered on screen */
+    DOCS.forEach(function (d, i) {
+      docsBox.appendChild(docField(d.key, d.label, d.required, i + 1));
     });
-    /* legacy labels from Settings stay visible but optional */
-    legacy.forEach(function (kind) { docsBox.appendChild(docField(kind, null, false)); });
+    /* NOTE: labels the admin saved earlier under Settings are intentionally NOT rendered any more:
+       they duplicated the NID / photograph documents (the "extra" items the owner asked to drop). */
 
     var sel = document.getElementById('rg-shares');
     Array.prototype.forEach.call(sel.options, function (o) {
