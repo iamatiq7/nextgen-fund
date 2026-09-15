@@ -1,6 +1,6 @@
-== 2026-09-15T11:44:49Z rules release attempt for nextgen-fund-2040 ==
+== 2026-09-15T11:49:05Z rules release attempt for nextgen-fund-2040 ==
 
-added 15 packages, removed 8 packages, and changed 3 packages in 997ms
+added 15 packages, removed 8 packages, and changed 3 packages in 931ms
 
 87 packages are looking for funding
   run `npm fund` for details
@@ -8,15 +8,15 @@ helpers: ok
 -- compile check --
 ruleset compile check -> http 200
 {
-  "name": "projects/nextgen-fund-2040/rulesets/d45061f2-1aa2-4ba6-8349-060d5f129050",
+  "name": "projects/nextgen-fund-2040/rulesets/58912fea-2149-4ad5-8e9d-4f2c63fedb31",
   "source": {
     "files": [
       {
         "content": "rules_version = '2';\n\n// NextGen Fund - Firestore security rules (v3, default-deny).\n//\n// v3 adds ONE thing to v2: a full-reset capability for the fund admin.\n// Reason (audited 2026-09-14): v2 made three stores undeletable by anyone,\n// including the admin - /settings/bootstrap, /usernames/* and /audit/*.\n// That made it impossible to ever return the app to a clean, first-run\n// state: bootstrap kept \"an admin already exists\" true forever, and a\n// leftover /usernames/{name} blocked that username from being reused\n// (create on an existing doc is an update, and update stays false).\n//\n// What changed, precisely:\n//   settings/bootstrap : delete allowed for the admin (was: never)\n//   usernames/{name}   : delete allowed for the admin (was: never)\n//   audit/{id}         : delete allowed for the admin (was: never)\n// Everything else is byte-identical to v2. Updates stay forbidden everywhere\n// they were forbidden: identity is still immutable, the audit log is still\n// append-only in normal operation, and no member gains any new power.\n//\n// RISK NOTE (read before releasing the bootstrap): deleting\n// /settings/bootstrap puts the app back into first-run mode, because admin\n// setup is claimable whenever the doc is absent - that is the intended\n// \"start from new\" behaviour. Do it deliberately, and create the
 -- release --
-1) ruleset upload -> http 403
-   ruleset upload refused: {"error":{"code":403,"message":"Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.","status":"PERMISSION_DENIED"}}
-3) release read-back -> http 403
+1) ruleset upload -> http 401
+   ruleset upload refused: {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+3) release read-back -> http 401
    active ruleset now: -
    release points at the uploaded ruleset: NO
 
