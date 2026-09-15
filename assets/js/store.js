@@ -401,20 +401,20 @@
 
     createNomineeRequest: async function (data) {
       if (Store.mode === 'firebase') return Store._fb.createNomineeRequest(data);
-      var db = load();
+      var db = Store._d();
       db.nomineeRequests = db.nomineeRequests || [];
       var row = { id: 'nr-' + Date.now().toString(36), memberId: data.memberId || 'demo', status: 'pending', requestedAt: new Date().toISOString(), memberName: data.memberName || '', username: data.username || '', currentNominee: data.currentNominee || '', requestedNominee: data.requestedNominee || '', relation: data.relation || '', reason: data.reason || '' };
       if (!row.requestedNominee) throw new Error('nominee-required');
-      db.nomineeRequests.push(row); save(db); return row;
+      db.nomineeRequests.push(row); Store._save(); return row;
     },
     listNomineeRequests: async function (status) {
       if (Store.mode === 'firebase') return Store._fb.listNomineeRequests(status);
-      var rows = (load().nomineeRequests || []).slice();
+      var rows = (Store._d().nomineeRequests || []).slice();
       return status ? rows.filter(function (r) { return r.status === status; }) : rows;
     },
     decideNomineeRequest: async function (id, approve, byName) {
       if (Store.mode === 'firebase') return Store._fb.decideNomineeRequest(id, approve, byName);
-      var db = load();
+      var db = Store._d();
       var row = (db.nomineeRequests || []).filter(function (r) { return r.id === id; })[0];
       if (!row) throw new Error('not-found');
       if (approve) {
@@ -422,7 +422,7 @@
       }
       row.status = approve ? 'approved' : 'rejected';
       row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';
-      save(db); return true;
+      Store._save(); return true;
     },
     /* The Drive uploader is independent of the data store: it always talks to the endpoint,
        in demo mode as well, so the same code path can be tested and used. */
@@ -456,11 +456,11 @@
     getDriveEndpoint: async function () {
       if (Store.mode === 'firebase') return Store._fb.getDriveEndpoint();
       /* the admin-panel value wins, then the build-time config, then the global */
-      return load().driveEndpoint || window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
+      return Store._d().driveEndpoint || window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
     },
     saveDriveEndpoint: async function (url) {
       if (Store.mode === 'firebase') return Store._fb.saveDriveEndpoint(url);
-      var db = load(); db.driveEndpoint = String(url || '').trim(); save(db); return db.driveEndpoint;
+      var db = Store._d(); db.driveEndpoint = String(url || '').trim(); Store._save(); return db.driveEndpoint;
     },
     getMyPayments: async function () {
       if (Store.mode === 'firebase') return Store._fb.getMyPayments();
