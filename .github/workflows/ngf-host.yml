@@ -1,0 +1,98 @@
+# Publish the very same site to the second Hosting site: nextgenfund.web.app
+#
+# Why this file exists
+#   Firebase serves <site-name>.web.app. The existing project nextgen-fund-2040 owns the site
+#   "nextgen-fund-2040"; a project may own several sites, so the same content can also be served
+#   from a second site named "nextgenfund" - no new project, no code change, no data move.
+#
+# What it does, in order
+#   1. deploys the repository to the project's default site (keeps nextgen-fund-2040.web.app current)
+#   2. creates the site "nextgenfund" if it does not exist yet (idempotent)
+#   3. deploys the same content to it
+#   4. clones the live release on the default site to the live release on the new site, so the two
+#      are byte-identical even if step 3 was skipped for any reason
+#   5. prints the site list and the releases as evidence
+#
+# The service-account secret is the same one the Hosting workflow already uses. It stays in
+# GitHub Secrets and is written to a temporary file that is deleted before the job ends.
+
+name: Publish to nextgenfund.web.app
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ngf-host
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT: nextgen-fund-2040
+      NEW_SITE: nextgenfund
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the Firebase CLI
+        run: npm install --no-save --loglevel=error firebase-tools@13
+
+      - name: Write the service-account key
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -euo pipefail
+          mkdir -p .ci
+          printf '%s' "$FIREBASE_SA" > .ci/sa.json
+          node -e "const j=require('./.ci/sa.json'); if(!j.private_key||!j.client_email){console.error('service-account secret missing or malformed');process.exit(1);} console.log('service account:', j.client_email, '| project:', j.project_id);"
+
+      - name: 1. Deploy the default site (nextgen-fund-2040.web.app)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: npx firebase deploy --only hosting --project "$PROJECT" --non-interactive
+
+      - name: 2. Create the second site if it does not exist
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set +e
+          npx firebase hosting:sites:create "$NEW_SITE" --project "$PROJECT" --non-interactive
+          echo "create exit code: $? (a non-zero code here usually means the site already exists)"
+          npx firebase hosting:sites:list --project "$PROJECT"
+
+      - name: 3. Deploy the same content to the new site
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set +e
+          npx firebase deploy --only "hosting:$NEW_SITE" --project "$PROJECT" --non-interactive
+          echo "deploy exit code: $?"
+
+      - name: 4. Clone the live release so both sites are byte-identical
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set +e
+          npx firebase hosting:clone "$PROJECT:live" "$NEW_SITE:live" --project "$PROJECT" --non-interactive
+          echo "clone exit code: $?"
+
+      - name: 5. Evidence
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set +e
+          echo "--- sites ---"
+          npx firebase hosting:sites:list --project "$PROJECT"
+          echo "--- releases on the new site ---"
+          npx firebase hosting:releases:list --project "$PROJECT" --site "$NEW_SITE"
+          echo "new address: https://$NEW_SITE.web.app"
+          rm -rf .ci
