@@ -1,18 +1,18 @@
-== 2026-09-15T11:31:29Z rules release attempt for nextgen-fund-2040 ==
+== 2026-09-15T11:35:00Z rules release attempt for nextgen-fund-2040 ==
 
-added 6 packages, removed 621 packages, and changed 3 packages in 1s
+added 15 packages, removed 8 packages, and changed 3 packages in 890ms
 
-5 packages are looking for funding
+87 packages are looking for funding
   run `npm fund` for details
-google-auth-library: ok
+helpers: ok
 -- compile check --
 ruleset compile check -> http 200
 {
-  "name": "projects/nextgen-fund-2040/rulesets/b244beb9-6765-4901-9f65-3929cc33ae52",
+  "name": "projects/nextgen-fund-2040/rulesets/418e87c4-f903-493c-bf85-f8cce538bfba",
   "source": {
     "files": [
       {
         "content": "rules_version = '2';\n\n// NextGen Fund - Firestore security rules (v3, default-deny).\n//\n// v3 adds ONE thing to v2: a full-reset capability for the fund admin.\n// Reason (audited 2026-09-14): v2 made three stores undeletable by anyone,\n// including the admin - /settings/bootstrap, /usernames/* and /audit/*.\n// That made it impossible to ever return the app to a clean, first-run\n// state: bootstrap kept \"an admin already exists\" true forever, and a\n// leftover /usernames/{name} blocked that username from being reused\n// (create on an existing doc is an update, and update stays false).\n//\n// What changed, precisely:\n//   settings/bootstrap : delete allowed for the admin (was: never)\n//   usernames/{name}   : delete allowed for the admin (was: never)\n//   audit/{id}         : delete allowed for the admin (was: never)\n// Everything else is byte-identical to v2. Updates stay forbidden everywhere\n// they were forbidden: identity is still immutable, the audit log is still\n// append-only in normal operation, and no member gains any new power.\n//\n// RISK NOTE (read before releasing the bootstrap): deleting\n// /settings/bootstrap puts the app back into first-run mode, because admin\n// setup is claimable whenever the doc is absent - that is the intended\n// \"start from new\" behaviour. Do it deliberately, and create the
 -- release --
-npm error could not determine executable to run
-npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-09-15T11_31_31_283Z-debug-0.log
+
+[1m[31mError:[39m[22m Cannot understand what targets to deploy/serve. No targets in firebase.json match '--only firestore:rules'.
