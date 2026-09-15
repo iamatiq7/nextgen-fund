@@ -104,6 +104,14 @@
     var auth = authMod.getAuth(app);
     var db = fsMod.getFirestore(app);
     var storage = stMod.getStorage(app);
+
+/* Some deployments have no Storage bucket: uploadBytes() then retries and never settles,
+   which left the member staring at a disabled button. Every network step gets a deadline. */
+function withTimeout(p, ms, tag) {
+  return Promise.race([p, new Promise(function (_, rej) {
+    setTimeout(function () { var e = new Error(tag || 'timeout'); e.code = 'timeout'; rej(e); }, ms);
+  })]);
+}
     var U = window.NGFUtil;
     var S = window.NGFStore;
 
@@ -352,6 +360,7 @@
           throw err('invalid', e.message);
         }
         var uid = cred.user.uid;
+        try {
         var docs = [];
         var docsPending = false;
         for (var i = 0; i < (data.docs || []).length; i++) {
@@ -362,7 +371,7 @@
             var path = 'registrations/' + uid + '/' + Date.now() + '-' + d.name;
             var ref = stMod.ref(storage, path);
             if (!d.file) throw new Error('no-file');
-            await stMod.uploadBytes(ref, d.file, { contentType: d.mime });
+            await withTimeout(stMod.uploadBytes(ref, d.file, { contentType: d.mime }), 8000, 'storage-timeout');
             docs.push({ kind: d.kind, name: d.name, mime: d.mime, size: d.size, path: path });
           } catch (e) {
             docsPending = true; /* Drive and Storage both unavailable: keep the compact copy inside the record */
@@ -399,6 +408,12 @@
         await audit(reg.fullName, 'registration-submitted', 'username ' + uname);
         await authMod.signOut(auth);
         return { ok: true, registrationId: uid };
+        } catch (eFail) {
+          /* the account was created before the rest of the registration ran: if anything after it
+             fails, drop that fresh account so the member can retry with the same email. */
+          try { await cred.user.delete(); } catch (eDel) { /* best effort, nothing else to do */ }
+          throw eFail;
+        }
       },
 
       /* ---------- auth ---------- */
