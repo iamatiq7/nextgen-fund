@@ -87,6 +87,16 @@
         if (bad) {
           log.textContent += L.t('rs.errors') + '\n' + report.errors.join('\n') + '\n';
         }
+        var denied = (report.errors || []).some(function (x) { return /permission|denied|insufficient/i.test(String(x)); });
+        if (denied) {
+          /* the classic stranded case: settings/bootstrap was released by an earlier run, so the
+             admin's own rights are gone. Say so plainly and point at the way forward. */
+          gate('<div class="notice warn"><strong>' + esc(L.t('rs.deniedTitle')) + '</strong><br>' + esc(L.t('rs.deniedBody')) + '</div>' +
+            '<p><a class="btn" href="setup.html">' + esc(L.t('rs.toSetup')) + '</a>' +
+            '<a class="btn ghost" href="admin.html" style="margin-left:6px">' + esc(L.t('rs.toAdmin')) + '</a></p>' +
+            '<div class="card"><div class="foot" style="white-space:pre-wrap">' + esc(log.textContent) + '</div></div>');
+          return;
+        }
         var done = report.accountDeleted ? L.t('rs.doneAccount') : L.t('rs.done');
         gate('<div class="notice ok">' + esc(done) + '</div>' +
           '<p><a class="btn" href="setup.html">' + esc(L.t('rs.toSetup')) + '</a>' +

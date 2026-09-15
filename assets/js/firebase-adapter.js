@@ -717,7 +717,17 @@ function withTimeout(p, ms, tag) {
         var order = ['payments', 'registrations', 'audit', 'usernames', 'users', 'finance'];
         for (var i = 0; i < order.length; i++) {
           var name = order[i];
-          var docs = await getAll(name);
+          var docs = [];
+          try {
+            docs = await getAll(name);
+          } catch (e) {
+            /* e.g. the admin rights are already gone because an earlier partial reset released
+               settings/bootstrap: report it and carry on with the other collections */
+            report.errors.push(name + ': ' + (e.code || e.message || 'denied'));
+            report.collections[name] = null;
+            onStep('skipped /' + name + ' (' + (e.code || e.message || 'denied') + ')');
+            continue;
+          }
           for (var k = 0; k < docs.length; k++) {
             try { await fsMod.deleteDoc(docIn(name, docs[k].id)); report.deleted++; }
             catch (e) { report.errors.push(name + '/' + docs[k].id + ': ' + (e.code || e.message)); }

@@ -32,7 +32,7 @@
       'rs.doneAccount': 'The database is empty and your sign-in was deleted. Open setup.html to create the new admin.',
       'rs.errors': 'Some documents could not be deleted. Publish the v3 rules first (docs/database-reset-runbook.md), then run it again - it is safe to repeat.',
       'rs.backupHint': 'Before the first reset, dump everything with: node tools/db-reset.mjs --backup --email you@example.com --password ... ',
-      'rs.toSetup': 'Create the new admin', 'rs.wrongWord': 'Type RESET exactly to enable the button.',
+      'rs.toSetup': 'Create the new admin', 'rs.deniedTitle': 'Some collections could not be cleared - the admin rights are gone.', 'rs.deniedBody': 'This happens when an earlier reset already released settings/bootstrap. Open setup.html and claim the admin account again, then run the reset once more - it is safe to repeat.', 'rs.toAdmin': 'Back to admin',  'rs.wrongWord': 'Type RESET exactly to enable the button.',
       'rs.deleted': 'deleted',
 
       'brand.name': 'NextGen Fund', 'brand.tag': 'family fund ledger',
@@ -280,7 +280,7 @@
       'rs.doneAccount': 'ডেটাবেস খালি এবং আপনার লগইন মুছে ফেলা হয়েছে। নতুন অ্যাডমিন তৈরিটে setup.html খুলুন।',
       'rs.errors': 'কিছু ডকুমেন্ট মুছা যায়নি। আগে v3 রুল পাবলিশ করুন (docs/database-reset-runbook.md), তারপর আবার চলান - বার বার চলানো নিরাপদ।',
       'rs.backupHint': 'প্রথম রিসেটের আগে সব ডাউনলোড করুন: node tools/db-reset.mjs --backup --email you@example.com --password ... ',
-      'rs.toSetup': 'নতুন অ্যাডমিন তৈরি করুন', 'rs.wrongWord': 'বাটন চালু করতে হুবহু বর্ণে RESET লিখুন।',
+      'rs.toSetup': 'নতুন অ্যাডমিন তৈরি করুন', 'rs.deniedTitle': 'কিছু কালেকশন মোছা যায়নি — অ্যাডমিনের অনুমতি আর নেই।', 'rs.deniedBody': 'আগের কোনো রিসেটে settings/bootstrap মুছে গেলে এমন হয়। setup.html খুলে আবার অ্যাডমিন অ্যাকাউন্ট claim করুন, তারপর আবার রিসেট চালান — বারবার চালানো নিরাপদ।', 'rs.toAdmin': 'অ্যাডমিনে ফিরুন',  'rs.wrongWord': 'বাটন চালু করতে হুবহু বর্ণে RESET লিখুন।',
       'rs.deleted': 'মুছা হয়েছে',
 
       'brand.name': 'নেক্সটজেন ফান্ড', 'brand.tag': 'পারিবারিক তহবিলের হিসাব',
