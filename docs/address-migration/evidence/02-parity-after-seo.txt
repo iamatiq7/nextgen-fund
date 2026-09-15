@@ -1,0 +1,50 @@
+=== address migration parity check ===
+timestamp : 2026-09-15T04:00:11.494Z
+old       : https://nextgen-fund-2040.web.app
+new       : https://nextgenfund.web.app
+
+--- page by page: status and content hash on both hosts ---
+route           old     new     sha256 (normalised) match
+/               200     200     27f0888eb098a809    YES
+/index.html     200     200     27f0888eb098a809    YES
+/setup.html     200     200     800a1413f36b1e6e    YES
+/login.html     200     200     73766781033838db    YES
+/portal.html    200     200     d4943f29b17142ef    YES
+/admin.html     200     200     fcd5b509ee8314b1    YES
+/register.html  200     200     63567cbd47a8e3e8    YES
+/reset.html     200     200     6f4ecbdee9304a32    YES
+/robots.txt     200     200     13638b281b53e3f2    YES
+/sitemap.xml    200     200     e52be6e4e660e464    YES
+/404.html       200     200     852dbe8845f7afb8    YES
+PASS  every route that the old host serves 200 is byte-identical on the new host  [0 mismatch(es)]
+
+--- assets on the new host ---
+  200    21310 B  /assets/css/style.css
+  200     5626 B  /assets/js/app.js
+  200    36824 B  /assets/js/store.js
+  200    37159 B  /assets/js/firebase-adapter.js
+  200      671 B  /assets/js/firebase-config.js
+  200    76686 B  /assets/js/i18n.js
+  200     3106 B  /assets/js/setup.js
+  200     3892 B  /assets/img/favicon.png
+  200    19234 B  /assets/img/logo.png
+PASS  every asset the site references loads on the new host  [0 failure(s)]
+
+--- backend wiring: the two hosts must use the same Firebase project ---
+PASS  firebase-config.js is identical on both hosts (same Auth + Firestore project)  [identical]
+  projectId: nextgen-fund-2040   authDomain: nextgen-fund-2040.firebaseapp.com
+  -> the new address writes to exactly the same database, so every record, login and admin view continues to work unchanged
+
+--- mixed content / plaintext references on the new host ---
+PASS  no http:// asset reference (nothing mixed-content on an HTTPS page)  [none]
+PASS  no unexpected third-party host referenced by the home page  [none]
+
+--- TLS on the new host ---
+PASS  HTTPS certificate is valid and trusted on the new host  [TLSv1.3 · web.app · issued by Google Trust Services · expires Oct 18 14:59:54 2026 GMT]
+
+--- redirect chain on both hosts ---
+  https://nextgen-fund-2040.web.app/ -> 200 
+  https://nextgenfund.web.app/ -> 200 
+
+checks: 6   pass: 6   fail: 0
+RESULT: ALL PASS

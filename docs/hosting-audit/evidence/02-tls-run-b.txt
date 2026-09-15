@@ -1,0 +1,35 @@
+=== TLS handshake evidence - run-b ===
+timestamp: 2026-09-14T10:01:28.173Z
+
+host=nextgen-fund-2040.web.app sni=nextgen-fund-2040.web.app
+  negotiated protocol  : TLSv1.3
+  cipher               : TLS_AES_128_GCM_SHA256 (TLSv1.3)
+  authorized (trusted)  : true 
+  peer IP:port         : 199.36.158.100:443
+  leaf subject         : web.app | O=undefined | C=undefined
+  leaf issuer          : WR4 | O=Google Trust Services | C=US
+  validity             : Jul 20 14:59:55 2026 GMT  ->  Oct 18 14:59:54 2026 GMT
+  serial / fingerprint : 93AB2A7AED4ACB210AF6C0FB093163BC | sha256 D6:9D:48:C3:ED:F1:AF:14:6F:82:E0:E4:09:50:BA:1D:2C:2A:6A:C9:87:56:57:53:6C:51:CD:7E:9B:82:59:1B
+  subjectAltName       : DNS:web.app, DNS:*.web.app
+  chain:
+    [0] CN=web.app | issuer=WR4 | O=Google Trust Services | valid_to=Oct 18 14:59:54 2026 GMT
+    [1] CN=WR4 | issuer=GTS Root R1 | O=Google Trust Services LLC | valid_to=Feb 20 14:00:00 2029 GMT
+    [2] CN=GTS Root R1 | issuer=GlobalSign Root CA | O=GlobalSign nv-sa | valid_to=Jan 28 00:00:42 2028 GMT
+    [3] CN=GlobalSign Root CA | issuer=GlobalSign Root CA | O=GlobalSign nv-sa | valid_to=Jan 28 12:00:00 2028 GMT
+
+host=iamatiq7.github.io sni=iamatiq7.github.io
+  negotiated protocol  : TLSv1.3
+  cipher               : TLS_AES_128_GCM_SHA256 (TLSv1.3)
+  authorized (trusted)  : true 
+  peer IP:port         : 185.199.109.153:443
+  leaf subject         : *.github.io | O=undefined | C=undefined
+  leaf issuer          : YR1 | O=Let's Encrypt | C=US
+  validity             : Aug  2 23:38:02 2026 GMT  ->  Oct 31 23:38:01 2026 GMT
+  serial / fingerprint : 059E7C420F8943F524AB370807C836BB57FE | sha256 71:F1:07:7D:B3:77:FD:7B:8D:68:38:0D:A6:6F:A6:82:38:A3:03:B2:91:1B:CB:77:0B:3B:2A:42:66:93:CF:84
+  subjectAltName       : DNS:*.github.com, DNS:*.github.io, DNS:*.githubusercontent.com, DNS:github.com, DNS:github.io, DNS:githubusercontent.com
+  chain:
+    [0] CN=*.github.io | issuer=YR1 | O=Let's Encrypt | valid_to=Oct 31 23:38:01 2026 GMT
+    [1] CN=YR1 | issuer=Root YR | O=ISRG | valid_to=Sep  2 23:59:59 2028 GMT
+    [2] CN=Root YR | issuer=ISRG Root X1 | O=Internet Security Research Group | valid_to=Sep  2 23:59:59 2032 GMT
+    [3] CN=ISRG Root X1 | issuer=ISRG Root X1 | O=Internet Security Research Group | valid_to=Jun  4 11:04:38 2035 GMT
+

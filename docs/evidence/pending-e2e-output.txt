@@ -1,0 +1,92 @@
+===== tests/e2e-emulator/pending-status-e2e.mjs =====
+# adapter source: ../../ngf-build/assets/js/
+PASS E1 the real adapter boots against the emulator | mode=firebase
+== 1. fund owner + one approved member ==
+== 2. the member submits 6,000 + 1,000; both must show as pending ==
+  ┬╖ ledger: 2 payments | pending(2) | stats pending 2 / 7000
+PASS E2 the pending filter returns exactly the two submitted payments
+PASS E3 stats agree with the filter
+PASS E4 the demo store and the real adapter expose the same summariser
+== 3. duplicate references are refused by the real backend ==
+PASS E5 the admin cannot record a reference that already exists for that member | dup-ref This transaction ID is already recorded for this member.
+PASS E6 the member cannot submit the same transaction ID twice | dup-ref This transaction ID was already submitted.
+== 4. while it waits, the member sees it as pending only (never as paid) ==
+  ┬╖ member balance while pending: pending=7000 paid=0 due=0
+PASS E7 the submitted money is pending, not paid | {"expected":1000,"paid":0,"paidDue":0,"advance":0,"advanceMonths":0,"pending":7000,"pendingDue":1000,"pendingAdvance":6000,"due":0,"dueVerified":1000}
+PASS E8 the member pending line quotes the whole 7,000 | due=1000 adv=6000
+== 5. the admin verifies one of the two ==
+  ┬╖ after verifying 1,000: pending(1) | stats pending 1 / 6000 | verified 1 / 1000
+PASS E9 pending drops to the remaining single row / 6,000
+PASS E10 the verified money is counted once
+PASS E11 the OLD call shape would have shown 2 pending rows here | old=2 real=1
+PASS E12 stats equal a fresh raw scan
+  ┬╖ fund aggregate after the admin write: pendingDue=6000 deposits=1000 funding=1000
+PASS E13 the fund aggregate now reports the 6,000 that is really pending | pendingDue=6000
+PASS E14 only verified money is counted as deposits | deposits=1000
+== 6. verify the rest: every surface must clear ==
+  ┬╖ after verifying all: pending(0) | stats pending 0 / 0 | verified 2 / 7000
+PASS E15 the pending list is empty
+PASS E16 the pending count and amount are zero
+PASS E17 both payments are verified and counted once (7,000)
+PASS E18 the OLD shape would still report 2 pending rows (the reported bug)
+PASS E19 stats equal a fresh raw scan
+PASS E20 the fund pending total clears | pendingDue=0
+PASS E21 the fund counts the money exactly once (7,000) | deposits=7000
+== 7. the member portal reflects it ==
+  ┬╖ member balance after verify: paid=7000 pending=0 due=0 advance=6000
+PASS E22 no pending money is left in the member view | pending=0
+PASS E23 all 7,000 is shown as paid | paid=7000
+PASS E24 the 6,000 overpayment is explained as advance | advance=6000 months=6
+  ┬╖ member ledger: PEND-E2E-1:verified, PEND-E2E-2:verified
+PASS E25 the member history footer agrees (2 verified, 0 pending) | {"pending":0,"verified":2,"rejected":0,"other":0,"all":2}
+== 7b. a decided payment cannot be flipped again (live adapter parity) ==
+PASS E27 rejecting an already verified payment is refused on the live backend | invalid Only pending payments can be rejected.
+PASS E28 verifying an already verified payment is refused on the live backend | invalid Only pending payments can be verified.
+PASS E29 a payment id that does not exist is refused | not-found Payment not found
+  ┬╖ after the refused flips: verified 2 / 7000 ┬╖ deposits 7000
+PASS E30 the refused attempts changed nothing
+== 8. audit trail ==
+  ┬╖ audit actions: ["payment-verified","payment-submitted","registration-approved","registration-submitted","admin-created"]
+PASS E26 every verification is in the audit log with actor + detail | {"id":"y8aBYavtoayadFPNPRT6","at":"2026-09-14T08:13:37.012Z","actor":"admin","action":"payment-verified","detail":"DYNYfaf4cviYsf9iiOKQ"}
+PASS E31 the registration audit entry survives (written before sign-out) | {"id":"GPnzjaLL4b75Z09KhkBw","at":"2026-09-14T08:13:36.140Z","actor":"Pend Member","action":"registration-submitted","detail":"username pend.member"}
+PASS E32 both member submissions are in the audit log | ["bkash due 1000 ref PEND-E2E-2","bkash due 6000 ref PEND-E2E-1"]
+REAL-ADAPTER PENDING E2E: ALL PASS (32 checks)
+
+===== tests/e2e-emulator/fixes-live-e2e.mjs (regression) =====
+# adapter source: ../../ngf-build/assets/js/
+PASS real adapter boots against emulator | mode=firebase
+PASS admin created + signed in | admin
+PASS registration visible to admin | pending
+PASS new member due = 1000 (1 month x 1000) | {"expected":1000,"paid":0,"paidDue":0,"advance":0,"advanceMonths":0,"pending":0,"pendingDue":0,"pendingAdvance":0,"due":1000,"dueVerified":1000}
+PASS advance starts at 0 - nothing overpaid yet | advance=0
+PASS fund total starts at 0 (no manual entries) | totalFunding=0
+PASS pending payment reduces due to 0 at once | {"expected":1000,"paid":0,"paidDue":0,"advance":0,"advanceMonths":0,"pending":1000,"pendingDue":1000,"pendingAdvance":0,"due":0,"dueVerified":1000}
+PASS pendingDue = 1000 exposed for the UI note
+PASS pending payment is NOT in the fund total yet | totalFunding=0
+PASS payment listed for admin | pending
+PASS approval -> totals written to settings/public | keys=fundName,currency,nextMeeting,meetingNote,totalFunding,totalRevenue,totalLoss,net,memberDeposits,memberAdvance,pendingDue,months,memberCount,monthlyPerShare,content,updatedAt
+PASS totalFunding = 1000 (auto, no manual entry) | totalFunding=1000
+PASS memberDeposits = 1000 | memberDeposits=1000
+PASS pendingDue cleared to 0 after approval | pendingDue=0
+PASS September row carries funding 1000 | {"month":"2026-09","funding":1000,"revenue":0,"loss":0,"deposits":1000}
+PASS member view agrees (paid 1000, due 0) | {"expected":1000,"paid":1000,"paidDue":1000,"advance":0,"advanceMonths":0,"pending":0,"pendingDue":0,"pendingAdvance":0,"due":0,"dueVerified":0}
+PASS overpaid due becomes advance (2,000 paid vs 1,000 billed) | {"expected":1000,"paid":2000,"paidDue":2000,"advance":1000,"advanceMonths":1,"pending":0,"pendingDue":0,"pendingAdvance":0,"due":0,"dueVerified":0}
+PASS advanceMonths tells how far ahead the member is | months=1
+PASS due stays 0 and paid total is 2,000 | due=0 paid=2000
+PASS fund totals expose the advance pool | memberAdvance=1000
+PASS fund deposits equal the money actually received (2,000) | memberDeposits=2000
+PASS admin name change persisted (re-read from Firestore) | E2E Admin Renamed
+PASS wrong current password rejected | wrong-credentials Current password is incorrect.
+PASS old password no longer accepted | wrong-credentials Wrong username or password.
+PASS new password logs in fine
+PASS renamed admin still shown after re-login | E2E Admin Renamed
+PASS member cannot self-verify | forbidden Admin access required
+PASS zero amount rejected | invalid Enter an amount greater than 0.
+PASS negative amount rejected | invalid Enter an amount greater than 0.
+PASS non-multiple rejected | invalid Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).
+PASS duplicate reference rejected | dup-ref This transaction ID was already submitted.
+PASS member cannot write fund settings | forbidden Admin access required
+PASS member cannot add finance entries | forbidden Admin access required
+PASS member cannot approve their own account | forbidden Admin access required
+PASS books still balanced after bad input | {"expected":1000,"paid":2000,"paidDue":2000,"advance":1000,"advanceMonths":1,"pending":0,"pendingDue":0,"pendingAdvance":0,"due":0,"dueVerified":0}
+REAL-ADAPTER E2E: ALL PASS

@@ -1,0 +1,62 @@
+=== Firebase incident history (status.firebase.google.com/incidents.json) ===
+collected : 2026-09-14T10:34:38.899Z
+http      : 200   records: 48
+window    : 2025-07-18 -> 2026-09-10  (423 days of history in this feed)
+
+--- incidents by Firebase service ---
+    12x  Test Lab
+     6x  App Hosting
+     5x  Cloud Messaging
+     4x  Crashlytics
+     3x  Performance Monitoring
+     3x  Hosting
+     3x  Multiple Products
+     3x  Studio (Preview)
+     2x  App Distribution
+     2x  AI Logic
+     2x  Realtime Database
+     1x  A/B Testing (Beta)
+     1x  Remote Config
+     1x  SQL Connect
+
+--- incidents by affected product (top 20) ---
+    12x  Test Lab
+     7x  Crashlytics
+     6x  Performance Monitoring
+     6x  App Hosting
+     5x  Cloud Messaging
+     3x  Hosting
+     3x  Studio (Preview)
+     2x  App Distribution
+     2x  AI Logic
+     2x  Realtime Database
+     1x  A/B Testing (Beta)
+     1x  Remote Config
+     1x  SQL Connect
+
+--- incidents mentioning "hosting": 11 ---
+    total published duration: 74567 minutes over 11 closed incidents (mean 6779 min, longest 29589 min)
+    [2026-07-30] 800 min   Firebase Hosting custom domains API returning 501 errors
+    [2026-03-23] 10904 min Firebase Hosting is missing metrics and logs in Cloud Logging.
+    [2026-03-10] 29589 min Firebase Studio App Hosting deployment disruption
+    [2026-03-05] 160 min   Deploys from GitHub are failing in us-east5
+    [2026-02-26] 60 min    Elevated errors and latency in europe-west4
+
+--- incidents mentioning "firestore": 0 ---
+
+--- incidents mentioning "authentication": 0 ---
+
+--- incidents mentioning "identity platform": 0 ---
+
+--- rough availability implied by published incidents (last 180 days) ---
+  hosting         incidents:   2   published downtime: 11704 min   implied uptime: 95.4846%
+  firestore       incidents:   0   published downtime:     0 min   implied uptime: 100.0000%
+  authentication  incidents:   0   published downtime:     0 min   implied uptime: 100.0000%
+
+--- caveats ---
+* This is the published-incident feed, not a per-request measurement. Incidents shorter than
+  Google threshold, or that never got a public entry, are not counted.
+* Durations are the published start/end of the incident, which is wider than the moment any one
+  user was affected; treating all of it as downtime for everyone understates real-world uptime.
+* Some incidents overlap in time, so the minutes must not be summed across products.
+* The contractual promise is the SLA (Hosting 99.95%, Firestore multi-region 99.999%), not this table.

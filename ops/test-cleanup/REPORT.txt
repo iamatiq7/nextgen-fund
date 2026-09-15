@@ -1,0 +1,7 @@
+auth accounts considered: 7
+test accounts matched   : 2 (e2e.mu2s00mo@ngf.local, docs.kept.mu27yli0@ngf.local)
+deleted                 : 2
+registrations rows removed      : 1
+users rows removed      : 2
+auth accounts remaining : 5
+result: PASS

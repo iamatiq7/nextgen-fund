@@ -1,0 +1,79 @@
+=== 07. sources: every technical claim and where it comes from ===
+collected: 2026-09-14 (all pages opened/searched on this date; the incident feeds were fetched live)
+compiled by: ATIQ.V2 for project nextgen-fund-2040
+
+--- SLA / uptime ---
+[1] Firebase Service Level Agreement (Hosting + Realtime Database, Monthly Uptime >= 99.95%)
+    https://firebase.google.com/terms/service-level-agreement
+[2] Cloud Storage for Firebase SLA (separate agreement, error-rate based)
+    https://firebase.google.com/terms/service-level-agreement/cloud-storage
+[3] Cloud Firestore SLA (multi-region >= 99.999%, regional >= 99.99%)
+    https://cloud.google.com/firestore/sla
+[4] Firestore locations (multi-region vs regional, availability differences)
+    https://firebase.google.com/docs/firestore/locations
+
+--- limits, quotas, pricing ---
+[5] Firebase Hosting usage, quotas and pricing (10 GB storage free, 2 GB per file)
+    https://firebase.google.com/docs/hosting/usage-quotas-pricing
+[6] Firebase pricing (Hosting: 360 MB/day data transfer on the no-cost Spark plan)
+    https://firebase.google.com/pricing
+[7] Cloud Firestore usage and limits (Spark: 50,000 reads / 20,000 writes / 20,000 deletes per day)
+    https://firebase.google.com/docs/firestore/quotas
+
+--- billing safety ---
+[8] Avoid surprise bills (set budget alerts; spend caps where applicable; programmatically
+    disable Cloud Billing to stop usage)
+    https://firebase.google.com/docs/projects/billing/avoid-surprise-bills
+[9] Set up programmatic notifications for budgets (budget -> Pub/Sub -> automated action)
+    https://docs.cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications
+
+--- data at rest / in transit / access control ---
+[10] Firestore server-side encryption (data encrypted before it is written to disk; no setup)
+     https://docs.cloud.google.com/firestore/native/docs/server-side-encryption
+[11] Firestore customer-managed encryption keys (CMEK)
+     https://firebase.google.com/docs/firestore/cmek
+[12] Firestore security rules / access model (project source: firestore.rules in the repo,
+     hand-verified in the emulator - see evidence/01-data-safety-rules.txt)
+
+--- backup and restore ---
+[13] Firestore export and import (managed export/import through Cloud Storage)
+     https://firebase.google.com/docs/firestore/manage-data/export-import
+[14] Firestore backups (scheduled backups, retention, restore)
+     https://docs.cloud.google.com/firestore/native/docs/backups
+
+--- custom domain ---
+[15] Connect a custom domain to Firebase Hosting (TXT verification, DNS records, SSL)
+     https://firebase.google.com/docs/hosting/custom-domain
+     (documented: allow up to 24 hours for TXT propagation before verifying)
+
+--- live incident feeds (fetched 2026-09-14) ---
+[16] Firebase incident history: https://status.firebase.google.com/incidents.json
+     48 published incidents, window 2025-07-18 -> 2026-09-10
+     by service: Test Lab 12, App Hosting 6, Cloud Messaging 5, Crashlytics 4, Hosting 3,
+     Multiple Products 3, Studio (Preview) 3, App Distribution 2, AI Logic 2,
+     Realtime Database 2, A/B Testing 1, Remote Config 1, SQL Connect 1
+     Firestore: 0   Authentication: 0
+[17] Google Cloud incident feed: https://status.cloud.google.com/incidents.json
+     6 records returned, none mentioning Firebase / Firestore / Hosting
+
+--- our own measurements (this workspace, reproducible) ---
+[18] docs/hosting-audit/nextgen-fund-where-it-runs.md  (DNS, TLS 1.3, edge cache node CCU=Kolkata,
+     served files sha256-identical to the repo, deploy pipeline, real browser network trace)
+[19] evidence/01-data-safety-rules.txt   (31 security checks, emulator test project - ALL PASS)
+[20] evidence/02-restore-drill.txt       (backup 171 ms, wipe 613 ms, restore 279 ms; 77/77 documents
+     restored identically; the naive restore order fails and why)
+[21] evidence/04-live-rules-probe.txt    (live project: anonymous reads of users / payments /
+     registrations / audit / settings -> 403 PERMISSION_DENIED)
+[22] evidence/05-firebase-incident-history.txt (the analysis behind the numbers in [16])
+
+--- rules actually read from the project (quoted, not summarised) ---
+[23] firestore.rules in the repository: users create is self-only (L68), payments create requires
+     memberId == auth.uid, amount >= 1000 and a multiple of 1000, status 'pending',
+     type in ['due','advance'], verifiedAt/verifiedBy null (L106-L116), audit write is
+     append-only except admin delete (L122-L127)
+
+--- what is NOT in this list, on purpose ---
+* No legal interpretation of the SLA, no liability advice, no compliance certification.
+* No "never goes down" or "100% secure" claim anywhere - those cannot be made honestly.
+* Third-party blogs/Stack Overflow were used only to locate the official pages, never as the
+  sole source of a factual claim.

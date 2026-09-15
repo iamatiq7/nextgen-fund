@@ -1,0 +1,8 @@
+﻿=== rendered DOM after JavaScript execution (headless Chromium) ===
+timestamp : 2026-09-14T16:02:16.1039835+06:00
+browser   : C:\Program Files\Google\Chrome\Application\chrome.exe (152.0.7977.83)
+url       : https://nextgen-fund-2040.web.app/setup.html
+headless  : --headless=new --virtual-time-budget=20000 --dump-dom
+
+--- stderr ---
+--- DOM ---

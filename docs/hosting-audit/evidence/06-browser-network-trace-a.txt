@@ -1,0 +1,71 @@
+=== real browser network trace (Chrome DevTools Protocol) ===
+timestamp  : 2026-09-14T10:02:35.034Z
+browser    : Chrome/152.0.7977.83
+user agent : Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36
+url loaded : https://nextgen-fund-2040.web.app/setup.html
+
+navigation started, waited 9.1s for the app to boot
+
+--- requests, in order, with status / remote IP (where the bytes actually came from) ---
+ 1. 200  text/html                h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/setup.html
+ 2. 200  text/css                 h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/css/style.css
+ 3. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/util.js
+ 4. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/common.js
+ 5. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/firebase-adapter.js
+ 6. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/firebase-config.js
+ 7. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/store.js
+ 8. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/setup.js
+ 9. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/seed-data.js
+10. 200  text/javascript          h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/js/i18n.js
+11. 200  image/png                h2     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/img/favicon.png
+12. 200  text/javascript          h2     ip=142.251.222.195:443      https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js
+13. 200  text/javascript          h2     ip=142.251.222.195:443      https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js
+14. 200  text/javascript          h3     ip=142.251.222.195:443      https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js
+15. 200  text/javascript          h3     ip=142.251.222.195:443      https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js
+16. 200  image/png                h3     ip=199.36.158.100:443       https://nextgen-fund-2040.web.app/assets/img/logo.png
+17. 200  text/plain               h2     ip=172.217.24.10:443        https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fnextgen-fund-2040%2Fdataba…
+18. 200  text/plain               h2     ip=172.217.24.10:443        https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=9puazFc7QMDXXFPFgT9eb7C3ywOgXS_95frQewvcJ…
+19. 200  text/plain               h3     ip=172.217.24.10:443        https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fnextgen-fund-2040%2Fdataba…
+
+total distinct responses recorded: 19
+
+--- hosts contacted, with the IP each resolved to ---
+   12x  nextgen-fund-2040.web.app              199.36.158.100
+    4x  www.gstatic.com                        142.251.222.195
+    3x  firestore.googleapis.com               172.217.24.10
+
+--- the page as the browser actually rendered it ---
+document.title : "Setup — NextGen Fund"
+visible text   :
+    NextGen Fund family fund ledger
+    Dashboard
+    Register
+    Login
+    বাংলা
+    FIRST-RUN SETUP
+    Admin setup
+    An admin account already exists — setup is complete.
+    Use your admin account to log in:
+    Go to admin loginDashboard
+    Forgot the admin password? In demo mode, reset the browser data (clear site data) and re-run setup. In Firebase mode, reset it from the Firebase console → Authentication.
+    NextGen Fund — internal family fund ledger
+    Live · Firebase
+
+--- resource timing (what the page loaded) ---
+     79ms  link           https://nextgen-fund-2040.web.app/assets/css/style.css
+     78ms  script         https://nextgen-fund-2040.web.app/assets/js/util.js
+    100ms  script         https://nextgen-fund-2040.web.app/assets/js/i18n.js
+    100ms  script         https://nextgen-fund-2040.web.app/assets/js/seed-data.js
+     84ms  script         https://nextgen-fund-2040.web.app/assets/js/firebase-config.js
+     82ms  script         https://nextgen-fund-2040.web.app/assets/js/firebase-adapter.js
+     97ms  script         https://nextgen-fund-2040.web.app/assets/js/store.js
+     78ms  script         https://nextgen-fund-2040.web.app/assets/js/common.js
+     98ms  script         https://nextgen-fund-2040.web.app/assets/js/setup.js
+    247ms  script         https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js
+     20ms  other          https://nextgen-fund-2040.web.app/assets/img/favicon.png
+    161ms  script         https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js
+    400ms  script         https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js
+     32ms  script         https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js
+     37ms  img            https://nextgen-fund-2040.web.app/assets/img/logo.png
+    277ms  fetch          https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fnextgen-fund-204…
+     64ms  fetch          https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fnextgen-fund-204…

@@ -1,0 +1,81 @@
+=== NextGen Fund - database reset, executed 2026-09-14 (evidence) ===
+project: nextgen-fund-2040   repo: github.com/iamatiq7/nextgen-fund
+method : guarded GitHub Actions job ops/db-reset/ci-reset.mjs, service-account secret
+         (admin credentials bypass security rules, so the deployed rules were never changed)
+
+--- RUN A - read-only backup, 2026-09-14T09:29:32Z (mode backup) ---
+counts         : {"payments":6,"registrations":7,"audit":23,"usernames":8,"users":8,"finance":0,"settings":2}
+backup file    : ops/db-reset/backup-2026-09-14T0929.json
+backup sha256  : b54dfe00f9de7e1fd589f9b6d02d608d336aa8578f5714851ce7c2802044377c
+backup bytes   : 20866
+backup total   : 54 document(s)
+auth accounts  : 9
+result         : PASS  (read-only, nothing deleted)
+
+--- independent backup with the owner's admin credentials, 09:32:15Z ---
+admin sign-in  : http 200 ok=true uid=BvTyCq... (the account settings/bootstrap named)
+counts         : users 8, payments 6, registrations 7, audit 23, settings 2, finance 0
+                 (usernames cannot be listed by a client under the deployed rules - 4 known ids added)
+backup file    : live-admin-backup-2026-09-14T0932.json  (39,136 bytes)
+backup sha256  : 47a2318a8196dc1c4c35ae95d3461c184bfbfc82533e2a2e05b505efbe34f2ba
+stored outside the public repository (contains member names and e-mail addresses)
+
+--- RUN B - the wipe, 09:34:01Z (mode wipe) ---
+counts before  : {"payments":6,"registrations":7,"audit":23,"usernames":8,"users":8,"finance":0,"settings":2}
+backup sha256  : 06f0c069da139f64b28c3764464622272561c732c55bf076ac51485fde86c957  (20866 bytes, 54 docs)
+deletions      : {"payments":"ok","registrations":"ok","audit":"ok","usernames":"ok","users":"ok","finance":"ok","settings":"ok"}
+counts after   : {"payments":0,"registrations":0,"audit":0,"usernames":0,"users":0,"finance":0,"settings":0}
+all zero       : YES
+auth before    : 9   auth after : 0
+first-run state: YES - setup.html can claim the project again
+result         : PASS
+
+--- live first-run proof, 09:39Z (after the wipe, before the final clean-up) ---
+1. sign-up            : http 200  uid=wS5gF6...
+2. claim bootstrap    : http 200  accepted (settings/bootstrap was free)
+3. write users/{uid}  : http 200  role=admin
+4. write username     : http 200  handle resolves to wS5gF6...
+5. write settings/pub : http 200
+6. admin sign-in      : http 200  ok=true  uid=wS5gF6...
+7. admin view         : bootstrap=200  users=200 (1 document)  public=200  fundName=NextGen Fund
+   roles visible      : ["admin"]
+RESULT: PASS - a brand-new admin was created from an empty project and logged in
+(the test identity verify.admin was removed by RUN D below)
+
+--- RUN C - the guard refusing an unrecognised trigger, 09:38:19Z ---
+The trigger file was rewritten by a tool that added a UTF-8 byte-order mark, so the first line
+did not match. The guard fell back to read-only:
+mode           : verify
+counts         : {"payments":0,"registrations":0,"audit":0,"usernames":1,"users":1,"finance":0,"settings":2}
+auth accounts  : 1 (wS5gF6...)
+result         : PASS (read-only)
+This is the guard behaving exactly as designed on an unexpected trigger.
+
+--- RUN D - final wipe, 09:41:26Z (mode wipe) ---
+counts before  : {"payments":0,"registrations":0,"audit":0,"usernames":1,"users":1,"finance":0,"settings":2}
+backup sha256  : 0b1e187da1aed397b7621c57cce30f1467d76993bf60f13a69bed7b326d7f700  (1344 bytes, 4 docs)
+deletions      : all 7 collections "ok"
+counts after   : all 0
+all zero       : YES
+auth before    : 1 (the verification admin)   auth after : 0
+first-run state: YES - setup.html can claim the project again
+result         : PASS
+
+--- unauthenticated probes after the final wipe (from outside, no credentials) ---
+404  settings/public                 NOT_FOUND
+404  settings/bootstrap              NOT_FOUND
+404  usernames/admin                 NOT_FOUND
+404  usernames/verify.admin          NOT_FOUND
+404  usernames/kazi.ibrahim          NOT_FOUND
+200  finance                         (0 documents)
+403  users / payments / audit / registrations   PERMISSION_DENIED (rules unchanged)
+200  https://iamatiq7.github.io/nextgen-fund/setup.html
+200  https://nextgen-fund-2040.web.app/setup.html
+
+--- what is NOT touched ---
+- The deployed Firestore security rules are unchanged (admin credentials bypass rules,
+  so no rules revision was needed). firestore.rules v3 in the repository is not deployed.
+- The service-account key still exists in the repository secret and is still needed for
+  Hosting deploys; the one-shot workflow that could delete data was removed.
+- Backups live in .openclaw/tmp/reset/backups/ (outside the public repository) and as
+  private GitHub Actions artifacts (90 days).

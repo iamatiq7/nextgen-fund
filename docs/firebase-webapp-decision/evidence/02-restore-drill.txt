@@ -1,0 +1,62 @@
+=== RESTORE DRILL (test data, local emulators) ===
+timestamp   : 2026-09-14T10:33:51.137Z
+tool        : C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund\tools\db-reset.mjs
+tool sha256 : 72274ba7a8d21a8a5d5b27374ce5978db22be216608874e38756d603ffdc30d8
+rules       : C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund\firestore.rules (sha256 d3b813c9b90b598232a2b2193434ea25ce88cf682384532e666e23b8e7e0c85a)
+target      : emulator project demo-nextgen-fund - the live database was never touched
+
+1. SEED      : 79 documents across 7 collections, admin uid eTvY5v…
+   counts    : {"payments":36,"registrations":3,"audit":12,"usernames":12,"users":13,"finance":1,"settings":2}
+
+2. BACKUP    : exit 0 in 171 ms
+   target   : demo-nextgen-fund
+   auth     : emulator client admin@nextgen.local (rules ENFORCED)
+   counts   : {"payments":36,"registrations":3,"audit":12,"usernames":12,"users":13,"finance":1,"settings":"skipped(403)"}
+   file     : C:\Users\SMART\OneDrive\Documents\Scheme\NextGenFund\.reset-backups\backup-demo-nextgen-fund-2026-09-14T10-33-51-743Z.json
+   bytes    : 49842
+   sha256   : 2235a8ecc31e67590dc3abd6792e1a8d271acb6799a274cc72f0c5b7edf34407
+   captured  : {"payments":36,"registrations":3,"audit":12,"usernames":12,"users":13,"finance":1}
+   NOTE      : this CLI backup ran as a client admin, which cannot list /settings, so
+               settings/public and settings/bootstrap are NOT inside this particular file.
+               The CI job (admin credentials) does capture them - see the wipe report for that run.
+
+3. WIPE      : exit 0 in 613 ms
+   after    : {"payments":0,"registrations":0,"audit":0,"usernames":0,"users":0,"finance":0,"settings":"by-id(403)"}
+   by id    : settings/public -> http 200
+   by id    : settings/bootstrap -> http 200
+   probe    : {"settings/public":"absent","settings/bootstrap":"absent"}
+   RESULT   : database is empty - the app is back to first-run (setup.html)
+   after     : {"payments":0,"registrations":0,"audit":0,"usernames":0,"users":0,"finance":0,"settings":0}
+
+4A. RESTORE straight after the wipe : exit 2 in 478 ms
+   plan     : {"payments":36,"registrations":3,"audit":12,"usernames":12,"users":13,"finance":1,"settings":"skipped(403)"}
+   written  : 15 document(s)
+   problems : ["create payments/pay-1-1 -> 403 {\"error\":{\"code\":403,\"message\":\"\\nevaluation error at L106:24 for 'create' @ L106, false for 'create' @ L106\",\"status\":\"PERMISSION_DEN
+   counts    : {"payments":0,"registrations":3,"audit":12,"usernames":0,"users":0,"finance":0,"settings":0}
+   FINDING   : the wipe removed the admin own user document, so the restoring client lost
+               isAdmin() and every admin-only write was denied with 403. Only rows that any
+               signed-in user may create came back. Restoring straight after a full wipe does
+               NOT work - an admin must be re-claimed first.
+
+4B. RESTORE with administrator credentials (the CI job path - rules bypassed)
+   wrote      : 77 document(s) in 279 ms
+   counts     : {"payments":36,"registrations":3,"audit":12,"usernames":12,"users":13,"finance":1,"settings":0}
+
+   fidelity - every document the backup holds, back in place with identical fields:
+   collection      in backup   restored   missing   mismatched
+   payments               36         36         0            0
+   registrations           3          3         0            0
+   audit                  12         12         0            0
+   usernames              12         12         0            0
+   users                  13         13         0            0
+   finance                 1          1         0            0
+   TOTAL                  77         77         0            0
+
+--- timings (test data: 77 documents in the backup file) ---
+backup                : 171 ms
+wipe                  : 613 ms
+restore (naive order) : 478 ms   -> incomplete
+restore (correct order): 279 ms  -> complete
+total (correct path)  : 1063 ms
+
+RESULT: PASS - backup, wipe and a verified restore completed; the correct ordering was proven, and the naive ordering failed in a reproducible, documented way
