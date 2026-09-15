@@ -11,7 +11,7 @@
    A "ref" may be a Drive file id, a Drive link, an https link or a data: URL. */
 (function () {
   'use strict';
-  var U = window.NGFUtil, S = window.NGFStore, C = window.NGFC;
+  var U = window.NGFUtil, S = window.NGFStore, C = window.NGFCOMMON;
   if (!U || !S || !C) return;
 
   function avatarEl(ref, name, px) {
