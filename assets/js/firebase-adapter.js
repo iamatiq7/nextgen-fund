@@ -83,15 +83,30 @@ function withTimeout(p, ms, tag) {
       try {
         var snap = await fsMod.getDoc(docIn('settings', 'drive'));
         if (snap.exists()) driveEndpointCache = String((snap.data() || {}).endpoint || '').trim();
-      } catch (e) { /* fall through to the build-time value */ }
+      } catch (e) {
+        if (String(e && e.code) === 'permission-denied') console.warn('settings/drive is not readable with the current rules; using the settings mirror');
+      }
+      if (!driveEndpointCache) {
+        /* the settings form mirrors the endpoint into settings/public as well, so an endpoint the
+           admin already saved keeps working even while /settings/drive is not writable/readable */
+        try {
+          var pub = await fsMod.getDoc(docIn('settings', 'public'));
+          if (pub.exists()) driveEndpointCache = String((pub.data() || {}).driveEndpoint || '').trim();
+        } catch (e2) { /* fall through */ }
+      }
       if (!driveEndpointCache) driveEndpointCache = window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
       return driveEndpointCache;
     }
 
     async function saveDriveEndpoint(url) {
       var clean = String(url || '').trim();
-      if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('bad-url');
-      await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
+      if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('The endpoint must start with https://');
+      try {
+        await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {
+        if (String(e && e.code) === 'permission-denied') throw err('denied', 'Only the fund admin account can change the Drive folder setting (deployed rules allow the admin only). The value was saved inside the main settings as a fallback.');
+        throw err('denied', (e && e.message) || 'Could not save the Drive endpoint.');
+      }
       driveEndpointCache = clean;
       return clean;
     }
@@ -786,9 +801,19 @@ function withTimeout(p, ms, tag) {
 
       saveSettings: async function (patch) {
         var me = await requireAdminUid();
+        var uid = (me && (me.uid || (me.user && (me.user.id || me.user.uid)))) || '';
         patch.updatedAt = new Date().toISOString();
-        await fsMod.setDoc(docIn('settings', 'public'), patch, { merge: true });
-        await audit(me.user.username, 'settings-updated', Object.keys(patch).join(', '));
+        patch.updatedByUid = uid;
+        patch.updatedBy = (me.user && me.user.username) || '';
+        try {
+          await fsMod.setDoc(docIn('settings', 'public'), patch, { merge: true });
+        } catch (e) {
+          if (String(e && e.code) === 'permission-denied') {
+            throw err('denied', 'Only the fund admin account can save settings. Sign in with the account created at setup (settings/bootstrap) and try again.');
+          }
+          throw err('denied', (e && e.message) || 'Could not save the settings.');
+        }
+        await audit((me.user && me.user.username) || '', 'settings-updated', Object.keys(patch).join(', ') + ' | uid ' + uid);
         await syncPublicTotals();
         return { ok: true };
       },

@@ -89,9 +89,10 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
         run: |
-          set +e
+          # a rules compile error used to be swallowed by `set +e`: the run said success while the
+          # old rules stayed live. This step now fails the workflow when the release fails.
           npx firebase deploy --only firestore:rules --project "$PROJECT" --non-interactive
-          echo "rules deploy exit code: $?"
+          echo "rules released"
 
       - name: 5. Evidence
         env:
