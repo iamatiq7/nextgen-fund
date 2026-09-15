@@ -100,7 +100,7 @@ jobs:
             echo "-- compile check --"
             node ops/rules-deploy/check-rules.mjs "$PROJECT"
             echo "-- release --"
-            npx firebase deploy --only firestore:rules --project "$PROJECT" --non-interactive && echo "rules released"
+            node ops/rules-deploy/release-rules.mjs "$PROJECT" && echo "rules released"
           } 2>&1 | tee ops/rules-deploy/transcript.txt
           grep -q "rules released" ops/rules-deploy/transcript.txt
 
