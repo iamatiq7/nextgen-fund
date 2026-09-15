@@ -85,6 +85,14 @@ jobs:
           npx firebase hosting:clone "$PROJECT:live" "$NEW_SITE:live" --project "$PROJECT" --non-interactive
           echo "clone exit code: $?"
 
+      - name: 4b. Publish the Firestore security rules (nominee requests, documents)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set +e
+          npx firebase deploy --only firestore:rules --project "$PROJECT" --non-interactive
+          echo "rules deploy exit code: $?"
+
       - name: 5. Evidence
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
