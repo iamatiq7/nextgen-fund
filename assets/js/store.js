@@ -259,6 +259,9 @@
       if (!/^01[0-9]{9}$/.test(phoneDigits)) errs.push('Wrong mobile number - it must be exactly 11 digits and start with 01.');
       if (!data.nominee || !String(data.nominee).trim()) errs.push('Nominee name is required.');
       if (!data.nomineeAddress || !String(data.nomineeAddress).trim()) errs.push('Nominee address is required.');
+      if (!data.nomineeRelation || !String(data.nomineeRelation).trim()) errs.push('Relation with the nominee is required.');
+      if (!data.fatherName || !String(data.fatherName).trim()) errs.push("Father's name is required.");
+      if (!data.motherName || !String(data.motherName).trim()) errs.push("Mother's name is required.");
       if (data.nomineePhone && !/^01[0-9]{9}$/.test(U.normPhone ? U.normPhone(data.nomineePhone) : String(data.nomineePhone))) errs.push('Wrong nominee mobile number - it must be 11 digits and start with 01.');
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(data.joinMonth || ''))) errs.push('Join month is required - pick the month the accounting starts.');
       if (!data.password || data.password.length < 8) errs.push('Password must be at least 8 characters.');
@@ -292,7 +295,9 @@
         id: U.uid('reg'), fullName: data.fullName.trim(), username: uname, email: data.email.trim(),
         phone: (U.normPhone ? U.normPhone(data.phone) : data.phone).trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
         nominee: (data.nominee || '').trim(), nomineeAddress: (data.nomineeAddress || '').trim(),
-        nomineePhone: (data.nomineePhone || '').trim(), joinMonth: String(data.joinMonth || '').trim(), shares: shares,
+        nomineePhone: (data.nomineePhone || '').trim(), nomineeRelation: (data.nomineeRelation || '').trim(),
+        fatherName: (data.fatherName || '').trim(), motherName: (data.motherName || '').trim(),
+        joinMonth: String(data.joinMonth || '').trim(), shares: shares,
         passwordHash: U.sha256(data.password),
         docs: docs.map(function (d) { return { kind: d.kind, name: d.name, mime: d.mime, size: d.size, data: d.data }; }),
         photo: (function () { var pd = (docs || []).filter(function (x) { return x && x.kind === 'profile-picture'; })[0]; return pd ? (pd.driveFileId || pd.driveUrl || pd.data || '') : ''; })(),
@@ -534,6 +539,8 @@
         db.users.push({
           id: U.uid('m'), username: r.username, email: r.email, fullName: r.fullName,
           phone: r.phone, address: r.address, shares: r.shares, photo: r.photo || '',
+          fatherName: r.fatherName || '', motherName: r.motherName || '',
+          nominee: r.nominee || '', nomineeRelation: r.nomineeRelation || '',
           monthlyDue: r.shares * (db.settings.monthlyPerShare || 1000),
 
           joinMonth: r.joinMonth || U.currentMonth(),

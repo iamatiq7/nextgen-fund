@@ -33,7 +33,7 @@ function base(patch) {
   n++;
   return Object.assign({
     fullName: 'Rule Test ' + n, username: 'rule.test.' + n, email: 'rule.test.' + n + '@ngf.local',
-    phone: '01712345678', occupation: 'Service', nominee: 'Nominee ' + n, nomineeAddress: 'Village, Thana, District',
+    phone: '01712345678', occupation: 'Service', nominee: 'Nominee ' + n, nomineeAddress: 'Village, Thana, District', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name',
     address: 'Member address', joinMonth: '2026-06', shares: '1', password: 'password123', docs: docs.map((d) => Object.assign({}, d))
   }, patch || {});
 }
@@ -76,6 +76,31 @@ ok('no documents -> refused', !r.ok && /Required documents/.test(r.msg), r.msg);
 r = await attempt({ nomineePhone: '0171234567' });
 ok('a bad nominee mobile -> refused', !r.ok && /nominee mobile/.test(r.msg), r.msg);
 
+
+console.log('== father, mother and the relation with the nominee ==');
+r = await attempt({ fatherName: '' });
+ok("father's name missing -> refused", !r.ok && /Father/.test(r.msg), r.msg);
+r = await attempt({ motherName: '' });
+ok("mother's name missing -> refused", !r.ok && /Mother/.test(r.msg), r.msg);
+r = await attempt({ nomineeRelation: '' });
+ok('relation with the nominee missing -> refused', !r.ok && /Relation with the nominee/.test(r.msg), r.msg);
+
+console.log('== the reported bug: all four documents attached, old Settings labels present ==');
+const legacyBackup = [];
+try {
+  const db = Store._d();
+  legacyBackup.push(db.settings && db.settings.docRequirements);
+  db.settings.docRequirements = ['Photo ID (NID / Birth Certificate)', 'Passport-size Photograph'];
+  Store._save();
+} catch (e) { }
+const bugCase = await attempt({ username: 'bug.case', email: 'bug.case@ngf.local' });
+ok('a registration with all four documents is accepted even while old Settings labels exist', bugCase.ok, bugCase.msg);
+try {
+  const db = Store._d();
+  db.settings.docRequirements = legacyBackup[0] || [];
+  Store._save();
+} catch (e) { }
+
 console.log('== what actually lands in the record ==');
 const good = await attempt({ phone: '01700000099', joinMonth: '2026-06', username: 'rule.record', email: 'rule.record@ngf.local' });
 ok('the record is created', good.ok && good.r && good.r.ok);
@@ -83,6 +108,7 @@ const regs = await Store.listRegistrations();
 const rec = regs.find((x) => x.username === 'rule.record');
 ok('the join month is stored', !!rec && rec.joinMonth === '2026-06', rec && rec.joinMonth);
 ok('the nominee address is stored', !!rec && rec.nomineeAddress === 'Village, Thana, District', rec && rec.nomineeAddress);
+ok('the father, mother and relation are stored', !!rec && rec.fatherName === 'Father Name' && rec.motherName === 'Mother Name' && rec.nomineeRelation === 'Brother', rec && (rec.fatherName + '/' + rec.motherName + '/' + rec.nomineeRelation));
 ok('the normalised phone is stored', !!rec && rec.phone === '01700000099', rec && rec.phone);
 ok('all four documents travel with the record', !!rec && (rec.docs || []).length === 4);
 ok('the profile picture is kept on the record', !!rec && (rec.docs || []).some((d) => d.kind === 'profile-picture' && d.data));

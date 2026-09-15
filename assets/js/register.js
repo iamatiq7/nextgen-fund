@@ -10,7 +10,7 @@
   function docField(kind, labelKey, required) {
     var wrap = document.createElement('label');
     wrap.className = 'f';
-    wrap.innerHTML = '<span>' + U.esc(kind) + ' *</span>' +
+    wrap.innerHTML = '<span>' + U.esc(labelKey ? L.t(labelKey) : kind) + (required ? ' *' : '') + '</span>' +
       '<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" data-kind="' + U.esc(kind) + '">' +
       '<span class="hint" data-hint="' + U.esc(kind) + '">' + U.esc(L.t('reg.docHint')) + '</span>';
     wrap.querySelector('input').addEventListener('change', function (ev) {
@@ -71,13 +71,20 @@
     var settings = await S.getSettings();
     /* The owner asked for four named documents, uploaded to Google Drive under a folder named
      after the username. The keys double as the file names inside that folder. */
+  /* The order and the names are the owner's: 1 member's picture, 2 member's NID / birth
+     certificate (front then back), 3 nominee's picture. The keys stay stable because they are the
+     file names inside the Google Drive folder. */
   var DOCS = [
+    { key: 'profile-picture', label: 'reg.docMemberPhoto', required: true },
     { key: 'nid-front', label: 'reg.docNidFront', required: true },
     { key: 'nid-back', label: 'reg.docNidBack', required: true },
-    { key: 'profile-picture', label: 'reg.docPhoto', required: true },
     { key: 'nominee-passport-photo', label: 'reg.docNomineePhoto', required: true }
   ];
-  var reqs = settings.docRequirements || [];
+  /* Only the four named documents are required. Labels the admin saved earlier under Settings
+     are shown as extra optional fields: they must never block a registration (that was the bug
+     behind "all document upload korar por o error"). */
+  var legacy = (settings.docRequirements || []).filter(function (k) { return !DOCS.some(function (d) { return d.key === k; }); });
+  var reqs = DOCS.map(function (d) { return d.key; });
     var per = settings.monthlyPerShare || 1000;
 
     document.getElementById('reg-intro').innerHTML = '<strong>' + U.esc(L.t('reg.glance', { amt: U.fmtBDT(per) })) + '</strong>';
@@ -85,12 +92,9 @@
     var docsBox = document.getElementById('doc-fields');
     DOCS.forEach(function (d) {
       docsBox.appendChild(docField(d.key, d.label, d.required));
-      reqs.push(d.key); /* the four named documents are mandatory */
     });
-    /* anything the admin added in settings stays optional and keeps its own label */
-    (settings.docRequirements || []).forEach(function (kind) {
-      if (reqs.indexOf(kind) === -1) { docsBox.appendChild(docField(kind, null, false)); }
-    });
+    /* legacy labels from Settings stay visible but optional */
+    legacy.forEach(function (kind) { docsBox.appendChild(docField(kind, null, false)); });
 
     var sel = document.getElementById('rg-shares');
     Array.prototype.forEach.call(sel.options, function (o) {
@@ -119,7 +123,10 @@
         email: document.getElementById('rg-email').value.trim(),
         phone: (U.normPhone ? U.normPhone(document.getElementById('rg-phone').value) : document.getElementById('rg-phone').value.replace(/\D/g, '')),
         occupation: document.getElementById('rg-occupation').value.trim(),
+        fatherName: document.getElementById('rg-father').value.trim(),
+        motherName: document.getElementById('rg-mother').value.trim(),
         nominee: document.getElementById('rg-nominee').value.trim(),
+        nomineeRelation: document.getElementById('rg-nominee-relation').value.trim(),
         nomineeAddress: document.getElementById('rg-nominee-address').value.trim(),
         nomineePhone: (U.normPhone ? U.normPhone(document.getElementById('rg-nominee-phone').value) : ''),
         address: document.getElementById('rg-address').value.trim(),
@@ -161,6 +168,12 @@
         nomPhoneField.classList.toggle('bad', !nomPhoneOk);
         if (!nomPhoneOk) local.push(L.t('reg.errNomineePhone'));
       }
+      var relField = document.getElementById('rg-nominee-relation');
+      var fatherField = document.getElementById('rg-father');
+      var motherField = document.getElementById('rg-mother');
+      if (fatherField) { fatherField.classList.toggle('bad', !data.fatherName); if (!data.fatherName) local.push(L.t('reg.errFather')); }
+      if (motherField) { motherField.classList.toggle('bad', !data.motherName); if (!data.motherName) local.push(L.t('reg.errMother')); }
+      if (relField) { relField.classList.toggle('bad', !data.nomineeRelation); if (!data.nomineeRelation) local.push(L.t('reg.errRelation')); }
       nomField.classList.toggle('bad', !data.nominee);
       if (!data.nominee) local.push(L.t('reg.errNominee'));
       nomAddrField.classList.toggle('bad', !data.nomineeAddress);

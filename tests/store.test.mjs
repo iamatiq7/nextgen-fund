@@ -72,7 +72,7 @@ const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfF
 const regA = {
   fullName: 'Test Member One', username: 'test.member.one', email: 'test.one@example.com',
   phone: '01711111111', address: 'Dhaka', occupation: 'Engineer', nominee: 'Test Nominee',
-  nomineeAddress: 'Dhaka', joinMonth: U.currentMonth(), shares: '1',
+  nomineeAddress: 'Dhaka', nomineeRelation: 'Brother', fatherName: 'Father Name', motherName: 'Mother Name', joinMonth: U.currentMonth(), shares: '1',
   password: 'testpass123',
   docs: [
     { kind: 'nid-front', name: 'nid-front.png', mime: 'image/png', size: 96, data: tinyPng },

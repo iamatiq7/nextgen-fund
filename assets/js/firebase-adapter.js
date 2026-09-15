@@ -410,7 +410,9 @@ function withTimeout(p, ms, tag) {
           fullName: data.fullName.trim(), username: uname, email: data.email.trim(),
           phone: data.phone.trim(), address: (data.address || '').trim(), occupation: (data.occupation || '').trim(),
           nominee: (data.nominee || '').trim(), nomineeAddress: (data.nomineeAddress || '').trim(),
-          nomineePhone: (data.nomineePhone || '').trim(), joinMonth: String(data.joinMonth || '').trim(),
+          nomineePhone: (data.nomineePhone || '').trim(), nomineeRelation: (data.nomineeRelation || '').trim(),
+          fatherName: (data.fatherName || '').trim(), motherName: (data.motherName || '').trim(),
+          joinMonth: String(data.joinMonth || '').trim(),
           shares: parseInt(data.shares, 10),
           docs: docs, docsPending: docsPending, status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
         };
@@ -427,6 +429,7 @@ function withTimeout(p, ms, tag) {
           fullName: data.fullName.trim(), phone: (U.normPhone ? U.normPhone(data.phone) : data.phone), address: reg.address,
           nominee: reg.nominee, nomineeAddress: reg.nomineeAddress || '', nomineePhone: reg.nomineePhone || '',
           joinMonth: reg.joinMonth || '',
+          nomineeRelation: reg.nomineeRelation || '', fatherName: reg.fatherName || '', motherName: reg.motherName || '',
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
           joinMonth: '', createdAt: new Date().toISOString()
         });
@@ -650,7 +653,7 @@ function withTimeout(p, ms, tag) {
       updateMember: async function (memberId, patch) {
         var me = await requireAdminUid();
         var allowed = {};
-        ['fullName', 'phone', 'address', 'joinMonth', 'status'].forEach(function (k) { if (patch[k] !== undefined) allowed[k] = patch[k]; });
+        ['fullName', 'phone', 'address', 'joinMonth', 'status', 'fatherName', 'motherName', 'nomineeRelation'].forEach(function (k) { if (patch[k] !== undefined) allowed[k] = patch[k]; });
         if (patch.shares !== undefined) {
           var sh = parseInt(patch.shares, 10);
           if (!(sh >= 0 && sh <= 20)) throw err('invalid', 'Shares must be 0\u201320.');
