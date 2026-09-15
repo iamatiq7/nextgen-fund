@@ -1,6 +1,0 @@
-﻿  [2026-09-01T14:44:00+00:00] medium Multiple products in us-central1-b are experiencing network service degradation.
-  [2026-08-20T15:40:00+00:00] high We are investigating an issue where customers may experience timeouts, service degradations, errors, and eleva
-  [2026-07-15T23:57:00+00:00] medium Google Cloud VMware Engine (GCVE), Google Cloud NetApp Volumes, and Bare Metal Solutions (BMS) services are ex
-  [2026-07-14T17:00:00+00:00] medium Google Cloud VMware Engine (GCVE) Stretched Cluster customers are experiencing zonal outages impacting network
-  [2026-06-05T07:00:00+00:00] medium Network traffic to Google Cloud originating from Delhi, Chennai, Mumbai and surrounding areas is experiencing 
-  [2026-02-27T12:37:00+00:00] low Vertex AI Gemini API customers experienced increased error rates when accessing the global endpoint.
