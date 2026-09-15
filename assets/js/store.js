@@ -285,6 +285,7 @@
         nominee: (data.nominee || '').trim(), shares: shares,
         passwordHash: U.sha256(data.password),
         docs: docs.map(function (d) { return { kind: d.kind, name: d.name, mime: d.mime, size: d.size, data: d.data }; }),
+        photo: (function () { var pd = (docs || []).filter(function (x) { return x && x.kind === 'profile-picture'; })[0]; return pd ? (pd.driveFileId || pd.driveUrl || pd.data || '') : ''; })(),
         status: 'pending', createdAt: new Date().toISOString(), decidedAt: null, decidedBy: null, note: ''
       };
       db.registrations.unshift(reg);
@@ -522,7 +523,7 @@
       if (approve) {
         db.users.push({
           id: U.uid('m'), username: r.username, email: r.email, fullName: r.fullName,
-          phone: r.phone, address: r.address, shares: r.shares,
+          phone: r.phone, address: r.address, shares: r.shares, photo: r.photo || '',
           monthlyDue: r.shares * (db.settings.monthlyPerShare || 1000),
           joinMonth: U.currentMonth(), status: 'active', role: 'member',
           passHash: r.passwordHash, createdAt: new Date().toISOString()
