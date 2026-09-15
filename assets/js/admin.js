@@ -388,7 +388,9 @@
       '<label class="f"><span>' + U.esc(L.t('adm.stMeeting')) + '</span><input type="date" id="st-meet" value="' + U.esc(s.nextMeeting || '') + '"></label>' +
       '<label class="f" style="grid-column:1/-1"><span>' + U.esc(L.t('adm.stMeetingNote')) + '</span><input type="text" id="st-note" placeholder="' + U.esc(L.t('adm.stMeetingNotePh')) + '" value="' + U.esc(s.meetingNote || '') + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stMps')) + '</span><input type="number" id="st-mps" min="1" value="' + (s.monthlyPerShare || 1000) + '"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('adm.stDocs')) + '</span><input type="text" id="st-docs" value="' + U.esc((s.docRequirements || []).join(' | ')) + '"><span class="hint">' + U.esc(L.t('adm.stDocsHint')) + '</span></label>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.stDrive')) + '</span><input type="text" id="st-drive" placeholder="https://script.google.com/macros/s/.../exec" value="' + U.esc(window.__ngfDriveNow || '') + '">' +
+        '<span class="hint">' + U.esc(L.t('adm.stDriveHint')) + '</span></label>' +
+        '<label class="f"><span>' + U.esc(L.t('adm.stDocs')) + '</span><input type="text" id="st-docs" value="' + U.esc((s.docRequirements || []).join(' | ')) + '"><span class="hint">' + U.esc(L.t('adm.stDocsHint')) + '</span></label>' +
       '</div>' +
       '<h2 style="margin-top:8px">' + U.esc(L.t('adm.stNumbers')) + '</h3>' +
       '<div class="grid form2">' +
@@ -459,12 +461,16 @@
       var err = document.getElementById('st-err'); err.textContent = '';
       var g = function (id) { return document.getElementById(id).value.trim(); };
       try {
-        await S.saveSettings({
+        if (g('st-drive') !== undefined && S.saveDriveEndpoint) {
+      try { await S.saveDriveEndpoint(g('st-drive')); } catch (e) { C.toast(String(e && e.message || e), true); }
+    }
+    await S.saveSettings({
           fundName: g('st-name'),
           nextMeeting: g('st-meet'),
           meetingNote: g('st-note'),
           monthlyPerShare: Number(g('st-mps')) || 1000,
-          docRequirements: g('st-docs').split('|').map(function (x) { return x.trim(); }).filter(Boolean),
+          driveEndpoint: (document.getElementById('st-drive') ? document.getElementById('st-drive').value.trim() : undefined),
+    docRequirements: g('st-docs').split('|').map(function (x) { return x.trim(); }).filter(Boolean),
           paymentNumbers: {
             bkash: g('st-bkash'), nagad: g('st-nagad'), rocket: g('st-rocket'), upay: g('st-upay'),
             bank: { bankName: g('st-bankname'), accountName: g('st-bankacc'), accountNumber: g('st-bankno'), branch: g('st-bankbr') }

@@ -538,6 +538,9 @@
     has: function (k) { return !!(dict.en[k]); }
   };
 
+  Object.assign(dict.en, { 'adm.stDrive': 'Member documents (Google Drive)', 'adm.stDriveHint': 'Paste the Apps Script /exec URL. Empty = Firebase Storage is used instead.' });
+  Object.assign(dict.bn, { 'adm.stDrive': 'সদস্যের ডকুমেন্ট (Google Drive)', 'adm.stDriveHint': 'Apps Script-এর /exec URL বসান। খালি রাখলে Firebase Storage ব্যবহার হবে।' });
+
   /* ---- strings added with the 2026-09-15 change set (documents, nominee workflow) ---- */
   Object.assign(dict.en, {
     'reg.docNidFront': 'NID — front side (photograph + name)', 'reg.docNidBack': 'NID — back side',

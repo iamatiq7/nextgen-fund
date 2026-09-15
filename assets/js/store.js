@@ -424,6 +424,14 @@
       row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';
       save(db); return true;
     },
+    getDriveEndpoint: async function () {
+      if (Store.mode === 'firebase') return Store._fb.getDriveEndpoint();
+      return load().driveEndpoint || '';
+    },
+    saveDriveEndpoint: async function (url) {
+      if (Store.mode === 'firebase') return Store._fb.saveDriveEndpoint(url);
+      var db = load(); db.driveEndpoint = String(url || '').trim(); save(db); return db.driveEndpoint;
+    },
     getMyPayments: async function () {
       if (Store.mode === 'firebase') return Store._fb.getMyPayments();
       var s = Store._requireLogin();

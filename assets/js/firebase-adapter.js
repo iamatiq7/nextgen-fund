@@ -8,6 +8,7 @@
    ============================================================ */
 (function () {
   'use strict';
+  var driveEndpointCache = null;
 
   /* ---------- nominee changes + Drive uploads (added 2026-09-15) ---------- */
   async function createNomineeRequest(data) {
@@ -46,8 +47,27 @@
     var m = String(fallbackName || '').match(/\.([a-z0-9]{2,4})$/i);
     return m ? m[1].toLowerCase() : 'jpg';
   }
+  async function getDriveEndpoint() {
+    if (driveEndpointCache !== null) return driveEndpointCache;
+    driveEndpointCache = '';
+    try {
+      var snap = await fsMod.getDoc(docIn('settings', 'drive'));
+      if (snap.exists()) driveEndpointCache = String((snap.data() || {}).endpoint || '').trim();
+    } catch (e) { /* fall through to the build-time value */ }
+    if (!driveEndpointCache) driveEndpointCache = window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
+    return driveEndpointCache;
+  }
+
+  async function saveDriveEndpoint(url) {
+    var clean = String(url || '').trim();
+    if (clean && !/^https:\/\/script\.google\.com\//.test(clean) && !/^https:\/\//.test(clean)) throw new Error('bad-url');
+    await fsMod.setDoc(docIn('settings', 'drive'), { endpoint: clean, updatedAt: new Date().toISOString() }, { merge: true });
+    driveEndpointCache = clean;
+    return clean;
+  }
+
   async function uploadToDrive(username, docs) {
-    var endpoint = window.NGF_DRIVE_ENDPOINT || (window.NGF_CONFIG && window.NGF_CONFIG.driveEndpoint) || '';
+    var endpoint = await getDriveEndpoint();
     if (!endpoint) return { ok: false, reason: 'drive-endpoint-missing' };
     var files = [];
     for (var i = 0; i < docs.length; i += 1) {
@@ -500,6 +520,8 @@
       listNomineeRequests: listNomineeRequests,
       decideNomineeRequest: decideNomineeRequest,
       uploadToDrive: uploadToDrive,
+      getDriveEndpoint: getDriveEndpoint,
+      saveDriveEndpoint: saveDriveEndpoint,
 
       submitPayment: async function (data) {
         var uid = await myUid();
