@@ -440,18 +440,3 @@ table.data { font-size: 14.5px; }
 .tone-black .k { color: var(--j-yellow) !important; }
 .tone-black .s { color: #c9ccd2 !important; }
 .tone-black .v { color: #fff !important; }
-
-/* ---- avatars: the uploaded picture, with the initials of the name as the fallback ----
-   The initials are the element's own text and the picture is layered on top, so a missing or
-   broken picture simply leaves the initials visible instead of a broken-image icon. */
-.av {
-  position: relative; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%; overflow: hidden; flex: 0 0 auto; margin-right: 8px;
-  background: var(--wash, #eef1f6); color: var(--ink-2, #3c4653);
-  font-weight: 700; letter-spacing: .02em; vertical-align: middle;
-}
-.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.doc-view .doc-row { display: flex; gap: 12px; align-items: flex-start; }
-.doc-view .doc-thumb { max-height: 120px; max-width: 180px; border-radius: 8px; border: 1px solid var(--line, #e2e6ee); }
-.doc-view .doc-ico { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 8px; background: var(--wash, #eef1f6); font-weight: 700; }
-.doc-view .doc-meta { display: flex; flex-direction: column; gap: 2px; }

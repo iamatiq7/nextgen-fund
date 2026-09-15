@@ -87,8 +87,8 @@
       });
     }
   } catch (e) { /* a failed session read must never break the public dashboard */ }
-    /* The dashboard is public: a guest sees the same figures without signing in, and a signed-in
-       visitor never gets bounced to the login page. */
+    var sess = await S.getSession();
+    if (!sess) { location.replace('login.html?next=index.html'); return; }
     document.getElementById('mode-badge').innerHTML = C.modeBadge();
     var snap = await S.getPublicSnapshot();
     paint(snap);

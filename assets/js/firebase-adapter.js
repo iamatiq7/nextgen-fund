@@ -138,12 +138,6 @@ function withTimeout(p, ms, tag) {
     }
 
     /* ---- helpers ---- */
-    /* the uploaded profile picture, kept on the user record so every screen can show it */
-    function photoOfDocs(docs) {
-      var d = (docs || []).filter(function (x) { return x && x.kind === 'profile-picture'; })[0];
-      if (!d) return '';
-      return d.driveFileId || d.driveUrl || d.dataUrl || d.data || '';
-    }
     function col(name) { return fsMod.collection(db, name); }
     function docIn(name, id) { return fsMod.doc(db, name, id); }
     async function getDoc(path, id) { var s = await fsMod.getDoc(docIn(path, id)); return s.exists() ? s.data() : null; }
@@ -421,7 +415,6 @@ function withTimeout(p, ms, tag) {
         try {
         await fsMod.setDoc(docIn('users', uid), {
           role: 'member', status: 'pending', username: uname, email: data.email.trim(),
-          photo: photoOfDocs(reg.docs),
           fullName: data.fullName.trim(), phone: data.phone.trim(), address: reg.address,
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
           joinMonth: '', createdAt: new Date().toISOString()
@@ -611,15 +604,11 @@ function withTimeout(p, ms, tag) {
           status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(),
           decidedBy: me.user.username || 'admin', note: note || ''
         });
-        var memberPatch = {
+        await fsMod.updateDoc(docIn('users', regId), {
           status: approve ? 'active' : 'rejected',
           joinMonth: approve ? U.currentMonth() : '',
           monthlyDue: approve ? (r.shares * ((await fb.getSettings()).monthlyPerShare || 1000)) : 0
-        };
-        /* approvals also refresh the uploaded profile picture on the member record */
-        var ph = photoOfDocs(r.docs);
-        if (ph) memberPatch.photo = ph;
-        await fsMod.updateDoc(docIn('users', regId), memberPatch);
+        });
         await syncPublicTotals();
         await audit(me.user.username, approve ? 'registration-approved' : 'registration-rejected', r.username + (note ? ' — ' + note : ''));
         return { ok: true, decidedAt: new Date().toISOString() };

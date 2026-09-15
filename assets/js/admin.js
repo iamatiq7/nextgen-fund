@@ -119,57 +119,21 @@
       m.remove(); C.toast(L.t('adm.rgRejected')); refresh();
     };
   }
-  function docView(d) {
-    /* a record may hold: a Drive file (driveFileId/driveUrl), the shrunk copy inside the record
-       (dataUrl - what happens while Storage is off), a Storage path, or the legacy d.data */
-    var thumb = '', open = '', dl = '', note = '';
-    var ref = d.driveFileId || (d.driveUrl ? (String(d.driveUrl).match(/[-\w]{25,}/) || [''])[0] : '');
-    if (ref) {
-      thumb = U.photoSrc ? U.photoSrc(ref) : '';
-      open = d.driveUrl || ('https://drive.google.com/file/d/' + ref + '/view');
-      dl = 'https://drive.google.com/uc?export=download&id=' + ref;
-      note = L.t('adm.rgInDrive');
-    } else if (d.dataUrl || d.data) {
-      thumb = d.dataUrl || d.data;
-      open = thumb; dl = thumb;
-      note = L.t('adm.rgStored');
-    } else if (d.path) {
-      note = L.t('adm.rgStored') + ' ' + d.path;
-    } else {
-      note = L.t('adm.rgNoFile');
-    }
-    var isPdf = String(d.mime || '').indexOf('pdf') >= 0;
-    var fname = (d.kind || 'document') + '.' + ((String(d.name || '').match(/\.([a-z0-9]{2,4})$/i) || [0, 'jpg'])[1].toLowerCase());
-    var html = '<li><div class="doc-row">';
-    if (thumb && !isPdf) html += '<img class="doc-thumb" src="' + thumb + '" alt="' + U.esc(d.kind || '') + '" loading="lazy" onerror="this.style.display=\'none\'">';
-    if (thumb && isPdf) html += '<span class="doc-ico">PDF</span>';
-    html += '<div class="doc-meta"><strong>' + U.esc(d.kind || 'document') + '</strong> <span class="mono">' + U.esc(fname) + '</span>' +
-      '<span class="sub">' + U.esc(d.name || '') + (d.size ? ' - ' + U.esc(L.t('adm.rgKB', { kb: Math.max(1, Math.round(d.size / 1024)) })) : '') + '<br>' + U.esc(note) + '</span>' +
-      '<div class="btn-row" style="margin-top:6px">' +
-      (open ? '<a class="btn sm" href="' + open + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.rgOpen')) + '</a>' : '') +
-      (dl ? '<a class="btn sm ghost" href="' + dl + '" download="' + U.esc(fname) + '">' + U.esc(L.t('adm.rgDownload')) + '</a>' : '') +
-      '</div></div></div></li>';
-    return html;
-  }
-
   async function viewDocs(regId) {
     var regs = await S.listRegistrations();
     var r = regs.find(function (x) { return x.id === regId; });
     if (!r) return;
-    var list = (r.docs || []);
-    var docs = list.length
-      ? list.map(docView).join('')
-      : '<li><strong>' + U.esc(L.t('adm.rgNoDocs')) + '</strong></li>';
-    var missing = ((await S.getSettings()).docRequirements || []).filter(function (label) {
-      return !list.some(function (d) { return String(d.name || d.kind || '').toLowerCase().indexOf(String(label).split(' ')[0].toLowerCase()) >= 0; });
-    });
-    C.modal('<h2>' + U.esc(L.t('adm.rgDocsT', { name: r.fullName })) + '</h2>' +
-      '<p class="footnote">' + U.esc(L.t('adm.rgDocsCount', { n: list.length })) + '</p>' +
-      '<ul class="clean doc-view">' + docs + '</ul>' +
-      (missing.length && list.length ? '<p class="foot">' + U.esc(L.t('adm.rgMissing', { list: missing.join(', ') })) + '</p>' : '') +
+    var docs = (r.docs || []).map(function (d) {
+      var inner = d.path
+        ? '<p class="footnote">' + U.esc(L.t('adm.rgStored')) + '<br><span class="mono">' + U.esc(d.path) + '</span></p>'
+        : (d.mime && d.mime.indexOf('pdf') >= 0
+          ? '<a class="btn sm ghost" href="' + d.data + '" target="_blank" rel="noopener">' + U.esc(L.t('adm.rgOpenPdf', { n: d.name })) + '</a>'
+          : '<img src="' + d.data + '" alt="' + U.esc(d.kind) + '" style="max-height:220px">');
+      return '<li><strong>' + U.esc(d.kind) + '</strong> — ' + U.esc(d.name) + ' (' + U.esc(L.t('adm.rgKB', { kb: Math.max(1, Math.round(d.size / 1024)) })) + ')' + inner + '</li>';
+    }).join('');
+    C.modal('<h2>' + U.esc(L.t('adm.rgDocsT', { name: r.fullName })) + '</h2><ul class="clean doc-view">' + (docs || '<li>' + U.esc(L.t('adm.rgNoDocs')) + '</li>') + '</ul>' +
       '<p class="foot">' + U.esc(L.t('adm.rgApplicantFoot', { name: r.fullName, email: r.email, phone: r.phone })) + '</p>' +
       '<div class="btn-row" style="justify-content:flex-end"><button class="btn" onclick="this.closest(\'.modal-back\').remove()">' + U.esc(L.t('common.close')) + '</button></div>');
-    if (U.trackDocAccess) U.trackDocAccess(regId, 'viewed');
   }
 
   /* ---------------- payments ---------------- */

@@ -198,27 +198,5 @@
       (function () { try { U.normPayFilter('nope'); return false; } catch (e) { return true; } })();
   };
 
-  U.photoSrc = function (ref) {
-    var v = String(ref || '').trim();
-    if (!v) return '';
-    if (/^data:image\//i.test(v)) return v;
-    if (/^https?:\/\//i.test(v)) {
-      var m = v.match(/[-\w]{25,}/);
-      if (m && /drive\.google\.com|googleusercontent|docs\.google\.com/.test(v)) {
-        return 'https://drive.google.com/thumbnail?id=' + m[0] + '&sz=w400';
-      }
-      return v;
-    }
-    if (/^[-\w]{25,}$/.test(v)) return 'https://drive.google.com/thumbnail?id=' + v + '&sz=w400';
-    return '';
-  };
-
-  U.initials = function (name) {
-    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return '?';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
   return U;
 });
