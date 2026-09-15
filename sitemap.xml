@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/login.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/register.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/portal.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/admin.html</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://iamatiq7.github.io/nextgen-fund/setup.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://nextgenfund.web.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://nextgenfund.web.app/login.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nextgenfund.web.app/register.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://nextgenfund.web.app/portal.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://nextgenfund.web.app/admin.html</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://nextgenfund.web.app/setup.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>

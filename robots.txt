@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://iamatiq7.github.io/nextgen-fund/sitemap.xml
+Sitemap: https://nextgenfund.web.app/sitemap.xml
