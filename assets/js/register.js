@@ -3,6 +3,7 @@
   'use strict';
   var U = window.NGFUtil, C = window.NGFCOMMON, S = window.NGFStore, L = window.NGFLANG;
   var pickedDocs = {};
+  var driveUploaded = false;
 
   function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
 
@@ -27,12 +28,41 @@
       hint.style.color = '';
       var reader = new FileReader();
       reader.onload = function () {
-        pickedDocs[kind] = { kind: kind, name: file.name, mime: file.type, size: file.size, data: reader.result, file: file };
-        hint.textContent = L.t('reg.picked', { name: file.name, sz: fmtSize(file.size) });
+        var full = reader.result;
+        shrink(file, function (small) {
+          pickedDocs[kind] = { kind: kind, key: kind, name: file.name, mime: file.type, size: file.size, data: small || full, file: file };
+          hint.textContent = L.t('reg.picked', { name: file.name, sz: fmtSize(file.size) });
+        });
       };
       reader.readAsDataURL(file);
     });
     return wrap;
+  }
+
+  /* Photos are shrunk in the browser before they are stored, so a member can never lose a
+     document: with Drive configured the full file goes to Drive; otherwise the compact copy
+     travels inside the registration record itself. */
+  function shrink(file, cb) {
+    if (!/^image\//.test(file.type)) { cb(null); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      function draw(max, q) {
+        var scale = Math.min(1, max / Math.max(img.width, img.height));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * scale));
+        c.height = Math.max(1, Math.round(img.height * scale));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return c.toDataURL('image/jpeg', q);
+      }
+      var out = draw(1000, 0.72);
+      if (out.length > 220000) out = draw(720, 0.62);
+      if (out.length > 220000) out = draw(560, 0.55);
+      URL.revokeObjectURL(url);
+      cb(out);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+    img.src = url;
   }
 
   async function run() {
@@ -92,6 +122,22 @@
         password: pw,
         docs: docs
       };
+
+      /* 1) Google Drive first, when an endpoint is configured: full-quality files land in
+            <username>/nid-front.jpg ... and only the links travel to the record. */
+      try {
+        var endpoint = (S.getDriveEndpoint ? await S.getDriveEndpoint() : '') || '';
+        if (endpoint && docs.length) {
+          var driveRes = await S.uploadToDrive(data.username, docs);
+          if (driveRes && driveRes.ok) {
+            (driveRes.files || []).forEach(function (f, i) {
+              var target = docs.filter(function (x) { return x.key + '.' + (f.name.split('.').pop()) === f.name; })[0] || docs[i];
+              if (target) { target.driveUrl = f.url; target.driveFileId = f.id; }
+            });
+            driveUploaded = true;
+          }
+        }
+      } catch (e) { /* a Drive problem must never block the registration */ }
 
       var local = [];
       if (pw !== pw2) local.push(L.t('reg.errMatch'));
