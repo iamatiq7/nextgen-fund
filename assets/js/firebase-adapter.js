@@ -227,6 +227,9 @@ async function listNomineeRequests(status) {
     }
     function col(name) { return fsMod.collection(db, name); }
     function docIn(name, id) { return fsMod.doc(db, name, id); }
+  /* wraps the modular helper so the request builders can stay short */
+  function addDoc(name, data) { return fsMod.addDoc(col(name), data); }
+  async function writeAudit(o) { o = o || {}; return audit(o.actor || '', o.action || '', o.detail || ''); }
     async function getDoc(path, id) { var s = await fsMod.getDoc(docIn(path, id)); return s.exists() ? s.data() : null; }
     async function getAll(path, q) {
       var snap = q ? await fsMod.getDocs(q) : await fsMod.getDocs(col(path));
