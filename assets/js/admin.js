@@ -504,8 +504,7 @@
           nextMeeting: g('st-meet'),
           meetingNote: g('st-note'),
           monthlyPerShare: Number(g('st-mps')) || 1000,
-          driveEndpoint: (document.getElementById('st-drive') ? document.getElementById('st-drive').value.trim() : undefined),
-    docRequirements: g('st-docs').split('|').map(function (x) { return x.trim(); }).filter(Boolean),
+          driveEndpoint: (document.getElementById('st-drive') ? document.getElementById('st-drive').value.trim() : undefined).split('|').map(function (x) { return x.trim(); }).filter(Boolean),
           paymentNumbers: {
             bkash: g('st-bkash'), nagad: g('st-nagad'), rocket: g('st-rocket'), upay: g('st-upay'),
             bank: { bankName: g('st-bankname'), accountName: g('st-bankacc'), accountNumber: g('st-bankno'), branch: g('st-bankbr') }

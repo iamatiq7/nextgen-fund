@@ -499,8 +499,18 @@
       if (Store.mode === 'firebase') return Store._fb.createNomineeRequest(data);
       var db = Store._d();
       db.nomineeRequests = db.nomineeRequests || [];
-      var row = { id: 'nr-' + Date.now().toString(36), memberId: data.memberId || 'demo', status: 'pending', requestedAt: new Date().toISOString(), memberName: data.memberName || '', username: data.username || '', currentNominee: data.currentNominee || '', requestedNominee: data.requestedNominee || '', relation: data.relation || '', reason: data.reason || '' };
-      if (!row.requestedNominee) throw new Error('nominee-required');
+      var row = {
+        id: 'nr-' + Date.now().toString(36), kind: 'nominee',
+        memberId: data.memberId || (Store._requireLogin && Store._requireLogin().uid) || 'demo',
+        memberName: (data.memberName || '').trim(), username: (data.username || '').trim(),
+        currentNominee: (data.currentNominee || '').trim(),
+        requestedNominee: (data.requestedNominee || '').trim(),
+        relation: (data.relation || '').trim(),
+        requestedPhone: (data.requestedPhone || '').trim(),
+        requestedAddress: (data.requestedAddress || '').trim(),
+        reason: (data.reason || '').trim(),
+        status: 'pending', requestedAt: new Date().toISOString()
+      };
       db.nomineeRequests.push(row); Store._save(); return row;
     },
     listNomineeRequests: async function (status) {
