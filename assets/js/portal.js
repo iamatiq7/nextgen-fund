@@ -326,7 +326,9 @@
   async function renderRequests() {
     var host = document.getElementById('portal-content');
     if (!host) return;
-    if (document.getElementById('sec-nominee')) return;          /* idempotent: never render twice */
+    /* idempotent: the injected block is the marker, so this can never run twice
+       (the old marker pointed at a card that was removed later and stopped guarding) */
+    if (document.getElementById('acc-req') || document.getElementById('sec-nominee')) return;
     var mine = await S.getMyAccount();
     var profile = (mine && mine.profile) || null;
     if (!profile) return;
@@ -357,7 +359,7 @@
     }
     var accForm =
       '<div id="acc-req" style="margin-top:18px">' +
-        '<h3>' + esc(L.t('acc.send')) + '</h3>' +
+        '<h3>' + esc(L.t('acc.reqTitle')) + '</h3>' +
         '<p class="footnote">' + esc(L.t('acc.hint')) + '</p>' +
         (pendAccount ? '<div class="notice">' + esc(L.t('acc.pendingRow', { list: (pendAccount.changes || []).map(function (x) { return L.t('acc.' + x.field) || x.field; }).join(', ') })) + '</div>' : '') +
         '<form id="acc-form" novalidate>' +
