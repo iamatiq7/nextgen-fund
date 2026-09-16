@@ -512,15 +512,25 @@
       if (Store.mode === 'firebase') return Store._fb.decideNomineeRequest(id, approve, byName);
       var db = Store._d();
       var row = (db.nomineeRequests || []).filter(function (r) { return r.id === id; })[0];
-      if (!row) throw new Error('not-found');
+      if (!row) { var e = new Error('not-found'); throw e; }
       if (approve) {
-        (db.users || []).forEach(function (u) { if (u.id === row.memberId) { u.nominee = row.requestedNominee; u.nomineeUpdatedAt = new Date().toISOString(); } });
-            if (row.requestedPhone !== undefined && row.requestedPhone !== null) u.nomineePhone = row.requestedPhone;
-            if (row.requestedAddress !== undefined && row.requestedAddress !== null) u.nomineeAddress = row.requestedAddress;
+        (db.users || []).forEach(function (u) {
+          if (u.id !== row.memberId) return;
+          u.nominee = row.requestedNominee;
+          if (row.relation) u.nomineeRelation = row.relation;
+          if (row.requestedPhone !== undefined && row.requestedPhone !== null && row.requestedPhone !== '') u.nomineePhone = row.requestedPhone;
+          if (row.requestedAddress !== undefined && row.requestedAddress !== null && row.requestedAddress !== '') u.nomineeAddress = row.requestedAddress;
+          u.nomineeUpdatedAt = new Date().toISOString();
+        });
+        Store._audit((row.username || 'member'), 'nominee-approve', row.requestedNominee || '');
+      } else {
+        Store._audit((row.username || 'member'), 'nominee-reject', row.reason || '');
       }
       row.status = approve ? 'approved' : 'rejected';
-      row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';
-      Store._save(); return true;
+      row.decidedAt = new Date().toISOString();
+      row.decidedBy = byName || 'admin';
+      Store._save();
+      return true;
     },
     /* The Drive uploader is independent of the data store: it always talks to the endpoint,
        in demo mode as well, so the same code path can be tested and used. */
