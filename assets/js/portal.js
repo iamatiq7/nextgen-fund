@@ -385,6 +385,77 @@
     });
   }
 
+  /* ================= member sections (tabs), added 2026-09-16 =================
+     The portal now works like the admin panel: a tab bar on top, one section at a time.
+     Only what a member needs: Overview (balances), Payments (pay + history) and Account
+     (profile, password, change request). The address bar keeps the section (#payments),
+     so refresh, back and shared links land on the right place. */
+  function sectionFromHash(h) {
+    var t = String(h || '').replace(/^#/, '').toLowerCase();
+    if (t === 'payments' || t === 'payment' || t === 'pay') return 'payments';
+    if (t === 'account') return 'account';
+    return 'overview';
+  }
+
+  function setupSections() {
+    var host = document.getElementById('portal-content');
+    var bar = document.getElementById('portal-tabs');
+    if (!host || !bar) return;
+    if (bar.getAttribute('data-wired')) return;
+    bar.setAttribute('data-wired', '1');
+
+    /* group the existing cards - nothing is re-created, only shown or hidden */
+    var cards = Array.prototype.slice.call(host.querySelectorAll('section.card, section.grid, div.row-flex'));
+    var stats = host.querySelector('section.grid.stats');
+    var payCard = document.getElementById('pay-card');
+    var accountCard = null;
+    var history = null;
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (c.querySelector('h2[data-i18n="por.account"]')) accountCard = c;
+      if (c.querySelector('#pay-table')) history = c;
+    }
+    /* the payment card and the history card sit in the same grid row: keep the wrapper too */
+    var payRow = payCard ? payCard.parentNode : null;
+
+    var groups = {
+      overview: [stats].filter(Boolean),
+      payments: [payRow, history].filter(Boolean),
+      account: [accountCard].filter(Boolean)
+    };
+
+    function show(name) {
+      ['overview', 'payments', 'account'].forEach(function (k) {
+        var list = groups[k] || [];
+        for (var j = 0; j < list.length; j++) {
+          var el = list[j];
+          if (!el) continue;
+          el.style.display = (k === name) ? '' : 'none';
+        }
+      });
+      var btns = bar.querySelectorAll('button');
+      for (var b = 0; b < btns.length; b++) {
+        btns[b].setAttribute('aria-selected', String(btns[b].getAttribute('data-tab') === name));
+      }
+      try { if (location.hash !== '#' + name) history_push(name); } catch (e) { }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function history_push(name) {
+      try { history.pushState(null, '', '#' + name); } catch (e) { location.hash = name; }
+    }
+
+    var btnsAll = bar.querySelectorAll('button');
+    for (var q = 0; q < btnsAll.length; q++) {
+      btnsAll[q].addEventListener('click', function (ev) {
+        ev.preventDefault();
+        show(this.getAttribute('data-tab'));
+      });
+    }
+    window.addEventListener('hashchange', function () { show(sectionFromHash(location.hash)); });
+    show(sectionFromHash(location.hash));
+    bar.classList.remove('hide');
+  }
+
   /* the portal fills its own cards asynchronously: wait for it, then add ours (once) */
   (function () {
     var tries = 0;
@@ -392,7 +463,7 @@
       tries++;
       var host = document.getElementById('portal-content');
       var ready = host && !host.classList.contains('hide') && !document.getElementById('sec-nominee');
-      if (ready) { try { await renderRequests(); } catch (e) { } }
+      if (ready) { try { await renderRequests(); } catch (e) { } try { setupSections(); } catch (e) { } }
       if (ready || tries > 40) clearInterval(timer);
     }, 250);
   })();
