@@ -70,8 +70,7 @@
         '<nav class="nav" id="main-nav" aria-label="Main">' +
         '<button type="button" class="btn sm subtle lang-btn" id="lang-btn" title="English / বাংলা">' + U.esc(L.t('lang.other')) + '</button>' +
         '<span class="who" id="nav-who"></span>' +
-        '<button class="btn sm subtle hide" id="nav-pass" data-i18n="nav.pass"></button>' +
-      '<button class="btn sm subtle hide" id="nav-logout" data-i18n="nav.logout"></button>' +
+        '<button class="btn sm subtle hide" id="nav-logout" data-i18n="nav.logout"></button>' +
         '</nav></div>';
       el.innerHTML = html;
       document.getElementById('lang-btn').onclick = function () { L.toggle(); location.reload(); };
@@ -97,11 +96,6 @@
         var out = document.getElementById('nav-logout');
         who.textContent = s.fullName + ' (' + s.role + ')';
         out.classList.remove('hide');
-    var pwBtn = document.getElementById('nav-pass');
-    if (pwBtn) {
-      pwBtn.classList.remove('hide');
-      pwBtn.onclick = function (ev) { ev.preventDefault(); NGFCOMMON.changePasswordModal(s.role, s.fullName); };
-    }
         out.onclick = async function () { await S.logout(); location.href = 'index.html'; };
       }).catch(function () {});
     },
@@ -133,54 +127,43 @@
       return boot;
     }
   };
-  /* ---------------- change the password (any signed-in account: member or admin) ----------------
-     Opened from the header button on every page, so both roles always have a visible way in.
-     The current password is verified by re-authenticating with Firebase before the change. */
-  NGFCOMMON.changePasswordModal = function (role, name) {
+
+
+  /* ---------------- forgot / reset password card ----------------
+     Lives inside Settings for both roles and works signed in or signed out: a signed-in visitor
+     gets their recorded address pre-filled, a signed-out visitor types the e-mail, username or
+     mobile number they registered with. The reset link itself is sent by Firebase. */
+  NGFCOMMON.resetPasswordCard = function (role, email) {
     var esc = U.esc;
-    NGFCOMMON.modal('<h2>' + esc(L.t('cp.title')) + '</h2>' +
-      '<p class="footnote">' + esc(L.t(role === 'admin' ? 'cp.subAdmin' : 'cp.sub')) + '</p>' +
-      '<label class="f"><span>' + esc(L.t('cp.current')) + '</span>' +
-      '<input type="password" id="cp-cur" autocomplete="current-password"></label>' +
-      '<label class="f"><span>' + esc(L.t('cp.new')) + '</span>' +
-      '<input type="password" id="cp-new" autocomplete="new-password"></label>' +
-      '<label class="f"><span>' + esc(L.t('cp.confirm')) + '</span>' +
-      '<input type="password" id="cp-new2" autocomplete="new-password"></label>' +
-      '<div id="cp-err" class="err" role="alert"></div>' +
-      '<div id="cp-ok" class="notice ok hide"></div>' +
-      '<div class="btn-row" style="margin-top:10px">' +
-      '<button class="btn" type="button" id="cp-go">' + esc(L.t('cp.save')) + '</button>' +
-      '<a class="btn subtle" href="login.html" id="cp-forgot">' + esc(L.t('cp.forgot')) + '</a>' +
-      '</div>');
+    return '<h3>' + esc(L.t('pw.title')) + '</h3>' +
+      '<p class="footnote">' + esc(L.t(role === 'admin' ? 'pw.hintAdmin' : 'pw.hint')) + '</p>' +
+      '<label class="f"><span>' + esc(L.t('pw.id')) + '</span>' +
+      '<input type="text" id="rst-id" value="' + esc(email || '') + '" placeholder="you@example.com / kazi.ibrahim / 01712345678"></label>' +
+      '<div id="rst-err" class="err" role="alert"></div>' +
+      '<div id="rst-done" class="notice ok hide"></div>' +
+      '<button class="btn ghost" type="button" id="rst-go">' + esc(L.t('pw.send')) + '</button>';
+  };
 
-    var err = document.getElementById('cp-err');
-    var okBox = document.getElementById('cp-ok');
-    var go = document.getElementById('cp-go');
-    var forgot = document.getElementById('cp-forgot');
-    if (forgot) forgot.onclick = function (ev) { ev.preventDefault(); location.href = 'login.html'; };
-
+  NGFCOMMON.wireResetCard = function () {
+    var go = document.getElementById('rst-go');
+    if (!go || go.getAttribute('data-wired')) return;
+    go.setAttribute('data-wired', '1');
+    var input = document.getElementById('rst-id');
+    var err = document.getElementById('rst-err');
+    var done = document.getElementById('rst-done');
     go.onclick = async function () {
       err.textContent = '';
-      okBox.classList.add('hide');
-      var cur = document.getElementById('cp-cur').value;
-      var n1 = document.getElementById('cp-new').value;
-      var n2 = document.getElementById('cp-new2').value;
-      if (!cur) { err.textContent = L.t('cp.errCurrent'); return; }
-      if (!n1 || n1.length < 8) { err.textContent = L.t('cp.errWeak'); return; }
-      if (n1 !== n2) { err.textContent = L.t('cp.errMismatch'); return; }
+      done.classList.add('hide');
+      var id = (input.value || '').trim();
+      if (!id) { err.textContent = L.t('pw.empty'); return; }
       go.disabled = true;
       try {
-        await S.changePassword(cur, n1);
-        document.getElementById('cp-cur').value = '';
-        document.getElementById('cp-new').value = '';
-        document.getElementById('cp-new2').value = '';
-        okBox.textContent = L.t('cp.ok');
-        okBox.classList.remove('hide');
-      } catch (e3) {
-        err.textContent = (e3 && e3.message) || L.t('cp.errGeneric');
-      } finally {
-        go.disabled = false;
-      }
+        var r = await S.requestPasswordReset(id);
+        done.textContent = L.t('pw.sent', { email: r.sentTo || '' });
+        done.classList.remove('hide');
+      } catch (e) {
+        err.textContent = (e && e.message) || L.t('pw.err');
+      } finally { go.disabled = false; }
     };
   };
 

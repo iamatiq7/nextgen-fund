@@ -198,19 +198,16 @@
       }
     });
 
-    /* change password */
-    document.getElementById('pw-form').addEventListener('submit', async function (ev) {
-      ev.preventDefault();
-      var errBox = document.getElementById('pw-err');
-      errBox.textContent = '';
-      try {
-        await S.changePassword(document.getElementById('pw-cur').value, document.getElementById('pw-new').value);
-        C.toast(L.t('por.pwUpdated'));
-        document.getElementById('pw-cur').value = ''; document.getElementById('pw-new').value = '';
-      } catch (e) {
-        errBox.textContent = e.message;
+    /* forgot / reset password - inside the account settings (My Fund) */
+    try {
+      var slot = document.getElementById('reset-slot');
+      if (slot && C.resetPasswordCard) {
+        var mine = await S.getMyAccount();
+        var prof = (mine && mine.profile) || {};
+        slot.innerHTML = C.resetPasswordCard(prof.role === 'admin' ? 'admin' : 'member', prof.email || '');
+        C.wireResetCard();
       }
-    });
+    } catch (eReset) { /* nothing to show if the account cannot be read */ }
 
     /* live updates in Firebase mode: balance + history refresh automatically */
     try {
