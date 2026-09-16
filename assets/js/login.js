@@ -44,7 +44,6 @@
   }
 
   run().catch(function (e) { console.error(e); });
-})();
 
 /* ---------------- forgot / reset password ----------------
    The member enters an e-mail, a username or the mobile number they registered with; the app
@@ -85,4 +84,6 @@
       send.disabled = false;
     }
   });
+})();
+
 })();
