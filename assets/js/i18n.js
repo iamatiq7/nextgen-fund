@@ -37,7 +37,7 @@
 
       'brand.name': 'NextGen Fund', 'brand.tag': 'family fund ledger',
       'nav.dashboard': 'Dashboard', 'nav.register': 'Register', 'nav.login': 'Login',
-      'nav.portal': 'My Fund', 'nav.admin': 'Admin', 'nav.logout': 'Log out',
+      'nav.portal': 'My Fund', 'nav.admin': 'Admin', 'nav.logout': 'Log out', 'nav.pass': 'Change password', 'cp.title': 'Change your password', 'cp.sub': 'Enter your current password, then choose a new one (at least 8 characters).', 'cp.subAdmin': 'Admin account: enter your current password, then choose a new one (at least 8 characters).', 'cp.current': 'Current password', 'cp.new': 'New password', 'cp.confirm': 'Repeat the new password', 'cp.save': 'Save the new password', 'cp.forgot': 'Forgot the current password?', 'cp.errCurrent': 'Enter your current password.', 'cp.errWeak': 'The new password must be at least 8 characters.', 'cp.errMismatch': 'The two new passwords do not match.', 'cp.errGeneric': 'The password could not be changed. Try again.', 'cp.ok': 'Your password has been changed. Use the new password the next time you log in.', 
       'mode.demo': 'Demo mode (this browser)', 'mode.live': 'Live · Firebase',
       'footer.tag': 'NextGen Fund — internal family fund ledger',
       'common.loading': 'Loading…', 'common.close': 'Close', 'common.cancel': 'Cancel',
@@ -285,7 +285,7 @@
 
       'brand.name': 'নেক্সটজেন ফান্ড', 'brand.tag': 'পারিবারিক তহবিলের হিসাব',
       'nav.dashboard': 'ড্যাশবোর্ড', 'nav.register': 'নিবন্ধন', 'nav.login': 'লগ ইন',
-      'nav.portal': 'আমার ফান্ড', 'nav.admin': 'অ্যাডমিন', 'nav.logout': 'লগ আউট',
+      'nav.portal': 'আমার ফান্ড', 'nav.admin': 'অ্যাডমিন', 'nav.logout': 'লগ আউট', 'nav.pass': 'পাসওয়ার্ড বদলান', 'cp.title': 'পাসওয়ার্ড পরিবর্তন করুন', 'cp.sub': 'বর্তমান পাসওয়ার্ড দিন, তারপর নতুন পাসওয়ার্ড বাছুন (কমপক্ষে ৮ অক্ষর)।', 'cp.subAdmin': 'অ্যাডমিন অ্যাকাউন্ট: বর্তমান পাসওয়ার্ড দিন, তারপর নতুন পাসওয়ার্ড বাছুন (কমপক্ষে ৮ অক্ষর)।', 'cp.current': 'বর্তমান পাসওয়ার্ড', 'cp.new': 'নতুন পাসওয়ার্ড', 'cp.confirm': 'নতুন পাসওয়ার্ড আবার লিখুন', 'cp.save': 'নতুন পাসওয়ার্ড সংরক্ষণ করুন', 'cp.forgot': 'বর্তমান পাসওয়ার্ড ভুলে গেছেন?', 'cp.errCurrent': 'বর্তমান পাসওয়ার্ড লিখুন।', 'cp.errWeak': 'নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।', 'cp.errMismatch': 'দুইবার লেখা নতুন পাসওয়ার্ড মিলছে না।', 'cp.errGeneric': 'পাসওয়ার্ড পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।', 'cp.ok': 'পাসওয়ার্ড পরিবর্তন হয়ে গেছে। পরের বার লগইনে নতুন পাসওয়ার্ডটি ব্যবহার করুন।', 
       'mode.demo': 'ডেমো মোড (এই ব্রাউজারে)', 'mode.live': 'লাইভ · ফায়ারবেস',
       'footer.tag': 'নেক্সটজেন ফান্ড — অভ্যন্তরীণ পারিবারিক তহবিলের হিসাব',
       'common.loading': 'লোড হচ্ছে…', 'common.close': 'বন্ধ করুন', 'common.cancel': 'বাতিল',
