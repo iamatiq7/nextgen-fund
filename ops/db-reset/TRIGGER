@@ -1,2 +1,0 @@
-backup-only 2026-09-14
-# read-only mode: the guard only recognises this exact phrase for backup, wipe needs its own line
