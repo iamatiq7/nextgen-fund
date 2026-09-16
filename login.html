@@ -34,7 +34,20 @@
       <div id="login-err" class="err" role="alert"></div>
       <button class="btn" type="submit" id="login-btn" data-i18n="log.btn"></button>
       <a class="btn subtle" href="register.html" style="margin-left:6px" data-i18n="log.new"></a>
+      <p class="foot" style="margin:10px 0 0"><a href="#" id="pw-link" data-i18n="log.forgot"></a></p>
     </form>
+  </div>
+
+  <div class="card hide" id="pw-card" style="margin-top:12px">
+    <h3 id="pw-title" data-i18n="log.resetTitle"></h3>
+    <p class="footnote" data-i18n="log.resetHint"></p>
+    <label class="f"><span data-i18n="log.resetId"></span>
+      <input type="text" id="pw-id" autocomplete="off" placeholder="you@example.com / kazi.ibrahim / 01712345678" data-i18n-ph="ph.resetId">
+    </label>
+    <div id="pw-err" class="err" role="alert"></div>
+    <div id="pw-done" class="notice ok hide"></div>
+    <button class="btn" type="button" id="pw-send" data-i18n="log.resetSend"></button>
+    <button class="btn subtle" type="button" id="pw-cancel" style="margin-left:6px" data-i18n="log.resetCancel"></button>
   </div>
 
   <div id="demo-note"></div>

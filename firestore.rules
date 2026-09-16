@@ -90,6 +90,14 @@ service cloud.firestore {
     // Username -> {uid, email}: public read (needed for username login),
     // created once by the owner (or admin). Never updatable; deletable by the
     // admin so a reset can free the handle for reuse.
+    // A small public map (mobile number -> account e-mail) used only by the password reset.
+    match /phones/{digits} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
     match /usernames/{name} {
       allow get: if true;
       // as above: the reset has to enumerate every handle to free them for reuse
@@ -110,9 +118,12 @@ service cloud.firestore {
     // Payments: members create their OWN pending credits; admins manage all.
     // Credits must be whole multiples of 1,000 tk (1000, 2000, 3000, ...).
     match /payments/{id} {
-      allow create: if isAdmin() || (
+      /* Only the member themselves may file a payment; the admin verifies them. The old
+         isAdmin() branch let the admin file payments - including for their own account. */
+      allow create: if (
           isSignedIn() &&
           request.resource.data.memberId == request.auth.uid &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'member' &&
           request.resource.data.amount is number &&
           request.resource.data.amount >= 1000 &&
           request.resource.data.amount % 1000 == 0 &&

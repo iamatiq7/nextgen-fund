@@ -75,7 +75,7 @@
 
       'log.kicker': 'Member & admin access', 'log.title': 'Log in',
       'log.sub': 'Use the username and password you registered with. Admins log in with their admin account.',
-      'log.user': 'Username or email', 'log.pass': 'Password', 'log.btn': 'Log in', 'log.new': 'New here? Register',
+      'log.user': 'Username or email', 'log.pass': 'Password', 'log.btn': 'Log in', 'log.forgot': 'Forgot your password?', 'log.resetTitle': 'Reset your password', 'log.resetHint': 'Enter the e-mail address, username or the mobile number you registered with. We will e-mail you a link to set a new password.', 'log.resetId': 'E-mail, username or mobile number', 'ph.resetId': 'you@example.com / kazi.ibrahim / 01712345678', 'log.resetSend': 'Send the reset link', 'log.resetCancel': 'Cancel', 'log.resetEmpty': 'Enter your e-mail, username or mobile number.', 'log.resetSent': 'Sent. Check {email} for the link to set a new password (also check the spam folder).', 'log.resetErr': 'The reset e-mail could not be sent. Try again shortly.', 'por.adminNoPay': 'This is the admin view - the fund admin verifies member payments and never files one, so the payment form is hidden here.',  'log.new': 'New here? Register',
       'log.demoNote': 'Demo mode. Sample accounts — admin: admin / nextgen2026, members: kazi.hamidul / nextgen123 (full list in the handover doc). Data lives in this browser only.',
       'log.loggingIn': 'Logging in…', 'log.errBoth': 'Enter your username/email and password.', 'log.title2': 'Login — NextGen Fund',
 
@@ -324,7 +324,7 @@
 
       'log.kicker': 'সদস্য ও অ্যাডমিন প্রবেশ', 'log.title': 'লগ ইন',
       'log.sub': 'নিবন্ধনের সময় দেওয়া ইউজারনেম ও পাসওয়ার্ড ব্যবহার করুন। অ্যাডমিনরা অ্যাডমিন অ্যাকাউন্ট দিয়ে লগ ইন করেন।',
-      'log.user': 'ইউজারনেম বা ইমেইল', 'log.pass': 'পাসওয়ার্ড', 'log.btn': 'লগ ইন', 'log.new': 'নতুন? নিবন্ধন করুন',
+      'log.user': 'ইউজারনেম বা ইমেইল', 'log.pass': 'পাসওয়ার্ড', 'log.btn': 'লগ ইন', 'log.forgot': 'পাসওয়ার্ড ভুলে গেছেন?', 'log.resetTitle': 'পাসওয়ার্ড রিসেট করুন', 'log.resetHint': 'যে ইমেইল, ইউজারনেম বা মোবাইল নম্বর দিয়ে রেজিস্ট্রেশন করেছিলেন সেটি লিখুন। নতুন পাসওয়ার্ড বসানোর লিংক ইমেইলে পাঠানো হবে।', 'log.resetId': 'ইমেইল, ইউজারনেম বা মোবাইল নম্বর', 'ph.resetId': 'you@example.com / kazi.ibrahim / 01712345678', 'log.resetSend': 'রিসেট লিংক পাঠান', 'log.resetCancel': 'বাতিল', 'log.resetEmpty': 'ইমেইল, ইউজারনেম বা মোবাইল নম্বর লিখুন।', 'log.resetSent': 'পাঠানো হয়েছে। {email} চেক করুন — নতুন পাসওয়ার্ড বসানোর লিংক পাবেন (স্প্যাম ফোল্ডারও দেখুন)।', 'log.resetErr': 'রিসেট ইমেইল পাঠানো যায়নি। একটু পরে আবার চেষ্টা করুন।', 'por.adminNoPay': 'এটি অ্যাডমিন দৃশ্য — ফান্ড অ্যাডমিন সদস্যদের পেমেন্ট যাচাই করেন, নিজে কখনো পেমেন্ট দেন না; তাই এখানে পেমেন্ট ফর্ম দেখানো হয় না।',  'log.new': 'নতুন? নিবন্ধন করুন',
       'log.demoNote': 'ডেমো মোড। নমুনা অ্যাকাউন্ট — অ্যাডমিন: admin / nextgen2026, সদস্য: kazi.hamidul / nextgen123 (পূর্ণ তালিকা হ্যান্ডওভার ডকুমেন্টে)। তথ্য শুধু এই ব্রাউজারে সংরক্ষিত।',
       'log.loggingIn': 'লগ ইন হচ্ছে…', 'log.errBoth': 'ইউজারনেম/ইমেইল ও পাসওয়ার্ড দিন।', 'log.title2': 'লগ ইন — নেক্সটজেন ফান্ড',
 

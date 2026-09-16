@@ -576,9 +576,52 @@ function withTimeout(p, ms, tag) {
       getDriveEndpoint: getDriveEndpoint,
       saveDriveEndpoint: saveDriveEndpoint,
 
+      /* Resolve an e-mail / username / mobile number to the account e-mail and ask Firebase to
+         send the reset link. Nothing is changed by us: the owner follows the e-mail. */
+      requestPasswordReset: async function (identifier) {
+        var id = String(identifier || '').trim();
+        if (!id) throw err('invalid', 'Enter your e-mail, username or mobile number.');
+        var email = '';
+        if (id.indexOf('@') > 0) {
+          email = id.toLowerCase();
+        } else {
+          var digits = U.normPhone ? U.normPhone(id) : id.replace(/[^0-9]/g, '');
+          if (digits && /^01[0-9]{9}$/.test(digits)) {
+            try {
+              var ph = await fsMod.getDoc(docIn('phones', digits));
+              if (ph.exists()) email = String((ph.data() || {}).email || '').toLowerCase();
+            } catch (e) { /* the phones map may not be published yet; fall through */ }
+          }
+          if (!email) {
+            try {
+              var un = await fsMod.getDoc(docIn('usernames', id.toLowerCase()));
+              if (un.exists()) email = String((un.data() || {}).email || '').toLowerCase();
+            } catch (e2) { /* ignore */ }
+          }
+        }
+        if (!email) throw err('notfound', 'No account matches that e-mail, username or mobile number.');
+        try {
+          await authMod.sendPasswordResetEmail(auth, email);
+        } catch (e3) {
+          var code = String((e3 && e3.code) || '');
+          if (code.indexOf('too-many-requests') >= 0) throw err('rate', 'Too many attempts - wait a few minutes and try again.');
+          if (code.indexOf('invalid-email') >= 0) throw err('invalid', 'That e-mail address is not valid.');
+          throw err('reset', 'The reset e-mail could not be sent right now. Try again shortly.');
+        }
+        var at = email.indexOf('@');
+        var masked = at > 1 ? email.slice(0, 2) + '***' + email.slice(at) : '***';
+        await audit(email, 'password-reset-requested', 'reset link sent');
+        return { ok: true, sentTo: masked };
+      },
+
       submitPayment: async function (data) {
         var uid = await myUid();
         var u = await userDoc(uid);
+        /* The admin must never file a payment (least of all for themselves): the admin verifies
+           member payments, they are not a payer in this ledger. */
+        if (u && u.role === 'admin') {
+          throw err('admin-not-payer', 'The fund admin cannot submit payments. The admin only verifies the payments members send.');
+        }
         var amount = Number(data.amount);
         if (!(amount > 0)) throw err('invalid', 'Enter an amount greater than 0.');
         if (amount % 1000 !== 0 || amount < 1000) throw err('invalid', 'Amount must be a multiple of 1,000 tk (1x1000, 2x1000, 3x1000, ...).');

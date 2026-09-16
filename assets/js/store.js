@@ -485,7 +485,24 @@
         .sort(function (a, b) { return (b.submittedAt || '').localeCompare(a.submittedAt || ''); });
     },
 
+    requestPasswordReset: async function (identifier) {
+      if (Store.mode === 'firebase') return Store._fb.requestPasswordReset(identifier);
+      var id = String(identifier || '').trim();
+      if (!id) throw new Error('Enter your e-mail, username or mobile number.');
+      var db = Store._d();
+      var digits = U.normPhone ? U.normPhone(id) : id.replace(/[^0-9]/g, '');
+      var hit = null;
+      if (id.indexOf('@') > 0) hit = (db.users || []).filter(function (u) { return String(u.email).toLowerCase() === id.toLowerCase(); })[0];
+      else if (/^01[0-9]{9}$/.test(digits)) hit = (db.users || []).filter(function (u) { return (U.normPhone ? U.normPhone(u.phone) : String(u.phone).replace(/[^0-9]/g, '')) === digits; })[0];
+      else hit = (db.users || []).filter(function (u) { return String(u.username).toLowerCase() === id.toLowerCase(); })[0];
+      if (!hit) throw new Error('No account matches that e-mail, username or mobile number.');
+      return { ok: true, sentTo: 'demo account (no e-mail is really sent)', demo: true };
+    },
+
     submitPayment: async function (data) {
+      if (Store.mode === 'firebase') return Store._fb.submitPayment(data);
+      var guardSession = Store._requireLogin();
+      if (guardSession && guardSession.role === 'admin') throw new Error('The fund admin cannot submit payments. The admin only verifies the payments members send.');
       if (Store.mode === 'firebase') return Store._fb.submitPayment(data);
       var s = Store._requireLogin();
       var db = Store._d();

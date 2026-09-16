@@ -149,6 +149,24 @@
       document.getElementById('py-ref').placeholder = document.getElementById('py-method').value === 'cash' ? '' : L.t('ph.ref');
     }
 
+    /* an admin session must not see the member payment form: the admin verifies, never pays */
+    (async function () {
+      try {
+        var sess = await S.getSession();
+        if (sess && sess.role === 'admin') {
+          var form = document.getElementById('pay-form');
+          var card = form && form.closest ? form.closest('.card') : null;
+          if (card) {
+            var box = document.createElement('div');
+            box.className = 'notice warn';
+            box.textContent = L.t('por.adminNoPay');
+            card.parentNode.insertBefore(box, card);
+            card.classList.add('hide');
+          }
+        }
+      } catch (e) { /* not signed in: leave the form as it is */ }
+    })();
+
     document.getElementById('pay-form').addEventListener('submit', async function (ev) {
       ev.preventDefault();
       var errBox = document.getElementById('pay-err');
