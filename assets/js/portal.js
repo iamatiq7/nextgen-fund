@@ -422,7 +422,7 @@
         d1.textContent = L.t('em.ok'); d1.classList.remove('hide');
         e1.textContent = '';
       } catch (e) {
-        var map = { 'wrong-password': 'em.wrong', 'email-held': 'em.held', 'email-bad': 'em.bad', 'nothing-pending': 'em.pending' };
+        var map = { 'wrong-password': 'em.wrong', 'email-held': 'em.held', 'email-bad': 'em.bad', 'nothing-pending': 'em.pending', 'verify-sent': 'em.verify', 'not-allowed': 'em.notAllowed' };
         e1.textContent = (e && map[e.code]) ? L.t(map[e.code]) : ((e && e.message) || L.t('em.wrong'));
       } finally { emGo.disabled = false; }
     });

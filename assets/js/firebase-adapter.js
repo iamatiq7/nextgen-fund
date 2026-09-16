@@ -130,14 +130,31 @@ function withTimeout(p, ms, tag) {
     } catch (eAuth) {
       throw err('wrong-password', 'wrong-password');
     }
+    var applied = false;
     try {
       await authMod.updateEmail(user, target);
+      applied = true;
     } catch (eMail) {
       var code = String((eMail && eMail.code) || '');
       if (/email-already-in-use/.test(code)) throw err('email-held', 'email-held');
       if (/invalid-email/.test(code)) throw err('email-bad', 'email-bad');
-      throw err('update-failed', code || 'update-failed');
+      if (/wrong-password|requires-recent-login/.test(code)) throw err('wrong-password', 'wrong-password');
+      /* Some projects cannot change an address directly (operation-not-allowed / admin-created
+         accounts). Firebase's own verification link does the same job: it mails the new address
+         and the change is applied when the member opens that link. */
+      try {
+        if (authMod.verifyBeforeUpdateEmail) {
+          await authMod.verifyBeforeUpdateEmail(user, target);
+          throw err('verify-sent', 'verify-sent');
+        }
+      } catch (eVerify) {
+        if (eVerify && eVerify.code === 'verify-sent') throw eVerify;
+        if (eVerify && /email-already-in-use/.test(String(eVerify.code))) throw err('email-held', 'email-held');
+        if (eVerify && /invalid-email/.test(String(eVerify.code))) throw err('email-bad', 'email-bad');
+      }
+      throw err('not-allowed', code || 'not-allowed');
     }
+    if (!applied) throw err('not-allowed', 'not-allowed');
     await fsMod.updateDoc(docIn('users', uid), { email: target, emailChangePending: null, emailChangedAt: new Date().toISOString() });
     try {
       var un = String(u.username || '').toLowerCase();
