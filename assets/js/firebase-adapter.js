@@ -108,6 +108,39 @@ function withTimeout(p, ms, tag) {
     return rows;
   }
 
+  /* The login identifier lives in Firebase Authentication and can only be changed by the
+     signed-in member (never by the admin from their own session), so the approved address is
+     applied here: re-authenticate with the current password, then set the new e-mail. */
+  async function applyEmailChange(password) {
+    var uid = await myUid();
+    if (!uid) throw new Error('not-signed-in');
+    var snap = await fsMod.getDoc(docIn('users', uid));
+    var u = snap.exists() ? (snap.data() || {}) : {};
+    var target = String(u.emailChangePending || '').trim();
+    if (!target) throw err('nothing-pending', 'nothing-pending');
+    var user = auth.currentUser;
+    if (!user) throw err('not-signed-in', 'not-signed-in');
+    try {
+      var cred = authMod.EmailAuthProvider.credential(user.email || u.email || '', password);
+      await authMod.reauthenticateWithCredential(user, cred);
+    } catch (eAuth) {
+      throw err('wrong-password', 'wrong-password');
+    }
+    try {
+      await authMod.updateEmail(user, target);
+    } catch (eMail) {
+      if (eMail && /email-already-in-use/.test(String(eMail.code))) throw err('email-held', 'email-held');
+      throw err('update-failed', (eMail && eMail.code) || 'update-failed');
+    }
+    await fsMod.updateDoc(docIn('users', uid), { email: target, emailChangePending: null, emailChangedAt: new Date().toISOString() });
+    try {
+      var un = String(u.username || '').toLowerCase();
+      if (un) await fsMod.setDoc(docIn('usernames', un), { uid: uid, email: target });
+    } catch (eMap) { /* the registry is a convenience, not the login identifier */ }
+    await writeAudit({ action: 'email.changed', memberId: uid, detail: (u.email || '') + ' -> ' + target });
+    return { ok: true, email: target };
+  }
+
   async function createAccountRequest(data) {
     var uid = await myUid();
     if (!uid) throw new Error('not-signed-in');
@@ -153,6 +186,7 @@ function withTimeout(p, ms, tag) {
       for (var i = 0; i < list.length; i++) {
         var ch = list[i];
         if (ch.field === 'shares') patch.shares = parseInt(ch.to, 10) || 0;
+        else if (ch.field === 'email') { patch.emailChangePending = ch.to; }   /* the login e-mail can only be changed from the member's own session */
         else patch[ch.field] = ch.to;
       }
       if (patch.username) {
@@ -721,7 +755,8 @@ async function listNomineeRequests(status) {
       },
 
       getMyPayments: async function () { return myPaymentsFor(await myUid()); },
-      createAccountRequest: createAccountRequest,
+      applyEmailChange: applyEmailChange,
+    createAccountRequest: createAccountRequest,
       listAccountRequests: listAccountRequests,
       decideAccountRequest: decideAccountRequest,
       createNomineeRequest: createNomineeRequest,

@@ -358,7 +358,24 @@
       return { fullName: clean };
     },
 
-    changePassword: async function (currentPw, newPw) {
+    applyEmailChange: async function (password) {
+    if (Store.mode === 'firebase') return Store._fb.applyEmailChange(password);
+    var s2 = Store._requireLogin();
+    var db = Store._d();
+    var u = db.users.filter(function (x) { return x.id === s2.uid; })[0];
+    if (!u || !u.emailChangePending) { var e0 = new Error('nothing-pending'); e0.code = 'nothing-pending'; throw e0; }
+    if (u.passHash !== U.sha256(password)) { var e1 = new Error('wrong-password'); e1.code = 'wrong-password'; throw e1; }
+    var old = u.email;
+    u.email = u.emailChangePending;
+    u.emailChangePending = null;
+    u.emailChangedAt = new Date().toISOString();
+    db.usernames = db.usernames || {};
+    if (u.username) db.usernames[String(u.username).toLowerCase()] = { uid: u.id, email: u.email };
+    Store._audit(u.username || 'member', 'email-changed', old + ' -> ' + u.email);
+    Store._save();
+    return { ok: true, email: u.email };
+  },
+  changePassword: async function (currentPw, newPw) {
       if (!newPw || newPw.length < 8) { var e = new Error('New password must be at least 8 characters.'); e.code = 'invalid'; throw e; }
       if (Store.mode === 'firebase') return Store._fb.changePassword(currentPw, newPw);
       var s = Store._requireLogin();

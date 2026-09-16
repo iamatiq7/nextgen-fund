@@ -366,8 +366,21 @@
       var h = cards[c].querySelector('h2[data-i18n="por.account"]');
       if (h) { accCard = cards[c]; break; }
     }
+    /* an approved e-mail change is confirmed here, on the member's own session, because only
+       the signed-in user may change the login identifier in Firebase Authentication */
+    var emBlock = '';
+    if (profile.emailChangePending) {
+      emBlock = '<div class="notice" id="em-box">' +
+        '<strong>' + esc(L.t('em.title')) + '</strong> ' + esc(profile.emailChangePending) + ' - ' + esc(L.t('em.pending')) +
+        '<p class="footnote" style="margin:6px 0 8px">' + esc(L.t('em.hint')) + '</p>' +
+        '<label class="f" style="max-width:320px"><span>' + esc(L.t('em.ph')) + '</span>' +
+        '<input type="password" id="em-pass" autocomplete="current-password"></label>' +
+        '<div id="em-err" class="err" role="alert"></div>' +
+        '<button class="btn" type="button" id="em-go">' + esc(L.t('em.apply')) + '</button>' +
+        '<div id="em-done" class="notice ok hide"></div></div>';
+    }
     var accForm =
-      '<div id="acc-req" style="margin-top:18px">' +
+      '<div id="acc-req" style="margin-top:18px">' + emBlock +
         '<h3>' + esc(L.t('acc.reqTitle')) + '</h3>' +
         '<p class="footnote">' + esc(L.t('acc.hint')) + '</p>' +
         (pendAccount ? '<div class="notice">' + esc(L.t('acc.pendingRow', { list: (pendAccount.changes || []).map(function (x) { return L.t('acc.' + x.field) || x.field; }).join(', ') })) + '</div>' : '') +
@@ -393,6 +406,23 @@
     else host.insertAdjacentHTML('beforeend', '<section class="card" style="margin-top:16px"><h2>' + esc(L.t('acc.title')) + '</h2>' + accForm + '</section>');
 
     /* ---------- wiring: the account change request ---------- */
+    var emGo = document.getElementById('em-go');
+    if (emGo) emGo.addEventListener('click', async function () {
+      var e1 = document.getElementById('em-err'), d1 = document.getElementById('em-done');
+      e1.textContent = ''; d1.classList.add('hide');
+      var pw = (document.getElementById('em-pass') || {}).value || '';
+      if (!pw) { e1.textContent = L.t('em.wrong'); return; }
+      emGo.disabled = true;
+      try {
+        await S.applyEmailChange(pw);
+        d1.textContent = L.t('em.ok'); d1.classList.remove('hide');
+        e1.textContent = '';
+      } catch (e) {
+        var map = { 'wrong-password': 'em.wrong', 'email-held': 'em.held' };
+        e1.textContent = (e && map[e.code]) ? L.t(map[e.code]) : ((e && e.message) || L.t('em.wrong'));
+      } finally { emGo.disabled = false; }
+    });
+
     var af = document.getElementById('acc-form');
     if (af) af.addEventListener('submit', async function (ev) {
       ev.preventDefault();
