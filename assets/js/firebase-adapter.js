@@ -131,6 +131,20 @@ function withTimeout(p, ms, tag) {
       throw err('wrong-password', 'wrong-password');
     }
     var applied = false;
+    /* Proved against this very project (accounts:update -> OPERATION_NOT_ALLOWED
+       "Please verify the new email before changing email."): the new address must be verified
+       first, so the verification link is the primary route here. */
+    if (authMod.verifyBeforeUpdateEmail) {
+      try {
+        await authMod.verifyBeforeUpdateEmail(user, target);
+        throw err('verify-sent', 'verify-sent');
+      } catch (eVerify) {
+        if (eVerify && eVerify.code === 'verify-sent') throw eVerify;
+        if (eVerify && /email-already-in-use/.test(String(eVerify.code))) throw err('email-held', 'email-held');
+        if (eVerify && /invalid-email/.test(String(eVerify.code))) throw err('email-bad', 'email-bad');
+        if (eVerify && /wrong-password|requires-recent-login/.test(String(eVerify.code))) throw err('wrong-password', 'wrong-password');
+      }
+    }
     try {
       await authMod.updateEmail(user, target);
       applied = true;
