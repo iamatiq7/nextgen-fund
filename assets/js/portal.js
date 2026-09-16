@@ -326,12 +326,21 @@
   async function renderRequests() {
     var host = document.getElementById('portal-content');
     if (!host) return;
-    /* idempotent: the injected block is the marker, so this can never run twice
-       (the old marker pointed at a card that was removed later and stopped guarding) */
-    if (document.getElementById('acc-req') || document.getElementById('sec-nominee')) return;
+    /* The guard must be taken BEFORE any await: this function runs from a 250 ms loop and the
+       reads below take longer than that, so two runs used to overlap and inject twice. A
+       synchronous marker element is claimed first - the DOM sees it immediately - and it is
+       always handed back, so at most one block can ever exist. */
+    if (document.getElementById('acc-req') || document.getElementById('acc-req-claim') || document.getElementById('sec-nominee')) return;
+    var claim = document.createElement('div');
+    claim.id = 'acc-req-claim';
+    host.appendChild(claim);
     var mine = await S.getMyAccount();
     var profile = (mine && mine.profile) || null;
-    if (!profile) return;
+    if (!profile) {
+      if (claim.parentNode) claim.parentNode.removeChild(claim);
+      claim = null;
+      return;
+    }
     var esc = U.esc;
     var myName = profile.fullName || '';
     var myUser = profile.username || '';
@@ -375,6 +384,11 @@
           '<button class="btn" type="submit" id="ac-send">' + esc(L.t('acc.send')) + '</button>' +
         '</form>' +
       '</div>';
+    /* exactly one block: drop any earlier copy and hand the claim back */
+    var stray = document.getElementById('acc-req');
+    if (stray && stray.parentNode) stray.parentNode.removeChild(stray);
+    var cl = document.getElementById('acc-req-claim');
+    if (cl && cl.parentNode) cl.parentNode.removeChild(cl);
     if (accCard) accCard.insertAdjacentHTML('beforeend', accForm);
     else host.insertAdjacentHTML('beforeend', '<section class="card" style="margin-top:16px"><h2>' + esc(L.t('acc.title')) + '</h2>' + accForm + '</section>');
 
