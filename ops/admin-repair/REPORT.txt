@@ -1,0 +1,17 @@
+=== admin profile repair (additive) ===
+project : nextgen-fund-2040
+mode    : repair the missing users/{uid} document only - no deletions
+started : 2026-09-16T04:26:53.146Z
+
+settings/bootstrap.adminUid : EIRm***
+auth account for that uid    : EXISTS (ad***@n***, created Tue, 15 Sep 2026 18:07:16 GMT)
+username mapped to the admin  : admi***
+usernames documents total     : 2
+users/{adminUid} document     : MISSING  <-- this is why the login fails
+
+created users/{adminUid} with: role=admin status=active username=admi*** email=ad***@n*** joinMonth=2026-09
+read-back                    : OK (role=admin, status=active)
+
+result  : REPAIRED - sign in with the existing e-mail and password; the app can now build the admin session.
+
+finished: 2026-09-16T04:26:58.975Z
