@@ -412,12 +412,7 @@
       '<div class="card" style="max-width:820px"><h2>' + U.esc(L.t('adm.pfTitle')) + '</h2>' +
       '<label class="f"><span>' + U.esc(L.t('adm.pfName')) + '</span><input type="text" id="pf-name" value="' + U.esc((sess && sess.fullName) || '') + '"></label>' +
       '<p><button type="button" class="btn" id="pf-save-name">' + U.esc(L.t('adm.pfNameSave')) + '</button> <span class="hint" id="pf-name-msg"></span></p>' +
-      '<h3 style="margin-top:8px">' + U.esc(L.t('adm.pfPwTitle')) + '</h3>' +
-      '<label class="f"><span>' + U.esc(L.t('adm.pfCur')) + '</span><input type="password" id="pf-cur" autocomplete="current-password"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('adm.pfNew')) + '</span><input type="password" id="pf-new" autocomplete="new-password"></label>' +
-      '<label class="f"><span>' + U.esc(L.t('adm.pfNew2')) + '</span><input type="password" id="pf-new2" autocomplete="new-password"></label>' +
-      '<p><button type="button" class="btn" id="pf-save-pw">' + U.esc(L.t('adm.pfPwSave')) + '</button> <span class="hint" id="pf-pw-msg"></span></p>' +
-      '</div>' +
+            '</div>' +
       '<div class="card" style="max-width:820px"><form id="set-form" novalidate>' +
       '<div class="grid form2">' +
       '<label class="f"><span>' + U.esc(L.t('adm.stFundName')) + '</span><input type="text" id="st-name" value="' + U.esc(s.fundName || 'NextGen Fund') + '"></label>' +
@@ -458,6 +453,11 @@
       cf('ct-bn-how3', 'adm.stHow3', bn.how3) +
       cf('ct-bn-how4', 'adm.stHow4', bn.how4) +
       '</div></div>' +
+'<h3 style="margin-top:8px">' + U.esc(L.t('adm.pfPwTitle')) + '</h3>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfCur')) + '</span><input type="password" id="pf-cur" autocomplete="current-password"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfNew')) + '</span><input type="password" id="pf-new" autocomplete="new-password"></label>' +
+      '<label class="f"><span>' + U.esc(L.t('adm.pfNew2')) + '</span><input type="password" id="pf-new2" autocomplete="new-password"></label>' +
+      '<p><button type="button" class="btn" id="pf-save-pw">' + U.esc(L.t('adm.pfPwSave')) + '</button> <span class="hint" id="pf-pw-msg"></span></p>' +
       '<div id="st-err" class="err"></div>' +
       '<button class="btn" type="submit">' + U.esc(L.t('adm.stSave')) + '</button></form></div>';
 
