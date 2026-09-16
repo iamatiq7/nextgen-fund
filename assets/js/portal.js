@@ -256,16 +256,27 @@
       else status = '<p class="footnote">' + esc(L.t('por.nomNone')) + '</p>';
 
       var canAsk = !latest || latest.status !== 'pending';
+      function line(label, value) {
+        return '<li><span class="k">' + esc(label) + '</span> ' + (value ? esc(value) : '<span class="hint">-</span>') + '</li>';
+      }
+      var hasAny = profile.nominee || profile.nomineeRelation || profile.nomineePhone || profile.nomineeAddress;
       box.innerHTML =
-        '<p><strong>' + esc(L.t('por.nomCurrent')) + ':</strong> ' + esc(profile.nominee || '—') + '</p>' + status +
+        (hasAny
+          ? '<ul class="clean">' + line(L.t('nom.name'), profile.nominee) + line(L.t('nom.relation'), profile.nomineeRelation) +
+            line(L.t('nom.phone'), profile.nomineePhone) + line(L.t('nom.address'), profile.nomineeAddress) + '</ul>'
+          : '<div class="empty">' + esc(L.t('nom.none')) + '</div>') +
+        status +
+        '<h3 style="margin-top:14px">' + esc(L.t('nom.reqTitle')) + '</h3><p class="footnote">' + esc(L.t('nom.hint')) + '</p>' +
         (canAsk ? (
           '<div class="grid two" style="margin-top:8px">' +
-          '<label class="f"><span>' + esc(L.t('por.nomNew')) + '</span><input type="text" id="nom-name" maxlength="80"></label>' +
-          '<label class="f"><span>' + esc(L.t('por.nomRelation')) + '</span><input type="text" id="nom-rel" maxlength="40"></label>' +
-          '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('por.nomReason')) + '</span><input type="text" id="nom-why" maxlength="160"></label>' +
-          '</div><div class="btn-row"><button class="btn" id="nom-send">' + esc(L.t('por.nomSubmit')) + '</button></div>' +
+          '<label class="f"><span>' + esc(L.t('nom.name')) + '</span><input type="text" id="nom-name" maxlength="80"></label>' +
+          '<label class="f"><span>' + esc(L.t('nom.relation')) + '</span><input type="text" id="nom-rel" maxlength="40"></label>' +
+          '<label class="f"><span>' + esc(L.t('nom.phone')) + '</span><input type="tel" id="nom-phone" maxlength="11" inputmode="numeric" placeholder="01xxxxxx (11 digits, optional)"></label>' +
+          '<label class="f"><span>' + esc(L.t('nom.address')) + '</span><input type="text" id="nom-addr" maxlength="120"></label>' +
+          '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('nom.reason')) + '</span><input type="text" id="nom-why" maxlength="160"></label>' +
+          '</div><div class="btn-row"><button class="btn" id="nom-send">' + esc(L.t('nom.send')) + '</button></div>' +
           '<p class="err" id="nom-err" role="alert"></p>'
-        ) : '');
+        ) : '<p class="footnote">' + esc(L.t('nom.pending')) + '</p>');
 
       var btn = el('nom-send');
       if (btn) btn.onclick = async function () {
@@ -277,8 +288,12 @@
         try {
           await S.createNomineeRequest({
             memberId: s.uid || profile.id || '', memberName: s.fullName, username: s.username || profile.username || '',
-            currentNominee: profile.nominee || '', requestedNominee: name,
-            relation: (el('nom-rel').value || '').trim(), reason: (el('nom-why').value || '').trim()
+            currentNominee: profile.nominee || '',
+            requestedNominee: name || profile.nominee || '',
+            relation: (el('nom-rel').value || '').trim() || profile.nomineeRelation || '',
+            requestedPhone: (el('nom-phone') && el('nom-phone').value || '').trim() || profile.nomineePhone || '',
+            requestedAddress: (el('nom-addr') && el('nom-addr').value || '').trim() || profile.nomineeAddress || '',
+            reason: (el('nom-why').value || '').trim()
           });
           C.toast(L.t('por.nomPending'));
           init();
@@ -394,6 +409,7 @@
     var t = String(h || '').replace(/^#/, '').toLowerCase();
     if (t === 'payments' || t === 'payment' || t === 'pay') return 'payments';
     if (t === 'account') return 'account';
+    if (t === 'nominee') return 'nominee';
     return 'overview';
   }
 
@@ -418,14 +434,17 @@
     /* the payment card and the history card sit in the same grid row: keep the wrapper too */
     var payRow = payCard ? payCard.parentNode : null;
 
+    var nomBody = document.getElementById('nom-body');
+    var nomineeCard = nomBody ? nomBody.closest('section.card') : null;
     var groups = {
       overview: [stats].filter(Boolean),
+      nominee: [nomineeCard].filter(Boolean),
       payments: [payRow, history].filter(Boolean),
       account: [accountCard].filter(Boolean)
     };
 
     function show(name) {
-      ['overview', 'payments', 'account'].forEach(function (k) {
+      ['overview', 'payments', 'account', 'nominee'].forEach(function (k) {
         var list = groups[k] || [];
         for (var j = 0; j < list.length; j++) {
           var el = list[j];
