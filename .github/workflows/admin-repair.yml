@@ -1,0 +1,69 @@
+name: Admin profile repair (owner-run, guarded, additive)
+
+# Recreates the missing users/{uid} document for the uid in settings/bootstrap. It only writes -
+# nothing is deleted - so it cannot damage the database. The report is masked before it is committed
+# to this public repository.
+#
+# Start it by making the first line of ops/admin-repair/TRIGGER exactly:  repair 2026-09-16
+# Afterwards delete this file and the TRIGGER again (that removal matches no path filter).
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ops/admin-repair/TRIGGER'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: admin-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Guard
+        run: |
+          set -euo pipefail
+          OK="no"
+          if [ -f ops/admin-repair/TRIGGER ]; then
+            FIRST="$(head -n 1 ops/admin-repair/TRIGGER | tr -d '\r' | sed 's/[[:space:]]*$//')"
+            echo "trigger first line: [$FIRST]"
+            if [ "$FIRST" = "repair 2026-09-16" ]; then OK="yes"; fi
+          fi
+          echo "OK=$OK" >> "$GITHUB_ENV"
+
+      - name: Install the Admin SDK
+        if: env.OK == 'yes'
+        run: npm install --no-save --loglevel=error firebase-admin@13
+
+      - name: Repair the admin profile
+        if: env.OK == 'yes'
+        env:
+          PROJECT_ID: nextgen-fund-2040
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.ci/sa.json
+        run: |
+          set -euo pipefail
+          mkdir -p .ci
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}' > .ci/sa.json
+          node ops/admin-repair/repair.mjs
+          rm -rf .ci
+
+      - name: Commit the masked report
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ ! -f ops/admin-repair/REPORT.txt ]; then echo "no report"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f ops/admin-repair/REPORT.txt
+          git diff --cached --quiet || git commit -m "chore(admin-repair): masked report"
+          git push || true
