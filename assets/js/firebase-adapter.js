@@ -197,7 +197,10 @@ async function listNomineeRequests(status) {
       if (approve) {
         var snap = await fsMod.getDoc(docIn('users', row.memberId));
         var cur = snap.exists() ? (snap.data() || {}) : {};
-        await fsMod.updateDoc(docIn('users', row.memberId), { nominee: row.requestedNominee, nomineeRelation: row.relation || '', nomineeUpdatedAt: new Date().toISOString() });
+        var patchN = { nominee: row.requestedNominee, nomineeRelation: row.relation || '', nomineeUpdatedAt: new Date().toISOString() };
+      if (row.requestedPhone) patchN.nomineePhone = row.requestedPhone;
+      if (row.requestedAddress) patchN.nomineeAddress = row.requestedAddress;
+      await fsMod.updateDoc(docIn('users', row.memberId), patchN);
         await writeAudit({ action: 'nominee.approve', memberId: row.memberId, detail: 'nominee: ' + (cur.nominee || '(none)') + ' -> ' + row.requestedNominee, by: byName || 'admin' });
       } else {
         await writeAudit({ action: 'nominee.reject', memberId: row.memberId, detail: 'nominee change to ' + row.requestedNominee + ' rejected', by: byName || 'admin' });
