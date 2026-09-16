@@ -245,8 +245,13 @@
       if (!s) { box.innerHTML = ''; return; }
       var acc = await S.getMyAccount().catch(function () { return null; });
       var profile = (acc && acc.profile) || {};
-      var mine = (await S.listNomineeRequests()) || [];
-      mine = mine.filter(function (r) { return r.memberId === (s.uid || profile.id || ''); });
+      /* the list of past requests is a nice extra: if the rules deny it we simply show none,
+         and the member still sees the stored nominee block and the request form. */
+      var mine = [];
+      try {
+        mine = (await S.listNomineeRequests()) || [];
+        mine = mine.filter(function (r) { return r.memberId === (s.uid || profile.id || ''); });
+      } catch (eList) { mine = []; }
       var latest = mine.slice().sort(function (a, b) { return String(b.requestedAt).localeCompare(String(a.requestedAt)); })[0];
 
       var status = '';
@@ -298,12 +303,16 @@
           C.toast(L.t('por.nomPending'));
           init();
         } catch (e) {
-          errBox.textContent = (e && e.message === 'nominee-required') ? L.t('v.required') : String(e && e.message || e);
+          var perm = e && /permission/i.test(String(e.code) + ' ' + String(e.message));
+          errBox.textContent = (e && e.message === 'nominee-required') ? L.t('v.required')
+            : (perm ? L.t('acc.noAccess') : String(e && e.message || e));
           btn.disabled = false;
         }
       };
     } catch (e) {
-      box.innerHTML = '<p class="footnote">' + esc(String(e && e.message || e)) + '</p>';
+      /* never wipe the card with a raw error: keep it usable */
+      box.innerHTML = '<div class="empty">' + esc(L.t('nom.none')) + '</div>' +
+        '<p class="footnote">' + esc(L.t('nom.hint')) + '</p>';
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 300); });
