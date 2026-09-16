@@ -1,21 +1,17 @@
 === NextGen Fund database reset report (CI) ===
 project        : nextgen-fund-2040
-mode           : wipe
-confirmed wipe : yes
+mode           : backup
+confirmed wipe : no
 target         : LIVE Firebase (admin credentials, security rules bypassed)
-started        : 2026-09-15T18:03:53.483Z
+started        : 2026-09-16T04:03:38.159Z
 result         : PASS
 
-counts before  : {"payments":0,"registrations":0,"audit":49,"usernames":7,"users":6,"finance":0,"settings":2}
-backup file    : ops/db-reset/backup-2026-09-15T1803.json
-backup sha256  : 4d578574dcdada9c3e7f5345a7b2820ae07b46083b0d29d9148197505dba3a5b
-backup bytes   : 21096
-backup counts  : {"payments":0,"registrations":0,"audit":49,"usernames":7,"users":6,"finance":0,"settings":2}
-backup total   : 64 document(s)
-deletions      : {"payments":"ok","registrations":"ok","audit":"ok","usernames":"ok","users":"ok","finance":"ok","settings":"ok"}
-counts after   : {"payments":0,"registrations":0,"audit":0,"usernames":0,"users":0,"finance":0,"settings":0}
-all zero       : YES
-auth before    : 6 (ids JN7RTa…, OJyYH8…, OZGjJY…, SxCwc5…, TAFOc6…, osjITm…)
-auth after     : 0 (ids none)
-first-run state: YES - setup.html can claim the project again
-finished       : 2026-09-15T18:03:53.484Z
+counts         : {"payments":0,"registrations":0,"audit":11,"usernames":2,"users":0,"finance":0,"settings":1}
+backup file    : ops/db-reset/backup-2026-09-16T0403.json
+backup sha256  : 8dfbaf5f3e1c3d1c6bb79b6347c53268e9ba868698164bd70c13c815139b7a58
+backup bytes   : 3374
+backup counts  : {"payments":0,"registrations":0,"audit":11,"usernames":2,"users":0,"finance":0,"settings":1}
+backup total   : 14 document(s)
+auth accounts  : 2 (ids EIRmeC…, uFLoZw…)
+note           : read-only run, nothing was deleted
+finished       : 2026-09-16T04:03:38.159Z
