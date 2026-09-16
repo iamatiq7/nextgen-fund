@@ -188,7 +188,11 @@ function withTimeout(p, ms, tag) {
 
 async function listNomineeRequests(status) {
       var all = await allRequests();
-      var rows = all.slice().sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
+      /* only nominee requests belong here: a member's account change must never show up
+         in the nominee view (and the other way round). Rows written before the kind field
+         existed are nominee requests. */
+      var rows = all.filter(function (r) { return (r.kind || 'nominee') === 'nominee'; })
+        .sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
       return status ? rows.filter(function (r) { return r.status === status; }) : rows;
     }
     async function decideNomineeRequest(id, approve, byName) {

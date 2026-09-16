@@ -558,7 +558,7 @@
      Approving applies the change; rejecting leaves the member untouched. */
   async function tabRequests() {
     var rows = [];
-    try { rows = (await S.listNomineeRequests('pending')) || []; } catch (e) { rows = []; }
+    try { rows = (await S.listAccountRequests('pending')) || []; } catch (e) { rows = []; }
     rows = rows.sort(function (a, b) { return String(b.requestedAt || '').localeCompare(String(a.requestedAt || '')); });
     var esc = U.esc;
     var body = document.getElementById('tab-body');
