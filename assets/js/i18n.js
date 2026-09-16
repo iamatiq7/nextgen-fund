@@ -236,11 +236,11 @@
       'err.accountNotFound': 'Account not found', 'err.enterEmailPw': 'Enter email and password (min 8 characters).',
 
       /* placeholders */
-      'ph.username': 'e.g. kazi.ibrahim', 'ph.password': 'Your password',
-      'ph.name': 'e.g. Kazi Rafiul Islam', 'ph.usernameReg': 'e.g. kazi.rafi (4-32 chars)',
+      'ph.username': 'e.g. your.name (4-32 chars: a-z 0-9 . _ -)', 'ph.password': 'Your password',
+      'ph.name': 'e.g. Full name (as printed on the NID)', 'ph.usernameReg': 'e.g. your.name (4-32 chars)',
       'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
       'ph.occupation': 'e.g. Service, Business, Student', 'ph.nominee': "Your nominee's full name",
-      'ph.address': 'Village / Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': 'Repeat password',
+      'ph.address': 'Village/Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': '(same as Password)', 'ph.nomineePhone': '01xxxxxx (11 digits, optional)', 'ph.passConf': '(same as Password)',
       'ph.amount': 'e.g. 1000', 'ph.ref': 'e.g. 9F7DA23K1',
       'ph.sender': 'The number or account you paid from', 'ph.note': 'e.g. August + September due',
       'ph.setupName': 'e.g. Kazi Atiqur Rahman', 'ph.setupEmail': 'admin@example.com',
@@ -504,11 +504,11 @@
       'err.accountNotFound': 'অ্যাকাউন্ট পাওয়া যায়নি', 'err.enterEmailPw': 'ইমেইল ও পাসওয়ার্ড দিন (সর্বনিম্ন ৮ অক্ষর)।',
 
       /* placeholders */
-      'ph.username': 'যেমন: kazi.ibrahim', 'ph.password': 'আপনার পাসওয়ার্ড',
-      'ph.name': 'যেমন: কাজী রফিকুল ইসলাম', 'ph.usernameReg': 'যেমন: kazi.rafi (৪-৩২ অক্ষর)',
+      'ph.username': 'যেমন: your.name (৪-৩২ অক্ষর: a-z 0-9 . _ -)', 'ph.password': 'আপনার পাসওয়ার্ড',
+      'ph.name': 'যেমন: সম্পূর্ণ নাম (NID অনুযায়ী)', 'ph.usernameReg': 'যেমন: kazi.rafi (৪-৩২ অক্ষর)',
       'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
       'ph.occupation': 'যেমন: চাকরি, ব্যবসা, শিক্ষার্থী', 'ph.nominee': 'মনোনীত ব্যক্তির পূর্ণ নাম',
-      'ph.address': 'গ্রাম / রাস্তা, থানা, জেলা', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': 'আবার পাসওয়ার্ড লিখুন',
+      'ph.address': 'গ্রাম/রাস্তা, থানা, জেলা', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': '(পাসওয়ার্ডের মতোই)', 'ph.nomineePhone': '০১xxxxxx (১১ ডিজিট, ঐচ্ছিক)', 'ph.passConf': '(পাসওয়ার্ডের মতোই)',
       'ph.amount': 'যেমন: 1000', 'ph.ref': 'যেমন: 9F7DA23K1',
       'ph.sender': 'যে নম্বর বা অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন', 'ph.note': 'যেমন: আগস্ট + সেপ্টেম্বরের বকেয়া',
       'ph.setupName': 'যেমন: কাজী আতিকুর রহমান', 'ph.setupEmail': 'admin@example.com',
