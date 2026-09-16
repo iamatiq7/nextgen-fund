@@ -99,7 +99,7 @@ function withTimeout(p, ms, tag) {
       }
     } catch (eU) { /* a read problem must not hide the other source */ }
     try {
-      var coll = (await getAll('nomineeRequests')) || [];
+      var coll = await allRequests();
       for (var j = 0; j < coll.length; j++) {
         var r = coll[j] || {};
         if (r.status === 'pending' && r.savedIn !== 'user') rows.push(r);
@@ -143,7 +143,7 @@ function withTimeout(p, ms, tag) {
   }
 
   async function decideAccountRequest(id, approve, byName) {
-    var row = ((await getAll('nomineeRequests')) || []).filter(function (r) { return r.id === id; })[0];
+    var row = (await allRequests()).filter(function (r) { return r.id === id; })[0];
     if (!row) throw new Error('not-found');
     if (approve) {
       var snapU = await fsMod.getDoc(docIn('users', row.memberId));
@@ -187,12 +187,12 @@ function withTimeout(p, ms, tag) {
   }
 
 async function listNomineeRequests(status) {
-      var all = (await getAll('nomineeRequests')) || [];
+      var all = await allRequests();
       var rows = all.slice().sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
       return status ? rows.filter(function (r) { return r.status === status; }) : rows;
     }
     async function decideNomineeRequest(id, approve, byName) {
-      var row = ((await getAll('nomineeRequests')) || []).filter(function (r) { return r.id === id; })[0];
+      var row = (await allRequests()).filter(function (r) { return r.id === id; })[0];
       if (!row) throw new Error('not-found');
       if (approve) {
         var snap = await fsMod.getDoc(docIn('users', row.memberId));
@@ -202,6 +202,7 @@ async function listNomineeRequests(status) {
       } else {
         await writeAudit({ action: 'nominee.reject', memberId: row.memberId, detail: 'nominee change to ' + row.requestedNominee + ' rejected', by: byName || 'admin' });
       }
+      try { await fsMod.updateDoc(docIn('users', row.memberId), { pendingNomineeRequest: null }); } catch (eClear) { }
       await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || 'admin' });
       return true;
     }
