@@ -98,6 +98,7 @@
           return;
         }
         var done = report.accountDeleted ? L.t('rs.doneAccount') : L.t('rs.done');
+        done += '\n' + L.t('rs.authNote');
         gate('<div class="notice ok">' + esc(done) + '</div>' +
           '<p><a class="btn" href="setup.html">' + esc(L.t('rs.toSetup')) + '</a>' +
           '<a class="btn ghost" href="index.html" style="margin-left:6px">' + esc(L.t('rs.toDash')) + '</a></p>' +

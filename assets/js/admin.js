@@ -421,7 +421,6 @@
       '<label class="f"><span>' + U.esc(L.t('adm.stMps')) + '</span><input type="number" id="st-mps" min="1" value="' + (s.monthlyPerShare || 1000) + '"></label>' +
       '<label class="f"><span>' + U.esc(L.t('adm.stDrive')) + '</span><input type="text" id="st-drive" placeholder="https://script.google.com/macros/s/.../exec" value="' + U.esc(window.__ngfDriveNow || '') + '">' +
         '<span class="hint">' + U.esc(L.t('adm.stDriveHint')) + '</span></label>' +
-        '<label class="f"><span>' + U.esc(L.t('adm.stDocs')) + '</span><input type="text" id="st-docs" value="' + U.esc((s.docRequirements || []).join(' | ')) + '"><span class="hint">' + U.esc(L.t('adm.stDocsHint')) + '</span></label>' +
       '</div>' +
       '<h2 style="margin-top:8px">' + U.esc(L.t('adm.stNumbers')) + '</h3>' +
       '<div class="grid form2">' +
@@ -495,7 +494,7 @@
     document.getElementById('set-form').addEventListener('submit', async function (ev) {
       ev.preventDefault();
       var err = document.getElementById('st-err'); err.textContent = '';
-      var g = function (id) { return document.getElementById(id).value.trim(); };
+      var g = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
       try {
         if (g('st-drive') !== undefined && S.saveDriveEndpoint) {
       try { await S.saveDriveEndpoint(g('st-drive')); } catch (e) { C.toast(String(e && e.message || e), true); }
@@ -555,8 +554,88 @@
       }).join('') : '<tr><td colspan="4"><div class="empty">' + U.esc(L.t('adm.auEmpty')) + '</div></td></tr>') + '</tbody></table></div>';
   }
 
+  /* ---------------- change requests: nominee + account (added 2026-09-16) ----------------
+     One table for both kinds of request, because a member may hold several at once.
+     Approving applies the change; rejecting leaves the member untouched. */
+  async function tabRequests() {
+    var rows = [];
+    try { rows = (await S.listNomineeRequests('pending')) || []; } catch (e) { rows = []; }
+    rows = rows.sort(function (a, b) { return String(b.requestedAt || '').localeCompare(String(a.requestedAt || '')); });
+    var esc = U.esc;
+    var body = document.getElementById('tab-body');
+    if (!rows.length) {
+      body.innerHTML = '<div class="card"><h2>' + esc(L.t('adm.rqTitle')) + '</h2><div class="empty">' + esc(L.t('adm.rqEmpty')) + '</div></div>';
+      return;
+    }
+    var html = '<div class="card"><h2>' + esc(L.t('adm.rqTitle')) + '</h2>' +
+      '<div class="tablewrap"><table class="data"><thead><tr>' +
+      '<th>' + esc(L.t('adm.rqKind')) + '</th><th>' + esc(L.t('adm.rqMember')) + '</th><th>' + esc(L.t('adm.rqField')) + '</th>' +
+      '<th>' + esc(L.t('adm.rqOld')) + '</th><th>' + esc(L.t('adm.rqNew')) + '</th><th>' + esc(L.t('adm.rqWhen')) + '</th>' +
+      '<th></th></tr></thead><tbody>';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var isAcc = r.kind === 'account';
+      var pairs = [];
+      if (isAcc) pairs = r.changes || [];
+      else pairs = [
+        { field: 'nominee', from: r.currentNominee || '', to: r.requestedNominee || '' },
+        { field: 'nomineeRelation', from: '', to: r.relation || '' },
+        { field: 'nomineePhone', from: '', to: r.requestedPhone || '' },
+        { field: 'nomineeAddress', from: '', to: r.requestedAddress || '' }
+      ];
+      for (var j = 0; j < pairs.length; j++) {
+        var pr = pairs[j];
+        if (!String(pr.to || '').trim()) continue;
+        html += '<tr>' +
+          '<td>' + esc(isAcc ? L.t('adm.rqKindAccount') : L.t('adm.rqKindNominee')) + '</td>' +
+          '<td>' + esc(r.memberName || '') + ' <span class="hint">' + esc(r.username || '') + '</span></td>' +
+          '<td>' + esc(pr.field) + '</td>' +
+          '<td>' + esc(pr.from || '-') + '</td>' +
+          '<td><strong>' + esc(pr.to) + '</strong></td>' +
+          '<td class="hint">' + esc(String(r.requestedAt || '').slice(0, 16).replace('T', ' ')) + '</td>' +
+          '<td><button class="btn sm" data-rq-ok="' + esc(r.id) + '" data-rq-kind="' + (isAcc ? 'acc' : 'nom') + '">' + esc(L.t('adm.rqApprove')) + '</button> ' +
+          '<button class="btn sm ghost" data-rq-no="' + esc(r.id) + '" data-rq-kind="' + (isAcc ? 'acc' : 'nom') + '">' + esc(L.t('adm.rqReject')) + '</button></td>' +
+          '</tr>';
+      }
+    }
+    html += '</tbody></table></div><div id="rq-msg" class="notice hide"></div></div>';
+    body.innerHTML = html;
+
+    function say(kind, ok) {
+      var m = document.getElementById('rq-msg');
+      if (!m) return;
+      m.classList.remove('hide');
+      m.textContent = ok ? L.t(kind === 'acc' ? 'adm.rqOkA' : 'adm.rqOkN') : L.t('adm.rqNo');
+    }
+    body.querySelectorAll('[data-rq-ok]').forEach(function (b) {
+      b.addEventListener('click', async function () {
+        b.disabled = true;
+        var kind = b.getAttribute('data-rq-kind');
+        try {
+          var res = kind === 'acc' ? await S.decideAccountRequest(b.getAttribute('data-rq-ok'), true, (ctxName() || 'admin'))
+            : await S.decideNomineeRequest(b.getAttribute('data-rq-ok'), true, (ctxName() || 'admin'));
+          if (res === 'username-taken') { C.toast(L.t('adm.rqUserTaken')); } else { say(kind, true); }
+        } catch (e) { C.toast((e && e.message) || 'error'); }
+        selectTab('requests');
+      });
+    });
+    body.querySelectorAll('[data-rq-no]').forEach(function (b) {
+      b.addEventListener('click', async function () {
+        b.disabled = true;
+        var kind = b.getAttribute('data-rq-kind');
+        try {
+          if (kind === 'acc') await S.decideAccountRequest(b.getAttribute('data-rq-no'), false, (ctxName() || 'admin'));
+          else await S.decideNomineeRequest(b.getAttribute('data-rq-no'), false, (ctxName() || 'admin'));
+          say(kind, false);
+        } catch (e) { C.toast((e && e.message) || 'error'); }
+        selectTab('requests');
+      });
+    });
+  }
+  function ctxName() { try { return (state && state.me && state.me.fullName) || ''; } catch (e) { return ''; } }
+
   /* ---------------- shell ---------------- */
-  var TABS = { overview: tabOverview, registrations: tabRegistrations, payments: tabPayments, members: tabMembers, finance: tabFinance, settings: tabSettings, export: tabExport, audit: tabAudit };
+  var TABS = { overview: tabOverview, registrations: tabRegistrations, payments: tabPayments, members: tabMembers, requests: tabRequests, finance: tabFinance, settings: tabSettings, export: tabExport, audit: tabAudit };
 
   function selectTab(tab) {
     state.tab = tab;

@@ -236,11 +236,11 @@
       'err.accountNotFound': 'Account not found', 'err.enterEmailPw': 'Enter email and password (min 8 characters).',
 
       /* placeholders */
-      'ph.username': 'e.g. kazi.ibrahim', 'ph.password': 'Your password',
-      'ph.name': 'e.g. Kazi Rafiul Islam', 'ph.usernameReg': 'e.g. kazi.rafi (4-32 chars)',
+      'ph.username': 'e.g. kazi.ibrahim' 'e.g. your.name (4-32 chars: a-z 0-9 . _ -)', 'ph.password': 'Your password',
+      'ph.name': 'e.g. Kazi Rafiul Islam' 'e.g. Full name (as printed on the NID)', 'ph.usernameReg': 'e.g. kazi.rafi (4-32 chars)',
       'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
       'ph.occupation': 'e.g. Service, Business, Student', 'ph.nominee': "Your nominee's full name",
-      'ph.address': 'Village / Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': 'Repeat password',
+      'ph.address': 'Village / Street, Thana, District' 'Village/Street, Thana, District', 'ph.passNew': 'Min 8 characters', 'ph.passConfirm': 'Repeat password',
       'ph.amount': 'e.g. 1000', 'ph.ref': 'e.g. 9F7DA23K1',
       'ph.sender': 'The number or account you paid from', 'ph.note': 'e.g. August + September due',
       'ph.setupName': 'e.g. Kazi Atiqur Rahman', 'ph.setupEmail': 'admin@example.com',
@@ -257,8 +257,8 @@
       'pay.afterTitle': 'Payment submitted — status: pending',
       'pay.afterText': 'The admin will verify it against the statement (usually before the monthly meeting). Watch it in your history below: pending → verified (balance updates) or rejected (reason shown, you can resubmit).',
       'pay.legend': 'pending = waiting for admin verification · verified = counted in your balance · rejected = not counted, reason shown',
-      'por.memberPhone': 'Phone',
-      ﻿'reg.errUserTaken': 'same username existed, try with another.',
+      'por.memberPhone': 'Phone'
+    'reg.errUserTaken': 'same username existed, try with another.',
       'reg.errEmailHold': 'That email is already registered. If the admin deleted this member, its login account must be removed first (Firebase Console, Authentication, the user, Delete account) and after that the same email can register again.',
       'nom.title': 'Nominee information', 'nom.hint': 'This is what you entered at registration. Send an update request and the admin will review it.',
       'nom.name': 'Nominee name', 'nom.relation': 'Relation', 'nom.phone': 'Nominee mobile', 'nom.address': 'Nominee address',
@@ -275,8 +275,7 @@
       'adm.rqWhen': 'Requested', 'adm.rqApprove': 'Approve', 'adm.rqReject': 'Reject', 'adm.rqDone': 'Done',
       'adm.rqEmpty': 'No pending requests.', 'adm.rqKindNominee': 'Nominee', 'adm.rqKindAccount': 'Account',
       'adm.rqOkN': 'Nominee information updated', 'adm.rqOkA': 'Account updated', 'adm.rqNo': 'Rejected',
-      'adm.rqUserTaken': 'That username is already taken, so the change was rejected.',
-      'rs.authNote': 'Note: login accounts live in Firebase Authentication. To let a deleted email register again, remove that account too (Firebase Console, Authentication).'
+      'adm.rqUserTaken': 'That username is already taken, so the change was rejected.'
     },
 
     /* ================= BANGLA (বাংলা) ================= */
@@ -504,11 +503,11 @@
       'err.accountNotFound': 'অ্যাকাউন্ট পাওয়া যায়নি', 'err.enterEmailPw': 'ইমেইল ও পাসওয়ার্ড দিন (সর্বনিম্ন ৮ অক্ষর)।',
 
       /* placeholders */
-      'ph.username': 'যেমন: kazi.ibrahim', 'ph.password': 'আপনার পাসওয়ার্ড',
-      'ph.name': 'যেমন: কাজী রফিকুল ইসলাম', 'ph.usernameReg': 'যেমন: kazi.rafi (৪-৩২ অক্ষর)',
+      'ph.username': 'যেমন: kazi.ibrahim' 'e.g. your.name (4-32 chars: a-z 0-9 . _ -)', 'ph.password': 'আপনার পাসওয়ার্ড',
+      'ph.name': 'যেমন: কাজী রফিকুল ইসলাম' 'e.g. Full name (as printed on the NID)', 'ph.usernameReg': 'যেমন: kazi.rafi (৪-৩২ অক্ষর)',
       'ph.email': 'you@example.com', 'ph.phone': '01XXXXXXXXX',
       'ph.occupation': 'যেমন: চাকরি, ব্যবসা, শিক্ষার্থী', 'ph.nominee': 'মনোনীত ব্যক্তির পূর্ণ নাম',
-      'ph.address': 'গ্রাম / রাস্তা, থানা, জেলা', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': 'আবার পাসওয়ার্ড লিখুন',
+      'ph.address': 'গ্রাম / রাস্তা, থানা, জেলা' 'Village/Street, Thana, District', 'ph.passNew': 'সর্বনিম্ন ৮ অক্ষর', 'ph.passConfirm': 'আবার পাসওয়ার্ড লিখুন',
       'ph.amount': 'যেমন: 1000', 'ph.ref': 'যেমন: 9F7DA23K1',
       'ph.sender': 'যে নম্বর বা অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন', 'ph.note': 'যেমন: আগস্ট + সেপ্টেম্বরের বকেয়া',
       'ph.setupName': 'যেমন: কাজী আতিকুর রহমান', 'ph.setupEmail': 'admin@example.com',
@@ -585,8 +584,9 @@
     'por.nomHint': 'নমিনি পরিবর্তন কার্যকর হবে কেবল ফান্ড অ্যাডমিন অনুমোদন করলে।',
     'adm.nomTitle': 'নমিনি পরিবর্তনের অনুরোধ', 'adm.nomNone': 'কোনো অপেক্ষমাণ অনুরোধ নেই।', 'adm.nomFrom': 'নমিনি',
     'adm.nomTo': 'হবে', 'adm.nomApprove': 'অনুমোদন', 'adm.nomReject': 'প্রত্যাখ্যান', 'adm.nomDone': 'নমিনি হালনাগাদ হয়েছে।',
-    'adm.nomRejected': 'অনুরোধ প্রত্যাখ্যাত।', 'adm.tabNominee': 'নমিনি',
-      'reg.errUserTaken': 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে — অন্য একটি নাম দিন।',
+    'adm.nomRejected': 'অনুরোধ প্রত্যাখ্যাত।', 'adm.tabNominee': 'নমিনি'
+  ,
+    'reg.errUserTaken': 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে — অন্য একটি নাম দিন।',
       'reg.errEmailHold': 'এই ইমেইলটি আগেই নিবন্ধিত। যদি অ্যাডমিন এই সদস্যকে মুছে দিয়ে থাকেন, তবে তার লগইন অ্যাকাউন্টটিও আগে সরাতে হবে (Firebase Console → Authentication → ওই user → Delete account) — তারপর একই ইমেইল দিয়ে আবার রেজিস্ট্রেশন করা যাবে।',
       'nom.title': 'নমিনির তথ্য', 'nom.hint': 'রেজিস্ট্রেশনের সময় আপনি যা দিয়েছিলেন। পরিবর্তন চাইলে অনুরোধ পাঠান — অ্যাডমিন যাচাই করে অনুমোদন দেবেন।',
       'nom.name': 'নমিনির নাম', 'nom.relation': 'সম্পর্ক', 'nom.phone': 'নমিনির মোবাইল', 'nom.address': 'নমিনির ঠিকানা',
@@ -603,8 +603,7 @@
       'adm.rqWhen': 'সময়', 'adm.rqApprove': 'অনুমোদন', 'adm.rqReject': 'প্রত্যাখ্যান', 'adm.rqDone': 'সম্পন্ন',
       'adm.rqEmpty': 'অপেক্ষমাণ কোনো অনুরোধ নেই।', 'adm.rqKindNominee': 'নমিনি', 'adm.rqKindAccount': 'অ্যাকাউন্ট',
       'adm.rqOkN': 'নমিনির তথ্য হালনাগাদ হয়েছে', 'adm.rqOkA': 'অ্যাকাউন্ট হালনাগাদ হয়েছে', 'adm.rqNo': 'প্রত্যাখ্যান করা হয়েছে',
-      'adm.rqUserTaken': 'এই ইউজারনেমটি আগেই নেওয়া — পরিবর্তনটি প্রত্যাখ্যাত হলো।',
-      'rs.authNote': 'মনে রাখবেন: লগইন অ্যাকাউন্টগুলো Firebase Authentication-এ থাকে। মুছে ফেলা ইমেইল দিয়ে আবার রেজিস্ট্রেশন করতে চাইলে ওই অ্যাকাউন্টটিও সরাতে হবে (Firebase Console → Authentication)।'
+      'adm.rqUserTaken': 'এই ইউজারনেমটি আগেই নেওয়া — পরিবর্তনটি প্রত্যাখ্যাত হলো।'
   });
 
   return L;

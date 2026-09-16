@@ -407,6 +407,8 @@
       return {
         profile: {
           id: u.id, username: u.username, email: u.email, fullName: u.fullName, phone: u.phone,
+          nominee: u.nominee || '', nomineeRelation: u.nomineeRelation || '', nomineePhone: u.nomineePhone || '', nomineeAddress: u.nomineeAddress || '',
+          fatherName: u.fatherName || '', motherName: u.motherName || '', status: u.status || '', role: u.role || '', joinMonth: u.joinMonth || '',
           address: u.address, shares: u.shares, monthlyDue: u.monthlyDue, joinMonth: u.joinMonth,
           status: u.status, role: u.role
         },
@@ -414,6 +416,84 @@
         payments: payments
       };
     },
+
+  /* account change requests — demo mode (browser storage) + facade to the Firebase adapter */
+  createAccountRequest: async function (data) {
+    if (Store.mode === 'firebase') return Store._fb.createAccountRequest(data);
+    var s2 = Store._requireLogin();
+    var db = Store._d();
+    db.nomineeRequests = db.nomineeRequests || [];
+    var fields = ['fullName', 'username', 'email', 'phone', 'shares'];
+    var changes = [];
+    fields.forEach(function (f) {
+      var to = (data && data[f] !== undefined) ? String(data[f]).trim() : '';
+      var from = (data && data['from_' + f] !== undefined) ? String(data['from_' + f]).trim() : '';
+      if (to !== '' && to !== from) changes.push({ field: f, from: from, to: to });
+    });
+    if (!changes.length) { var e0 = new Error('nothing-to-request'); throw e0; }
+    for (var i = 0; i < changes.length; i++) {
+      if (changes[i].field === 'username') {
+        var un = changes[i].to.toLowerCase();
+        var me = db.users.filter(function (x) { return x.id === s2.uid; })[0] || {};
+        if (String(me.username || '').toLowerCase() === un) continue;
+        var taken = db.users.some(function (x) { return String(x.username || '').toLowerCase() === un; });
+        if (taken) { var e1 = new Error('same username existed, try with another.'); e1.code = 'username-taken'; throw e1; }
+      }
+    }
+    /* one pending account request at a time: the older one is superseded */
+    db.nomineeRequests.forEach(function (r) {
+      if (r.kind === 'account' && r.memberId === s2.uid && r.status === 'pending') { r.status = 'cancelled'; r.decidedAt = new Date().toISOString(); }
+    });
+    var me2 = db.users.filter(function (x) { return x.id === s2.uid; })[0] || {};
+    var row = {
+      id: U.uid ? U.uid('r') : 'r-' + Date.now(), kind: 'account', memberId: s2.uid,
+      memberName: data.memberName || me2.fullName || '', username: data.from_username || me2.username || '',
+      changes: changes, reason: (data.reason || ''), status: 'pending', requestedAt: new Date().toISOString()
+    };
+    db.nomineeRequests.push(row); Store._save(); return row;
+  },
+  listAccountRequests: async function (status) {
+    if (Store.mode === 'firebase') return Store._fb.listAccountRequests(status);
+    var rows = (Store._d().nomineeRequests || []).filter(function (r) { return r.kind === 'account'; });
+    return status ? rows.filter(function (r) { return r.status === status; }) : rows;
+  },
+  decideAccountRequest: async function (id, approve, byName) {
+    if (Store.mode === 'firebase') return Store._fb.decideAccountRequest(id, approve, byName);
+    var db = Store._d();
+    var row = (db.nomineeRequests || []).filter(function (r) { return r.id === id; })[0];
+    if (!row) { var e = new Error('not-found'); throw e; }
+    var u = db.users.filter(function (x) { return x.id === row.memberId; })[0];
+    if (approve && u) {
+      for (var i = 0; i < (row.changes || []).length; i++) {
+        var ch = row.changes[i];
+        if (ch.field === 'username') {
+          var un = ch.to.toLowerCase();
+          var clash = db.users.some(function (x) { return x.id !== u.id && String(x.username || '').toLowerCase() === un; });
+          if (clash) {
+            row.status = 'rejected'; row.decidedAt = new Date().toISOString(); row.note = 'username-taken';
+            Store._audit(u.username || 'member', 'account-reject', 'username already taken: ' + ch.to);
+            Store._save();
+            return 'username-taken';
+          }
+          u.username = ch.to;
+          db.usernames = db.usernames || {};
+          db.usernames[un] = { uid: u.id, email: u.email || '' };
+        } else if (ch.field === 'shares') {
+          u.shares = parseInt(ch.to, 10) || 0;
+        } else {
+          u[ch.field] = ch.to;
+        }
+      }
+      Store._audit(u.username || 'member', 'account-approve', JSON.stringify(row.changes || []).slice(0, 200));
+    } else {
+      Store._audit((u && u.username) || 'member', 'account-reject', (row.reason || ''));
+    }
+    row.status = approve ? 'approved' : 'rejected';
+    row.decidedAt = new Date().toISOString();
+    row.decidedBy = byName || '';
+    Store._save();
+    return true;
+  },
 
     createNomineeRequest: async function (data) {
       if (Store.mode === 'firebase') return Store._fb.createNomineeRequest(data);
@@ -435,6 +515,8 @@
       if (!row) throw new Error('not-found');
       if (approve) {
         (db.users || []).forEach(function (u) { if (u.id === row.memberId) { u.nominee = row.requestedNominee; u.nomineeUpdatedAt = new Date().toISOString(); } });
+            if (row.requestedPhone !== undefined && row.requestedPhone !== null) u.nomineePhone = row.requestedPhone;
+            if (row.requestedAddress !== undefined && row.requestedAddress !== null) u.nomineeAddress = row.requestedAddress;
       }
       row.status = approve ? 'approved' : 'rejected';
       row.decidedAt = new Date().toISOString(); row.decidedBy = byName || 'admin';

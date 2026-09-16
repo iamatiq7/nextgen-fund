@@ -47,12 +47,93 @@ function withTimeout(p, ms, tag) {
       if (!String(data.requestedNominee || '').trim()) throw new Error('nominee-required');
       return addDoc('nomineeRequests', {
         memberId: uid, memberName: (data.memberName || '').trim(), username: (data.username || '').trim(),
+        kind: 'nominee',
         currentNominee: (data.currentNominee || '').trim(), requestedNominee: (data.requestedNominee || '').trim(),
-        relation: (data.relation || '').trim(), reason: (data.reason || '').trim(),
+        relation: (data.relation || '').trim(),
+        requestedPhone: (data.requestedPhone || '').trim(), requestedAddress: (data.requestedAddress || '').trim(),
+        reason: (data.reason || '').trim(),
         status: 'pending', requestedAt: new Date().toISOString()
       });
     }
-    async function listNomineeRequests(status) {
+      /* ---- account change requests (name, username, e-mail, mobile, shares, status) ----
+     The member sends one request holding only the fields that actually changed; nothing is
+     applied until the admin approves, and the previous values stay in force until then. */
+  var ACC_FIELDS = ['fullName', 'username', 'email', 'phone', 'shares'];
+
+  async function createAccountRequest(data) {
+    var uid = await myUid();
+    if (!uid) throw new Error('not-signed-in');
+    var changes = [];
+    ACC_FIELDS.forEach(function (f) {
+      var to = (data && data[f] !== undefined) ? String(data[f]).trim() : '';
+      var from = (data && data['from_' + f] !== undefined) ? String(data['from_' + f]).trim() : '';
+      if (to !== '' && to !== from) changes.push({ field: f, from: from, to: to });
+    });
+    if (!changes.length) throw new Error('nothing-to-request');
+    var newName = '';
+    for (var i = 0; i < changes.length; i++) if (changes[i].field === 'username') newName = changes[i].to.toLowerCase();
+    if (newName) {
+      var hit = await fsMod.getDoc(docIn('usernames', newName));
+      if (hit && hit.exists() && String((hit.data() || {}).uid) !== String(uid)) {
+        throw err('username-taken', 'same username existed, try with another.');
+      }
+    }
+    return addDoc('nomineeRequests', {
+      kind: 'account', memberId: uid, memberName: (data.memberName || '').trim(),
+      username: (data.from_username || '').trim(),
+      changes: changes, reason: (data.reason || '').trim(),
+      status: 'pending', requestedAt: new Date().toISOString()
+    });
+  }
+
+  async function listAccountRequests(status) {
+    var all = (await getAll('nomineeRequests')) || [];
+    var rows = all.filter(function (r) { return r.kind === 'account'; })
+      .sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
+    return status ? rows.filter(function (r) { return r.status === status; }) : rows;
+  }
+
+  async function decideAccountRequest(id, approve, byName) {
+    var row = ((await getAll('nomineeRequests')) || []).filter(function (r) { return r.id === id; })[0];
+    if (!row) throw new Error('not-found');
+    if (approve) {
+      var snapU = await fsMod.getDoc(docIn('users', row.memberId));
+      var cur = snapU.exists() ? (snapU.data() || {}) : {};
+      var patch = {};
+      var list = row.changes || [];
+      for (var i = 0; i < list.length; i++) {
+        var ch = list[i];
+        if (ch.field === 'shares') patch.shares = parseInt(ch.to, 10) || 0;
+        else patch[ch.field] = ch.to;
+      }
+      if (patch.username) {
+        var oldName = String(cur.username || '').toLowerCase();
+        var newName = String(patch.username).toLowerCase();
+        try {
+          var clash = await fsMod.getDoc(docIn('usernames', newName));
+          if (clash && clash.exists() && String((clash.data() || {}).uid) !== String(row.memberId)) {
+            throw err('username-taken', 'same username existed, try with another.');
+          }
+          if (oldName && oldName !== newName) await fsMod.deleteDoc(docIn('usernames', oldName));
+          await fsMod.setDoc(docIn('usernames', newName), { uid: row.memberId, email: patch.email || cur.email || '' });
+        } catch (eMap) {
+          if (eMap && eMap.code === 'username-taken') {
+            await fsMod.updateDoc(docIn('nomineeRequests', id), { status: 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || '', note: 'username-taken' });
+            await writeAudit({ action: 'account.reject', memberId: row.memberId, detail: 'username already taken: ' + newName });
+            return 'username-taken';
+          }
+        }
+      }
+      await fsMod.updateDoc(docIn('users', row.memberId), patch);
+      await writeAudit({ action: 'account.approve', memberId: row.memberId, detail: JSON.stringify(patch).slice(0, 300) });
+    } else {
+      await writeAudit({ action: 'account.reject', memberId: row.memberId, detail: (row.reason || '') + ' | ' + JSON.stringify(row.changes || []).slice(0, 200) });
+    }
+    await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || '' });
+    return true;
+  }
+
+async function listNomineeRequests(status) {
       var all = (await getAll('nomineeRequests')) || [];
       var rows = all.slice().sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
       return status ? rows.filter(function (r) { return r.status === status; }) : rows;
@@ -380,10 +461,17 @@ function withTimeout(p, ms, tag) {
       /* ---------- registration (creates Auth account immediately) ---------- */
       register: async function (data, uname) {
         var cred;
+        /* the username must be free: usernames/NAME is the registry every login path reads */
+        try {
+          var taken = await fsMod.getDoc(docIn('usernames', uname));
+          if (taken && taken.exists()) throw err('username-taken', 'same username existed, try with another.');
+        } catch (eChk) {
+          if (eChk && eChk.code === 'username-taken') throw eChk;
+        }
         try {
           cred = await authMod.createUserWithEmailAndPassword(auth, data.email, data.password);
         } catch (e) {
-          if (e.code === 'auth/email-already-in-use') throw err('invalid', 'That email is already registered.');
+          if (e.code === 'auth/email-already-in-use') throw err('email-held', 'That email is already registered.');
           if (e.code === 'auth/weak-password') throw err('invalid', 'Password must be at least 8 characters.');
           throw err('invalid', e.message);
         }
@@ -431,7 +519,7 @@ function withTimeout(p, ms, tag) {
           joinMonth: reg.joinMonth || '',
           nomineeRelation: reg.nomineeRelation || '', fatherName: reg.fatherName || '', motherName: reg.motherName || '',
           shares: reg.shares, monthlyDue: reg.shares * ((await fb.getSettings()).monthlyPerShare || 1000),
-          joinMonth: '', createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString()
         });
         } catch (e2) {
           if (String(e2 && e2.code) === 'permission-denied') throw err('closed', 'Registration is not open yet - the fund admin has not finished setting up the fund. Please try again later.');
@@ -569,6 +657,9 @@ function withTimeout(p, ms, tag) {
       },
 
       getMyPayments: async function () { return myPaymentsFor(await myUid()); },
+      createAccountRequest: createAccountRequest,
+      listAccountRequests: listAccountRequests,
+      decideAccountRequest: decideAccountRequest,
       createNomineeRequest: createNomineeRequest,
       listNomineeRequests: listNomineeRequests,
       decideNomineeRequest: decideNomineeRequest,

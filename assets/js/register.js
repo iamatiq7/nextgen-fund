@@ -210,7 +210,9 @@
           '<li><strong>' + U.esc(L.t('reg.doneNext')) + '</strong> ' + U.esc(L.t('reg.doneNextText')) + '</li>' +
           '</ul></div><p><a class="btn ghost" href="index.html">' + U.esc(L.t('reg.back')) + '</a></p>';
       } catch (e) {
-        errBox.textContent = e.message || 'Error';
+        var codeMap = { 'username-taken': 'reg.errUserTaken', 'email-held': 'reg.errEmailHold' };
+    var key = e && codeMap[e.code];
+    errBox.textContent = key ? L.t(key) : (e.message || 'Error');
         btn.disabled = false; btn.textContent = L.t('reg.submit');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }

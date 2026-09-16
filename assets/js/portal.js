@@ -293,4 +293,151 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 300); });
   else setTimeout(init, 300);
+  /* ================= member requests: nominee + account (added 2026-09-16) =================
+     The member never edits their record directly: every change becomes a request that the
+     admin approves. Until a decision arrives the stored values (and therefore the screens)
+     stay exactly as they were. Two cards are injected into the portal: one for the nominee
+     block captured at registration, one for the six account fields. */
+  function reqRow(label, value) {
+    return '<li><strong>' + U.esc(label) + '</strong> ' + U.esc(value || '-') + '</li>';
+  }
+
+  async function renderRequests() {
+    var host = document.getElementById('portal-content');
+    if (!host) return;
+    var mine = await S.getMyAccount();
+    var profile = (mine && mine.profile) || null;
+    if (!profile || document.getElementById('sec-nominee')) return;
+    var esc = U.esc;
+    var myName = profile.fullName || '';
+    var myUser = profile.username || '';
+
+    /* pending requests so the member sees what is waiting */
+    var pendNominee = [], pendAccount = [];
+    try {
+      var all = (await S.listNomineeRequests()) || [];
+      for (var i = 0; i < all.length; i++) {
+        var r = all[i];
+        if (r.status !== 'pending' || String(r.memberId) !== String(profile.uid || profile.id || '')) continue;
+        if (r.kind === 'account') pendAccount.push(r); else pendNominee.push(r);
+      }
+    } catch (e) { /* a read problem must not empty the page */ }
+
+    var nomineeCard = '<section class="card" id="sec-nominee" style="margin-top:16px">' +
+      '<h2>' + esc(L.t('por.secNominee')) + ' - ' + esc(L.t('nom.title')) + '</h2>' +
+      '<p class="footnote">' + esc(L.t('nom.hint')) + '</p>' +
+      '<ul class="clean">' +
+      reqRow(L.t('nom.name'), profile.nominee) + reqRow(L.t('nom.relation'), profile.nomineeRelation) +
+      reqRow(L.t('nom.phone'), profile.nomineePhone) + reqRow(L.t('nom.address'), profile.nomineeAddress) +
+      '</ul>' +
+      (pendNominee.length ? '<div class="notice">' + esc(L.t('nom.pending')) + '</div>' : '') +
+      '<h3>' + esc(L.t('nom.reqTitle')) + '</h3>' +
+      '<form id="nom-form" novalidate>' +
+      '<div class="grid two">' +
+      '<label class="f"><span>' + esc(L.t('nom.name')) + '</span><input type="text" id="nm-name" value="' + esc(profile.nominee || '') + '"></label>' +
+      '<label class="f"><span>' + esc(L.t('nom.relation')) + '</span><input type="text" id="nm-rel" value="' + esc(profile.nomineeRelation || '') + '"></label>' +
+      '<label class="f"><span>' + esc(L.t('nom.phone')) + '</span><input type="tel" id="nm-phone" maxlength="11" inputmode="numeric" value="' + esc(profile.nomineePhone || '') + '" placeholder="01xxxxxx (11 digits, optional)"></label>' +
+      '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('nom.address')) + '</span><input type="text" id="nm-addr" value="' + esc(profile.nomineeAddress || '') + '"></label>' +
+      '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('nom.reason')) + '</span><input type="text" id="nm-reason"></label>' +
+      '</div><div id="nm-err" class="err" role="alert"></div><div id="nm-done" class="notice ok hide"></div>' +
+      '<button class="btn" type="submit" id="nm-send">' + esc(L.t('nom.send')) + '</button></form></section>';
+
+    var accFields = [
+      ['fullName', L.t('acc.name'), 'text', myName],
+      ['username', L.t('acc.username'), 'text', myUser],
+      ['email', L.t('acc.email'), 'email', profile.email || ''],
+      ['phone', L.t('acc.phone'), 'tel', profile.phone || ''],
+      ['shares', L.t('acc.shares'), 'number', (profile.shares === undefined ? '' : String(profile.shares))]
+    ];
+    var rows = '<ul class="clean">' +
+      reqRow(L.t('acc.name'), myName) + reqRow(L.t('acc.username'), myUser) + reqRow(L.t('acc.email'), profile.email) +
+      reqRow(L.t('acc.phone'), profile.phone) + reqRow(L.t('acc.shares'), (profile.shares === undefined ? '' : String(profile.shares))) +
+      reqRow(L.t('acc.status'), profile.status) + '</ul>';
+    var formFields = '';
+    for (var k = 0; k < accFields.length; k++) {
+      var f = accFields[k];
+      formFields += '<label class="f"><span>' + esc(f[1]) + '</span><input type="' + f[2] + '" id="ac-' + f[0] + '" value="' + esc(f[3] || '') + '"' +
+        (f[0] === 'phone' ? ' maxlength="11" inputmode="numeric"' : '') + '></label>';
+    }
+    var accountCard = '<section class="card" id="sec-account-req" style="margin-top:16px">' +
+      '<h2>' + esc(L.t('acc.title')) + '</h2>' +
+      '<p class="footnote">' + esc(L.t('acc.hint')) + '</p>' + rows +
+      (pendAccount.length ? '<div class="notice">' + esc(L.t('acc.pendingRow', { list: (pendAccount[0].changes || []).map(function (c) { return L.t('acc.' + c.field) || c.field; }).join(', ') })) + '</div>' : '') +
+      '<h3>' + esc(L.t('acc.title')) + '</h3>' +
+      '<form id="acc-form" novalidate><div class="grid two">' + formFields +
+      '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('acc.reason')) + '</span><input type="text" id="ac-reason"></label>' +
+      '</div><div id="ac-err" class="err" role="alert"></div><div id="ac-done" class="notice ok hide"></div>' +
+      '<button class="btn" type="submit" id="ac-send">' + esc(L.t('acc.send')) + '</button></form></section>';
+
+    host.insertAdjacentHTML('beforeend', nomineeCard + accountCard);
+
+    /* ---- nominee request ---- */
+    var nf = document.getElementById('nom-form');
+    if (nf) nf.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var e1 = document.getElementById('nm-err'), d1 = document.getElementById('nm-done');
+      e1.textContent = ''; d1.classList.add('hide');
+      var want = {
+        requestedNominee: document.getElementById('nm-name').value.trim(),
+        relation: document.getElementById('nm-rel').value.trim(),
+        requestedPhone: document.getElementById('nm-phone').value.trim(),
+        requestedAddress: document.getElementById('nm-addr').value.trim()
+      };
+      if (!want.requestedNominee) { e1.textContent = L.t('nom.reqEmpty'); return; }
+      if (want.requestedPhone && U.validPhone && !U.validPhone(want.requestedPhone)) { e1.textContent = L.t('nom.reqEmpty'); return; }
+      var same = want.requestedNominee === (profile.nominee || '') && want.relation === (profile.nomineeRelation || '') &&
+        want.requestedPhone === (profile.nomineePhone || '') && want.requestedAddress === (profile.nomineeAddress || '');
+      if (same) { e1.textContent = L.t('nom.reqEmpty'); return; }
+      var b1 = document.getElementById('nm-send'); b1.disabled = true;
+      try {
+        await S.createNomineeRequest({
+          memberName: myName, username: myUser, currentNominee: profile.nominee || '',
+          requestedNominee: want.requestedNominee, relation: want.relation,
+          requestedPhone: want.requestedPhone, requestedAddress: want.requestedAddress,
+          reason: document.getElementById('nm-reason').value.trim()
+        });
+        d1.textContent = L.t('nom.reqSent'); d1.classList.remove('hide');
+      } catch (e) { e1.textContent = (e && e.message) || L.t('nom.reqEmpty'); }
+      finally { b1.disabled = false; }
+    });
+
+    /* ---- account request ---- */
+    var af = document.getElementById('acc-form');
+    if (af) af.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var e2 = document.getElementById('ac-err'), d2 = document.getElementById('ac-done');
+      e2.textContent = ''; d2.classList.add('hide');
+      var payload = { memberName: myName, from_username: myUser, reason: document.getElementById('ac-reason').value.trim() };
+      for (var i = 0; i < accFields.length; i++) {
+        var key = accFields[i][0];
+        var el = document.getElementById('ac-' + key);
+        payload[key] = el ? el.value.trim() : '';
+        payload['from_' + key] = (profile[key] === undefined ? '' : String(profile[key]));
+      }
+      var changed = accFields.some(function (f) { var el = document.getElementById('ac-' + f[0]); return el && el.value.trim() !== String(profile[f[0]] === undefined ? '' : profile[f[0]]); });
+      if (!changed) { e2.textContent = L.t('acc.reqEmpty'); return; }
+      if (payload.phone && U.validPhone && !U.validPhone(payload.phone)) { e2.textContent = L.t('reg.errPhone'); return; }
+      var b2 = document.getElementById('ac-send'); b2.disabled = true;
+      try {
+        await S.createAccountRequest(payload);
+        d2.textContent = L.t('acc.reqSent'); d2.classList.remove('hide');
+      } catch (e) {
+        var map = { 'username-taken': 'reg.errUserTaken' };
+        e2.textContent = (e && map[e.code]) ? L.t(map[e.code]) : ((e && e.message) || L.t('acc.reqEmpty'));
+      } finally { b2.disabled = false; }
+    });
+  }
+
+  /* the portal fills its cards asynchronously: wait for the content block, then add ours */
+  (function () {
+    var tries = 0;
+    var timer = setInterval(async function () {
+      tries++;
+      var host = document.getElementById('portal-content');
+      var ready = host && !host.classList.contains('hide') && !document.getElementById('sec-nominee');
+      if (ready) { try { await renderRequests(); } catch (e) { } }
+      if (ready || tries > 40) clearInterval(timer);
+    }, 250);
+  })();
+
 })();

@@ -30,10 +30,10 @@
           <h2 data-i18n="reg.secMember"></h2>
       <div class="grid form2">
         <label class="f"><span data-i18n="reg.name"></span>
-          <input type="text" id="rg-name" autocomplete="name" placeholder="e.g. Kazi Rafiul Islam" data-i18n-ph="ph.name" required>
+          <input type="text" id="rg-name" autocomplete="name" placeholder="e.g. Full name (as printed on the NID)" data-i18n-ph="ph.name" required>
         </label>
         <label class="f"><span data-i18n="reg.username"></span>
-          <input type="text" id="rg-username" autocomplete="off" placeholder="e.g. kazi.rafi (4-32 chars)" data-i18n-ph="ph.usernameReg" required>
+          <input type="text" id="rg-username" autocomplete="off" placeholder="e.g. your.name (4-32 chars: a-z 0-9 . _ -)" data-i18n-ph="ph.usernameReg" required>
           <span class="hint" data-i18n="reg.userHint"></span>
         </label>
         <label class="f"><span data-i18n="reg.email"></span>
@@ -51,7 +51,7 @@
           <input type="text" id="rg-mother" placeholder="Mother's full name" data-i18n-ph="ph.motherName">
         </label>
         <label class="f" style="grid-column:1/-1"><span data-i18n="reg.address"></span>
-          <input type="text" id="rg-address" placeholder="Village / Street, Thana, District" data-i18n-ph="ph.address">
+          <input type="text" id="rg-address" placeholder="Village/Street, Thana, District" data-i18n-ph="ph.address">
         </label>
         <label class="f"><span data-i18n="reg.occupation"></span>
           <input type="text" id="rg-occupation" placeholder="e.g. Service, Business, Student" data-i18n-ph="ph.occupation">
@@ -74,7 +74,7 @@
           <input type="password" id="rg-pass" autocomplete="new-password" placeholder="Min 8 characters" data-i18n-ph="ph.passNew" required>
         </label>
         <label class="f"><span data-i18n="reg.pass2"></span>
-          <input type="password" id="rg-pass2" autocomplete="new-password" placeholder="Repeat password" data-i18n-ph="ph.passConf" required>
+          <input type="password" id="rg-pass2" autocomplete="new-password" placeholder="(same as Password)" data-i18n-ph="ph.passConf" required>
         </label>
       </div>
       <h2 style="margin-top:18px" data-i18n="reg.secNominee"></h2>
@@ -86,7 +86,7 @@
           <input type="text" id="rg-nominee-relation" placeholder="e.g. Brother, Spouse, Father" data-i18n-ph="ph.nomineeRelation">
         </label>
         <label class="f"><span data-i18n="reg.nomineePhone"></span>
-          <input type="tel" id="rg-nominee-phone" placeholder="01XXXXXXXXX (optional)" data-i18n-ph="ph.nomineePhone" maxlength="11" inputmode="numeric">
+          <input type="tel" id="rg-nominee-phone" placeholder="01xxxxxx (11 digits, optional)" data-i18n-ph="ph.nomineePhone" maxlength="11" inputmode="numeric">
         </label>
         <label class="f" style="grid-column:1/-1"><span data-i18n="reg.nomineeAddress"></span>
           <input type="text" id="rg-nominee-address" placeholder="Nominee's village / street, thana, district" data-i18n-ph="ph.nomineeAddress">
