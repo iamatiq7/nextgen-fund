@@ -99,7 +99,7 @@ function withTimeout(p, ms, tag) {
       }
     } catch (eU) { /* a read problem must not hide the other source */ }
     try {
-      var coll = await allRequests();
+      var coll = (await getAll('nomineeRequests')) || [];
       for (var j = 0; j < coll.length; j++) {
         var r = coll[j] || {};
         if (r.status === 'pending' && r.savedIn !== 'user') rows.push(r);
