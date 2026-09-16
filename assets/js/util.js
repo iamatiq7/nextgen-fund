@@ -229,5 +229,14 @@
   };
   U.validPhone = function (value) { return /^01[0-9]{9}$/.test(U.normPhone(value)); };
 
+  /* The one canonical form of a mobile number: 11 digits starting 01. Accepts Bangla digits,
+     spaces/dashes and a +880 / 880 country code, so the reset lookup can never miss. */
+  U.phoneKey = function (value) {
+    var d = U.normPhone ? U.normPhone(value) : String(value == null ? '' : value).replace(/[^0-9]/g, '');
+    if (d.length === 13 && d.indexOf('880') === 0) d = '0' + d.slice(3);
+    if (d.length === 12 && d.indexOf('88') === 0) d = d.slice(2);
+    return d;
+  };
+
   return U;
 });

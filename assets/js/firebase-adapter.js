@@ -585,7 +585,7 @@ function withTimeout(p, ms, tag) {
         if (id.indexOf('@') > 0) {
           email = id.toLowerCase();
         } else {
-          var digits = U.normPhone ? U.normPhone(id) : id.replace(/[^0-9]/g, '');
+          var digits = U.phoneKey ? U.phoneKey(id) : id.replace(/[^0-9]/g, '');
           if (digits && /^01[0-9]{9}$/.test(digits)) {
             try {
               var ph = await fsMod.getDoc(docIn('phones', digits));
