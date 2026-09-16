@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-16T11:24:07.683Z",
+  "at": "2026-09-16T11:36:13.665Z",
   "project": "nextgen-fund-2040",
   "serviceAccount": "firebase-adminsdk-fbsvc@nextgen-fund-2040.iam.gserviceaccount.com",
   "tokenLength": 1024,
@@ -14,7 +14,7 @@
     "   matches the uploaded ruleset: NO"
   ],
   "rulesFileBytes": 7245,
-  "uploadedRuleset": "projects/nextgen-fund-2040/rulesets/d67bdcc0-0ef5-489a-b98f-193e14e6124d",
+  "uploadedRuleset": "projects/nextgen-fund-2040/rulesets/b219f1b4-4ae7-42d4-9bad-7609774c3e2d",
   "releaseWriteStatus": 403,
   "releaseBody": {
     "code": 403,
@@ -27,8 +27,8 @@
         "domain": "iam.googleapis.com",
         "metadata": {
           "resource": "projects/nextgen-fund-2040",
-          "error_info_id": "CiQwMWEwYTlmNS1iODRkLTc0NjItODliOS0wNzRkN2ZiNWI5NDQSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
-          "troubleshooter_url": "https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMWEwYTlmNS1iODRkLTc0NjItODliOS0wNzRkN2ZiNWI5NDQSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
+          "error_info_id": "CiQwMWEwYWEwMC1jZDk1LTdiNmYtYTQ5Ny04NTZiNjMwNDk5ZDcSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
+          "troubleshooter_url": "https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMWEwYWEwMC1jZDk1LTdiNmYtYTQ5Ny04NTZiNjMwNDk5ZDcSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
           "permission": "firebaserules.releases.create"
         }
       }
