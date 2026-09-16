@@ -373,6 +373,8 @@
       emBlock = '<div class="notice" id="em-box">' +
         '<strong>' + esc(L.t('em.title')) + '</strong> ' + esc(profile.emailChangePending) + ' - ' + esc(L.t('em.pending')) +
         '<p class="footnote" style="margin:6px 0 8px">' + esc(L.t('em.hint')) + '</p>' +
+        '<label class="f" style="max-width:340px"><span>' + esc(L.t('em.mail')) + '</span>' +
+        '<input type="email" id="em-mail" value="' + esc(profile.emailChangePending || '') + '"></label>' +
         '<label class="f" style="max-width:320px"><span>' + esc(L.t('em.ph')) + '</span>' +
         '<input type="password" id="em-pass" autocomplete="current-password"></label>' +
         '<div id="em-err" class="err" role="alert"></div>' +
@@ -411,14 +413,16 @@
       var e1 = document.getElementById('em-err'), d1 = document.getElementById('em-done');
       e1.textContent = ''; d1.classList.add('hide');
       var pw = (document.getElementById('em-pass') || {}).value || '';
+      var mail = ((document.getElementById('em-mail') || {}).value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(mail)) { e1.textContent = L.t('em.bad'); return; }
       if (!pw) { e1.textContent = L.t('em.wrong'); return; }
       emGo.disabled = true;
       try {
-        await S.applyEmailChange(pw);
+        await S.applyEmailChange(pw, mail);
         d1.textContent = L.t('em.ok'); d1.classList.remove('hide');
         e1.textContent = '';
       } catch (e) {
-        var map = { 'wrong-password': 'em.wrong', 'email-held': 'em.held' };
+        var map = { 'wrong-password': 'em.wrong', 'email-held': 'em.held', 'email-bad': 'em.bad', 'nothing-pending': 'em.pending' };
         e1.textContent = (e && map[e.code]) ? L.t(map[e.code]) : ((e && e.message) || L.t('em.wrong'));
       } finally { emGo.disabled = false; }
     });

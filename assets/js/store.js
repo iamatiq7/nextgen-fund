@@ -358,15 +358,17 @@
       return { fullName: clean };
     },
 
-    applyEmailChange: async function (password) {
-    if (Store.mode === 'firebase') return Store._fb.applyEmailChange(password);
+    applyEmailChange: async function (password, correctedEmail) {
+    if (Store.mode === 'firebase') return Store._fb.applyEmailChange(password, correctedEmail);
     var s2 = Store._requireLogin();
     var db = Store._d();
     var u = db.users.filter(function (x) { return x.id === s2.uid; })[0];
-    if (!u || !u.emailChangePending) { var e0 = new Error('nothing-pending'); e0.code = 'nothing-pending'; throw e0; }
+    var target = String(correctedEmail || (u && u.emailChangePending) || '').trim();
+    if (!target) { var e0 = new Error('nothing-pending'); e0.code = 'nothing-pending'; throw e0; }
+    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(target)) { var e3 = new Error('email-bad'); e3.code = 'email-bad'; throw e3; }
     if (u.passHash !== U.sha256(password)) { var e1 = new Error('wrong-password'); e1.code = 'wrong-password'; throw e1; }
     var old = u.email;
-    u.email = u.emailChangePending;
+    u.email = target;
     u.emailChangePending = null;
     u.emailChangedAt = new Date().toISOString();
     db.usernames = db.usernames || {};

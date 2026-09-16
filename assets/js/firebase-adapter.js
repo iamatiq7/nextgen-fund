@@ -111,13 +111,17 @@ function withTimeout(p, ms, tag) {
   /* The login identifier lives in Firebase Authentication and can only be changed by the
      signed-in member (never by the admin from their own session), so the approved address is
      applied here: re-authenticate with the current password, then set the new e-mail. */
-  async function applyEmailChange(password) {
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(String(v || '').trim()); }
+
+  async function applyEmailChange(password, correctedEmail) {
     var uid = await myUid();
     if (!uid) throw new Error('not-signed-in');
     var snap = await fsMod.getDoc(docIn('users', uid));
     var u = snap.exists() ? (snap.data() || {}) : {};
-    var target = String(u.emailChangePending || '').trim();
+    /* the member may correct an incomplete address right here (a typo such as gmail.c) */
+    var target = String(correctedEmail || u.emailChangePending || '').trim();
     if (!target) throw err('nothing-pending', 'nothing-pending');
+    if (!validEmail(target)) throw err('email-bad', 'email-bad');
     var user = auth.currentUser;
     if (!user) throw err('not-signed-in', 'not-signed-in');
     try {
@@ -129,8 +133,10 @@ function withTimeout(p, ms, tag) {
     try {
       await authMod.updateEmail(user, target);
     } catch (eMail) {
-      if (eMail && /email-already-in-use/.test(String(eMail.code))) throw err('email-held', 'email-held');
-      throw err('update-failed', (eMail && eMail.code) || 'update-failed');
+      var code = String((eMail && eMail.code) || '');
+      if (/email-already-in-use/.test(code)) throw err('email-held', 'email-held');
+      if (/invalid-email/.test(code)) throw err('email-bad', 'email-bad');
+      throw err('update-failed', code || 'update-failed');
     }
     await fsMod.updateDoc(docIn('users', uid), { email: target, emailChangePending: null, emailChangedAt: new Date().toISOString() });
     try {
@@ -148,7 +154,10 @@ function withTimeout(p, ms, tag) {
     ACC_FIELDS.forEach(function (f) {
       var to = (data && data[f] !== undefined) ? String(data[f]).trim() : '';
       var from = (data && data['from_' + f] !== undefined) ? String(data['from_' + f]).trim() : '';
-      if (to !== '' && to !== from) changes.push({ field: f, from: from, to: to });
+      if (to !== '' && to !== from) {
+        if (f === 'email' && !/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(to)) throw err('email-bad', 'email-bad');
+        changes.push({ field: f, from: from, to: to });
+      }
     });
     if (!changes.length) throw new Error('nothing-to-request');
     var newName = '';
@@ -186,7 +195,10 @@ function withTimeout(p, ms, tag) {
       for (var i = 0; i < list.length; i++) {
         var ch = list[i];
         if (ch.field === 'shares') patch.shares = parseInt(ch.to, 10) || 0;
-        else if (ch.field === 'email') { patch.emailChangePending = ch.to; }   /* the login e-mail can only be changed from the member's own session */
+        else if (ch.field === 'email') {
+          if (!validEmail(ch.to)) throw err('email-bad', 'email-bad');   /* never store an address that cannot be a login id */
+          patch.emailChangePending = ch.to;                              /* the login e-mail is applied from the member's own session */
+        }
         else patch[ch.field] = ch.to;
       }
       if (patch.username) {
