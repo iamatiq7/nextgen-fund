@@ -311,43 +311,18 @@
     var myUser = profile.username || '';
 
     /* what is already waiting for the admin */
-    var pendNominee = 0, pendAccount = null;
+    var pendAccount = null;
     try {
       var all = (await S.listNomineeRequests()) || [];
       for (var i = 0; i < all.length; i++) {
         var r = all[i];
         if (r.status !== 'pending' || String(r.memberId) !== String(profile.id || profile.uid || '')) continue;
-        if (r.kind === 'account') { if (!pendAccount) pendAccount = r; } else { pendNominee++; }
+        if (r.kind === 'account' && !pendAccount) pendAccount = r;
       }
-    } catch (e) { /* a read problem must not empty the page */ }
+    } catch (e) { /* no access to the list (or an empty fund): show nothing, never an error */ }
 
-    /* ---------- 1. nominee: stored values shown once, then an empty request form ---------- */
-    function line(label, value) {
-      return '<li><span class="k">' + esc(label) + '</span> ' + (value ? esc(value) : '<span class="hint">-</span>') + '</li>';
-    }
-    var nomineeCard =
-      '<section class="card" id="sec-nominee" style="margin-top:16px">' +
-        '<h2>' + esc(L.t('nom.title')) + '</h2>' +
-        '<p class="footnote">' + esc(L.t('nom.hint')) + '</p>' +
-        '<ul class="clean">' +
-          line(L.t('nom.name'), profile.nominee) + line(L.t('nom.relation'), profile.nomineeRelation) +
-          line(L.t('nom.phone'), profile.nomineePhone) + line(L.t('nom.address'), profile.nomineeAddress) +
-        '</ul>' +
-        (pendNominee ? '<div class="notice">' + esc(L.t('nom.pending')) + '</div>' : '') +
-        '<h3>' + esc(L.t('nom.reqTitle')) + '</h3>' +
-        '<form id="nom-form" novalidate>' +
-          '<div class="grid two">' +
-            '<label class="f"><span>' + esc(L.t('nom.name')) + '</span><input type="text" id="nm-name"></label>' +
-            '<label class="f"><span>' + esc(L.t('nom.relation')) + '</span><input type="text" id="nm-rel"></label>' +
-            '<label class="f"><span>' + esc(L.t('nom.phone')) + '</span><input type="tel" id="nm-phone" maxlength="11" inputmode="numeric" placeholder="01xxxxxx (11 digits, optional)"></label>' +
-            '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('nom.address')) + '</span><input type="text" id="nm-addr" placeholder="Village/Street, Thana, District"></label>' +
-            '<label class="f" style="grid-column:1/-1"><span>' + esc(L.t('nom.reason')) + '</span><input type="text" id="nm-reason"></label>' +
-          '</div>' +
-          '<div id="nm-err" class="err" role="alert"></div><div id="nm-done" class="notice ok hide"></div>' +
-          '<button class="btn" type="submit" id="nm-send">' + esc(L.t('nom.send')) + '</button>' +
-        '</form>' +
-      '</section>';
-    host.insertAdjacentHTML('beforeend', nomineeCard);
+    /* the nominee card was removed on the owner's request: the outline in the
+       screenshot marked that block. The stored nominee data stays in the record. */
 
     /* ---------- 2. account: the form is appended to the card that already lists the values ---------- */
     var cards = host.querySelectorAll('section.card');
@@ -377,37 +352,7 @@
     if (accCard) accCard.insertAdjacentHTML('beforeend', accForm);
     else host.insertAdjacentHTML('beforeend', '<section class="card" style="margin-top:16px"><h2>' + esc(L.t('acc.title')) + '</h2>' + accForm + '</section>');
 
-    /* ---------- wiring: nominee ---------- */
-    var nf = document.getElementById('nom-form');
-    if (nf) nf.addEventListener('submit', async function (ev) {
-      ev.preventDefault();
-      var e1 = document.getElementById('nm-err'), d1 = document.getElementById('nm-done');
-      e1.textContent = ''; d1.classList.add('hide');
-      var want = {
-        requestedNominee: document.getElementById('nm-name').value.trim(),
-        relation: document.getElementById('nm-rel').value.trim(),
-        requestedPhone: document.getElementById('nm-phone').value.trim(),
-        requestedAddress: document.getElementById('nm-addr').value.trim()
-      };
-      if (!want.requestedNominee && !want.relation && !want.requestedPhone && !want.requestedAddress) { e1.textContent = L.t('nom.reqEmpty'); return; }
-      if (want.requestedPhone && U.validPhone && !U.validPhone(want.requestedPhone)) { e1.textContent = L.t('reg.errNomineePhone') || L.t('nom.reqEmpty'); return; }
-      var b1 = document.getElementById('nm-send'); b1.disabled = true;
-      try {
-        await S.createNomineeRequest({
-          memberName: myName, username: myUser, currentNominee: profile.nominee || '',
-          requestedNominee: want.requestedNominee || profile.nominee || '',
-          relation: want.relation || profile.nomineeRelation || '',
-          requestedPhone: want.requestedPhone || profile.nomineePhone || '',
-          requestedAddress: want.requestedAddress || profile.nomineeAddress || '',
-          reason: document.getElementById('nm-reason').value.trim()
-        });
-        d1.textContent = L.t('nom.reqSent'); d1.classList.remove('hide');
-        nf.reset();
-      } catch (e) { e1.textContent = (e && e.message) || L.t('nom.reqEmpty'); }
-      finally { b1.disabled = false; }
-    });
-
-    /* ---------- wiring: account ---------- */
+    /* ---------- wiring: the account change request ---------- */
     var af = document.getElementById('acc-form');
     if (af) af.addEventListener('submit', async function (ev) {
       ev.preventDefault();
@@ -433,7 +378,9 @@
         af.reset();
       } catch (e) {
         var map = { 'username-taken': 'reg.errUserTaken' };
-        e2.textContent = (e && map[e.code]) ? L.t(map[e.code]) : ((e && e.message) || L.t('acc.reqEmpty'));
+        if (e && map[e.code]) e2.textContent = L.t(map[e.code]);
+        else if (e && /permission/i.test(String(e.code) + ' ' + String(e.message))) e2.textContent = L.t('acc.noAccess');
+        else e2.textContent = (e && e.message) || L.t('acc.reqEmpty');
       } finally { b2.disabled = false; }
     });
   }
