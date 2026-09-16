@@ -335,7 +335,7 @@
     var myUser = profile.username || '';
 
     /* what is already waiting for the admin */
-    var pendAccount = null;
+    var pendAccount = profile.pendingAccountRequest || null;   /* stored on the member's own record */
     try {
       var all = (await S.listNomineeRequests()) || [];
       for (var i = 0; i < all.length; i++) {

@@ -45,7 +45,7 @@ function withTimeout(p, ms, tag) {
       var uid = await myUid();
       if (!uid) throw new Error('not-signed-in');
       if (!String(data.requestedNominee || '').trim()) throw new Error('nominee-required');
-      return addDoc('nomineeRequests', {
+      var rowN = {
         memberId: uid, memberName: (data.memberName || '').trim(), username: (data.username || '').trim(),
         kind: 'nominee',
         currentNominee: (data.currentNominee || '').trim(), requestedNominee: (data.requestedNominee || '').trim(),
@@ -53,12 +53,60 @@ function withTimeout(p, ms, tag) {
         requestedPhone: (data.requestedPhone || '').trim(), requestedAddress: (data.requestedAddress || '').trim(),
         reason: (data.reason || '').trim(),
         status: 'pending', requestedAt: new Date().toISOString()
-      });
+      };
+      return saveRequest(rowN, 'pendingNomineeRequest');
     }
       /* ---- account change requests (name, username, e-mail, mobile, shares, status) ----
      The member sends one request holding only the fields that actually changed; nothing is
      applied until the admin approves, and the previous values stay in force until then. */
   var ACC_FIELDS = ['fullName', 'username', 'email', 'phone', 'shares'];
+
+  /* A member may only write their own users/{uid} document with the published rules
+     (registration itself writes it), so a pending request is stored there as one field.
+     If that write is refused we fall back to the shared collection; the admin panel reads both. */
+  async function saveRequest(row, field) {
+    var uid = row.memberId || (await myUid());
+    if (!uid) throw err('not-signed-in', 'not-signed-in');
+    row.memberId = uid;
+    row.savedIn = 'user';
+    var patch = {};
+    patch[field] = row;
+    try {
+      await fsMod.updateDoc(docIn('users', uid), patch);
+      return row;
+    } catch (eUser) {
+      try {
+        var created = await addDoc('nomineeRequests', row);
+        row.id = (created && created.id) || row.id;
+        row.savedIn = 'collection';
+        return row;
+      } catch (eColl) {
+        var perm = /permission/i.test(String(eUser && eUser.code) + ' ' + String(eColl && eColl.code));
+        throw err(perm ? 'permission-denied' : 'save-failed', perm ? 'permission-denied' : 'save-failed');
+      }
+    }
+  }
+
+  /* every pending request, from both places */
+  async function allRequests() {
+    var rows = [];
+    try {
+      var users = (await getAll('users')) || [];
+      for (var i = 0; i < users.length; i++) {
+        var u = users[i] || {};
+        if (u.pendingAccountRequest) { var a = u.pendingAccountRequest; a.id = a.id || ('u-' + u.id); a.memberId = a.memberId || u.id; a.savedIn = 'user'; rows.push(a); }
+        if (u.pendingNomineeRequest) { var n = u.pendingNomineeRequest; n.id = n.id || ('u-' + u.id); n.memberId = n.memberId || u.id; n.savedIn = 'user'; rows.push(n); }
+      }
+    } catch (eU) { /* a read problem must not hide the other source */ }
+    try {
+      var coll = (await getAll('nomineeRequests')) || [];
+      for (var j = 0; j < coll.length; j++) {
+        var r = coll[j] || {};
+        if (r.status === 'pending' && r.savedIn !== 'user') rows.push(r);
+      }
+    } catch (eC) { /* the collection may not be published yet */ }
+    return rows;
+  }
 
   async function createAccountRequest(data) {
     var uid = await myUid();
@@ -78,16 +126,17 @@ function withTimeout(p, ms, tag) {
         throw err('username-taken', 'same username existed, try with another.');
       }
     }
-    return addDoc('nomineeRequests', {
+    var rowA = {
       kind: 'account', memberId: uid, memberName: (data.memberName || '').trim(),
       username: (data.from_username || '').trim(),
       changes: changes, reason: (data.reason || '').trim(),
       status: 'pending', requestedAt: new Date().toISOString()
-    });
+    };
+    return saveRequest(rowA, 'pendingAccountRequest');
   }
 
   async function listAccountRequests(status) {
-    var all = (await getAll('nomineeRequests')) || [];
+    var all = await allRequests();
     var rows = all.filter(function (r) { return r.kind === 'account'; })
       .sort(function (x, y) { return String(y.requestedAt || '').localeCompare(String(x.requestedAt || '')); });
     return status ? rows.filter(function (r) { return r.status === status; }) : rows;
@@ -129,7 +178,11 @@ function withTimeout(p, ms, tag) {
     } else {
       await writeAudit({ action: 'account.reject', memberId: row.memberId, detail: (row.reason || '') + ' | ' + JSON.stringify(row.changes || []).slice(0, 200) });
     }
-    await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || '' });
+    var clear = {}; clear.pendingAccountRequest = null;
+    try { await fsMod.updateDoc(docIn('users', row.memberId), clear); } catch (eClear) { }
+    if (row.savedIn !== 'user') {
+      try { await fsMod.updateDoc(docIn('nomineeRequests', id), { status: approve ? 'approved' : 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || '' }); } catch (eRow) { }
+    }
     return true;
   }
 
