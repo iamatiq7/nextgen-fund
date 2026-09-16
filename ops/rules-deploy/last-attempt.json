@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-16T03:45:15.853Z",
+  "at": "2026-09-16T04:26:18.510Z",
   "project": "nextgen-fund-2040",
   "serviceAccount": "firebase-adminsdk-fbsvc@nextgen-fund-2040.iam.gserviceaccount.com",
   "tokenLength": 1024,
@@ -10,11 +10,11 @@
     "   release create -> http 403",
     "   {\"error\":{\"code\":403,\"message\":\"The caller does not have permission\",\"status\":\"PERMISSION_DENIED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"IAM_PERMISSION_DENIED\",\"domain\":\"iam.googleapis.com\",\"metadata\":{\"resource\":\"projects/nextgen-fund-2040\",\"error_info_id\":\"CiQwMWE",
     "3) release read-back -> http 200",
-    "   active ruleset: projects/nextgen-fund-2040/rulesets/2f618aaa-a335-4d73-8d3b-d475318b82d2",
+    "   active ruleset: projects/nextgen-fund-2040/rulesets/7ca56345-eae1-49ca-88bb-7b17e64c8fad",
     "   matches the uploaded ruleset: NO"
   ],
   "rulesFileBytes": 6665,
-  "uploadedRuleset": "projects/nextgen-fund-2040/rulesets/e1fc9dd5-2b42-4fdb-8a97-8007f00e7d16",
+  "uploadedRuleset": "projects/nextgen-fund-2040/rulesets/14a85913-bf81-47e5-b8aa-467e6a6c6ff8",
   "releaseWriteStatus": 403,
   "releaseBody": {
     "code": 403,
@@ -27,14 +27,14 @@
         "domain": "iam.googleapis.com",
         "metadata": {
           "resource": "projects/nextgen-fund-2040",
-          "error_info_id": "CiQwMWEwYTg1MS05ZWQwLTc4M2EtOWJmYy1jMmNlOTM4Y2MyZGISGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
-          "troubleshooter_url": "https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMWEwYTg1MS05ZWQwLTc4M2EtOWJmYy1jMmNlOTM4Y2MyZGISGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
+          "error_info_id": "CiQwMWEwYTg3Ny0zMWI4LTdhNjItYWFhMS04N2NjZjhjMDhjZGMSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
+          "troubleshooter_url": "https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMWEwYTg3Ny0zMWI4LTdhNjItYWFhMS04N2NjZjhjMDhjZGMSGnByb2plY3RzL25leHRnZW4tZnVuZC0yMDQw",
           "permission": "firebaserules.releases.create"
         }
       }
     ]
   },
-  "activeRulesetAfter": "projects/nextgen-fund-2040/rulesets/2f618aaa-a335-4d73-8d3b-d475318b82d2",
+  "activeRulesetAfter": "projects/nextgen-fund-2040/rulesets/7ca56345-eae1-49ca-88bb-7b17e64c8fad",
   "releaseMatchesUpload": false,
   "result": "RELEASE NOT CONFIRMED"
 }
