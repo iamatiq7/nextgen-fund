@@ -500,6 +500,21 @@ function withTimeout(p, ms, tag) {
         return { fullName: clean };
       },
 
+      changePassword: async function (currentPw, newPw) {
+        var cu = auth.currentUser;
+        if (!cu) throw err('unauthenticated', 'Please log in');
+        if (!newPw || newPw.length < 8) throw err('invalid', 'New password must be at least 8 characters.');
+        var cred = authMod.EmailAuthProvider.credential(cu.email, currentPw);
+        try {
+          await authMod.reauthenticateWithCredential(cu, cred);
+        } catch (e) {
+          throw err('wrong-credentials', 'Current password is incorrect.');
+        }
+        await authMod.updatePassword(cu, newPw);
+        await audit((cu.email || ''), 'password-changed', 'own password changed');
+        return { ok: true };
+      },
+
       setupAdmin: async function (data) {
         if (await fb.adminExists()) throw err('exists', 'An admin account already exists.');
         // Claim bootstrap: sign in/up, then write settings/bootstrap with own uid.

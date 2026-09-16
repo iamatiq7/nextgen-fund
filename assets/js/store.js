@@ -358,7 +358,19 @@
       return { fullName: clean };
     },
 
-    
+    changePassword: async function (currentPw, newPw) {
+      if (!newPw || newPw.length < 8) { var e = new Error('New password must be at least 8 characters.'); e.code = 'invalid'; throw e; }
+      if (Store.mode === 'firebase') return Store._fb.changePassword(currentPw, newPw);
+      var s = Store._requireLogin();
+      var db = Store._d();
+      var u = db.users.find(function (x) { return x.id === s.uid; });
+      if (!u || u.passHash !== U.sha256(currentPw)) { var e2 = new Error('Current password is incorrect.'); e2.code = 'wrong-credentials'; throw e2; }
+      u.passHash = U.sha256(newPw);
+      Store._audit(u.username, 'password-changed', '');
+      Store._save();
+      return { ok: true };
+    },
+
     setupAdmin: async function (data) {
       if (Store.mode === 'firebase') return Store._fb.setupAdmin(data);
       var db = Store._d();

@@ -128,43 +128,4 @@
     }
   };
 
-
-  /* ---------------- forgot / reset password card ----------------
-     Lives inside Settings for both roles and works signed in or signed out: a signed-in visitor
-     gets their recorded address pre-filled, a signed-out visitor types the e-mail, username or
-     mobile number they registered with. The reset link itself is sent by Firebase. */
-  NGFCOMMON.resetPasswordCard = function (role, email) {
-    var esc = U.esc;
-    return '<h3>' + esc(L.t('pw.title')) + '</h3>' +
-      '<p class="footnote">' + esc(L.t(role === 'admin' ? 'pw.hintAdmin' : 'pw.hint')) + '</p>' +
-      '<label class="f"><span>' + esc(L.t('pw.id')) + '</span>' +
-      '<input type="text" id="rst-id" value="' + esc(email || '') + '" placeholder="you@example.com / kazi.ibrahim / 01712345678"></label>' +
-      '<div id="rst-err" class="err" role="alert"></div>' +
-      '<div id="rst-done" class="notice ok hide"></div>' +
-      '<button class="btn ghost" type="button" id="rst-go">' + esc(L.t('pw.send')) + '</button>';
-  };
-
-  NGFCOMMON.wireResetCard = function () {
-    var go = document.getElementById('rst-go');
-    if (!go || go.getAttribute('data-wired')) return;
-    go.setAttribute('data-wired', '1');
-    var input = document.getElementById('rst-id');
-    var err = document.getElementById('rst-err');
-    var done = document.getElementById('rst-done');
-    go.onclick = async function () {
-      err.textContent = '';
-      done.classList.add('hide');
-      var id = (input.value || '').trim();
-      if (!id) { err.textContent = L.t('pw.empty'); return; }
-      go.disabled = true;
-      try {
-        var r = await S.requestPasswordReset(id);
-        done.textContent = L.t('pw.sent', { email: r.sentTo || '' });
-        done.classList.remove('hide');
-      } catch (e) {
-        err.textContent = (e && e.message) || L.t('pw.err');
-      } finally { go.disabled = false; }
-    };
-  };
-
 })();
