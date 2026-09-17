@@ -370,7 +370,13 @@
        the signed-in user may change the login identifier in Firebase Authentication */
     var emBlock = '';
     if (profile.emailChangePending) {
-      emBlock = '<div class="notice" id="em-box">' +
+      var vState = (profile.emailVerification && profile.emailVerification.status) || 'awaiting-member';
+      var vLine = vState === 'sent'
+        ? '<div class="notice ok">✅ নতুন ইমেইল রেকর্ডে বসে গেছে — যাচাইয়ের লিংক <strong>' + esc(profile.emailChangePending) + '</strong>-এ পাঠানো হয়েছে। ইনবক্স/স্প্যাম দেখে লিংকে ক্লিক করুন; ক্লিক করলে লগইন ইমেইলটিও নতুন ঠিকানায় বদলে যাবে।</div>'
+        : vState === 'needs-password'
+          ? '<div class="notice">ℹ️ যাচাইয়ের লিংক পাঠাতে পাসওয়ার্ড দরকার — নিচে পাসওয়ার্ড দিয়ে “লিংক পাঠান” চাপুন।</div>'
+          : '<div class="notice">ℹ️ নতুন ইমেইল রেকর্ডে বসেছে ✓ — কনফার্মেশন লিংক পাঠানোর অনুরোধ এই সেশন থেকেই দেওয়া হয়েছে। না এলে নিচের বোতাম চাপুন।</div>';
+      emBlock = vLine + '<div class="notice" id="em-box">' +
         '<strong>' + esc(L.t('em.title')) + '</strong> ' + esc(profile.emailChangePending) + ' - ' + esc(L.t('em.pending')) +
         '<p class="footnote" style="margin:6px 0 8px">' + esc(L.t('em.hint')) + '</p>' +
         '<label class="f" style="max-width:340px"><span>' + esc(L.t('em.mail')) + '</span>' +
@@ -541,7 +547,14 @@
       tries++;
       var host = document.getElementById('portal-content');
       var ready = host && !host.classList.contains('hide') && !document.getElementById('sec-nominee');
-      if (ready) { try { await S.reconcileEmail(); } catch (e) { } try { await renderRequests(); } catch (e) { } try { setupSections(); } catch (e) { } }
+      if (ready) { try { await S.reconcileEmail(); } catch (e) { }
+        /* An approved address only becomes the login address when the member's own session asks
+           Firebase to confirm it, so the confirmation link is requested automatically right after
+           sign-in - the member does not have to find a button first. */
+        try {
+          var vres = await S.sendPendingEmailVerification();
+          if (vres && vres.status === 'sent') { try { sessionStorage.setItem('ngf.verify.sent', vres.to || '1'); } catch (eS) { } }
+        } catch (eV) { } try { await renderRequests(); } catch (e) { } try { setupSections(); } catch (e) { } }
       if (ready || tries > 40) clearInterval(timer);
     }, 250);
   })();

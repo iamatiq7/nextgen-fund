@@ -37,7 +37,11 @@
         if (sess.role === 'admin') location.href = next && next !== 'portal.html' ? next : 'admin.html';
         else location.href = next || 'portal.html';
       } catch (e) {
-        errBox.textContent = e.message || L.t('err.wrong');
+        /* a replaced address must say so plainly, and the button always comes back: an e-mail
+           change may never leave a member without a way to sign in */
+        var msg = (e && e.message) ? String(e.message) : '';
+        if (e && e.code === 'retired') msg = '⚠️ ' + msg + ' — পুরোনো ইমেইল দিয়ে আর লগইন হবে না; ইউজারনেম দিয়েও লগইন করতে পারেন।';
+        errBox.textContent = msg || L.t('err.wrong');
         btn.disabled = false; btn.textContent = L.t('log.btn');
       }
     });

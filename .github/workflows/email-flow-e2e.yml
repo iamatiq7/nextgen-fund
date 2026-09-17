@@ -1,4 +1,4 @@
-name: E-mail change flow — live end-to-end test
+﻿name: E-mail change flow â€” live end-to-end test
 
 # Proof job. It answers two questions with live data:
 #   1. is every account's Firestore e-mail identical to its Firebase Auth e-mail (read-only), and
@@ -43,7 +43,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17b' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the flow test
         if: steps.guard.outputs.armed == 'yes'

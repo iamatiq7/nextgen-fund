@@ -137,6 +137,8 @@ function withTimeout(p, ms, tag) {
     if (authMod.verifyBeforeUpdateEmail) {
       try {
         await authMod.verifyBeforeUpdateEmail(user, target);
+        try { await fsMod.updateDoc(docIn('users', uid), { emailVerification: { to: target, status: 'sent', sentAt: new Date().toISOString(), requestedBy: 'member-apply' } }); } catch (eW1) { }
+        await writeAudit({ action: 'email.verify-sent', memberId: uid, detail: 'confirmation link mailed to the approved address' });
         throw err('verify-sent', 'verify-sent');
       } catch (eVerify) {
         if (eVerify && eVerify.code === 'verify-sent') throw eVerify;
@@ -159,6 +161,7 @@ function withTimeout(p, ms, tag) {
       try {
         if (authMod.verifyBeforeUpdateEmail) {
           await authMod.verifyBeforeUpdateEmail(user, target);
+          try { await fsMod.updateDoc(docIn('users', uid), { emailVerification: { to: target, status: 'sent', sentAt: new Date().toISOString(), requestedBy: 'member-apply' } }); } catch (eW2) { }
           throw err('verify-sent', 'verify-sent');
         }
       } catch (eVerify) {
@@ -169,7 +172,7 @@ function withTimeout(p, ms, tag) {
       throw err('not-allowed', code || 'not-allowed');
     }
     if (!applied) throw err('not-allowed', 'not-allowed');
-    await fsMod.updateDoc(docIn('users', uid), { email: target, emailChangePending: null, emailChangedAt: new Date().toISOString() });
+    await fsMod.updateDoc(docIn('users', uid), { email: target, authEmail: target, emailChangePending: null, emailVerification: null, emailChangedAt: new Date().toISOString() });
     try {
       var un = String(u.username || '').toLowerCase();
       if (un) await fsMod.setDoc(docIn('usernames', un), { uid: uid, email: target });
@@ -222,13 +225,20 @@ function withTimeout(p, ms, tag) {
       var snapU = await fsMod.getDoc(docIn('users', row.memberId));
       var cur = snapU.exists() ? (snapU.data() || {}) : {};
       var patch = {};
+      var emailTarget = '';
       var list = row.changes || [];
       for (var i = 0; i < list.length; i++) {
         var ch = list[i];
         if (ch.field === 'shares') patch.shares = parseInt(ch.to, 10) || 0;
         else if (ch.field === 'email') {
           if (!validEmail(ch.to)) throw err('email-bad', 'email-bad');   /* never store an address that cannot be a login id */
-          patch.emailChangePending = ch.to;                              /* the login e-mail is applied from the member's own session */
+          /* an address that already belongs to somebody else can never become a login id */
+          var takenBy = await fsMod.getDoc(docIn('usernames', String(ch.to).toLowerCase()));
+          if (takenBy && takenBy.exists() && String((takenBy.data() || {}).uid || '') !== String(row.memberId)) throw err('email-held', 'email-held');
+          patch.email = ch.to;                  /* the record carries the new address at once, so the member sees the change */
+          patch.emailChangePending = ch.to;     /* Authentication switches over from the member's own session (confirmation link) */
+          patch.emailVerification = { to: ch.to, status: 'awaiting-member', requestedAt: new Date().toISOString() };
+          emailTarget = String(ch.to).trim();
         }
         else patch[ch.field] = ch.to;
       }
@@ -241,12 +251,52 @@ function withTimeout(p, ms, tag) {
             throw err('username-taken', 'same username existed, try with another.');
           }
           if (oldName && oldName !== newName) await fsMod.deleteDoc(docIn('usernames', oldName));
-          await fsMod.setDoc(docIn('usernames', newName), { uid: row.memberId, email: patch.email || cur.email || '' });
+          /* The registry must point at the address Authentication really holds. A freshly approved
+             address is only a candidate until the member opens the confirmation link, so it rides
+             along as emailAlt and the login tries both (registry documents are immutable). */
+          var regLive = String(cur.email || '');
+          var regDoc = { uid: row.memberId, email: regLive || String(patch.email || '') };
+          if (emailTarget && String(emailTarget).toLowerCase() !== regLive.toLowerCase()) regDoc.emailAlt = emailTarget;
+          await fsMod.setDoc(docIn('usernames', newName), regDoc);
         } catch (eMap) {
           if (eMap && eMap.code === 'username-taken') {
             await fsMod.updateDoc(docIn('nomineeRequests', id), { status: 'rejected', decidedAt: new Date().toISOString(), decidedBy: byName || '', note: 'username-taken' });
             await writeAudit({ action: 'account.reject', memberId: row.memberId, detail: 'username already taken: ' + newName });
             return 'username-taken';
+          }
+        }
+      }
+      if (emailTarget) {
+        var newLow = String(emailTarget).toLowerCase();
+        var oldLow = String(cur.email || '').toLowerCase();
+        /* the new address already resolves to this account for login, before the link is opened */
+        try {
+          var aliasNew = await fsMod.getDoc(docIn('usernames', newLow));
+          if (!(aliasNew && aliasNew.exists())) {
+            await fsMod.setDoc(docIn('usernames', newLow), { uid: row.memberId, type: 'email', login: String(cur.email || ''), loginAlt: emailTarget, createdAt: new Date().toISOString() });
+          }
+        } catch (eAlias) { /* the record change is what matters; the alias only makes the new address usable straight away */ }
+        /* the old address stops being a way in: it is marked as moved */
+        try {
+          if (oldLow && oldLow !== newLow) {
+            var aliasOld = await fsMod.getDoc(docIn('usernames', oldLow));
+            if (!(aliasOld && aliasOld.exists())) {
+              await fsMod.setDoc(docIn('usernames', oldLow), { uid: row.memberId, type: 'email', retired: true, movedTo: emailTarget });
+            }
+          }
+        } catch (eAlias2) { }
+        /* an e-mail-only change still has to refresh the username registry with both candidates */
+        if (!patch.username) {
+          var unameNow = String(cur.username || '').toLowerCase();
+          if (unameNow) {
+            try {
+              var regNow = await fsMod.getDoc(docIn('usernames', unameNow));
+              var regLive2 = String(cur.email || '');
+              var regPatch = { uid: row.memberId, email: regLive2 || emailTarget };
+              if (newLow !== regLive2.toLowerCase()) regPatch.emailAlt = emailTarget;
+              if (regNow && regNow.exists()) await fsMod.deleteDoc(docIn('usernames', unameNow));
+              await fsMod.setDoc(docIn('usernames', unameNow), regPatch);
+            } catch (eReg) { }
           }
         }
       }
@@ -496,6 +546,98 @@ async function listNomineeRequests(status) {
       return getAll('payments', fsMod.query(col('payments'), fsMod.where('memberId', '==', uid)));
     }
 
+  /* ---------- login identifiers ----------
+     One account can be reached by several strings: the username, the address Authentication holds,
+     and a newly approved address that is still waiting for its confirmation link. Whatever the
+     member types is resolved to every candidate and the first one that authenticates wins, so an
+     address change can never lock somebody out of their own account. */
+  async function resolveLogin(input) {
+    var raw = String(input || '').trim();
+    var key = raw.toLowerCase();
+    if (!key) return { kind: 'unknown', candidates: [], typed: raw };
+    try {
+      var map = await getDoc('usernames', key);            /* public: readable while signed out */
+      if (map && map.exists()) {
+        var d = map.data() || {};
+        if (d.retired === true) return { kind: 'retired', candidates: [], uid: d.uid || '', movedTo: d.movedTo || '' };
+        var cands = [];
+        [d.email, d.emailAlt, key].forEach(function (v) {
+          var s = String(v || '').trim();
+          if (s && cands.indexOf(s.toLowerCase()) < 0) cands.push(s);
+        });
+        return { kind: key.indexOf('@') > 0 ? 'email' : 'user', candidates: cands, uid: d.uid || '', typed: raw };
+      }
+    } catch (eMap) { /* the registry is a helper, not a gate */ }
+    return { kind: key.indexOf('@') > 0 ? 'email' : 'unknown', candidates: [raw], typed: raw };
+  }
+
+  async function finishLogin() {
+    var cu = auth.currentUser;
+    if (!cu) throw err('wrong-credentials', 'Wrong username or password.');
+    var u = await userDoc(cu.uid);
+    if (!u) { await authMod.signOut(auth); throw err('wrong-credentials', 'Account not found.'); }
+    /* self-healing: the signed-out login reads the public registry, so it is kept in step with the
+       address that just signed in. Registry documents are immutable under the published rules, so a
+       refused write is simply ignored - the candidate list above already covers the login. */
+    try {
+      var uname = String(u.username || '').toLowerCase();
+      var live = String((cu && cu.email) || '').toLowerCase();
+      if (uname && live) {
+        var snapU = await getDoc('usernames', uname);
+        var have = snapU && snapU.exists() ? String((snapU.data() || {}).email || '').toLowerCase() : '';
+        if (have && have !== live) await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid, email: live, emailAlt: u.emailChangePending || u.email || live });
+      }
+    } catch (eHeal) { /* never block a login on this */ }
+    if (u.status === 'pending') { await authMod.signOut(auth); throw err('pending', 'Your registration is still awaiting admin approval.'); }
+    if (u.status === 'rejected') { await authMod.signOut(auth); throw err('rejected', 'Your registration was not approved. Contact the fund admin.'); }
+    if (u.status === 'suspended') { await authMod.signOut(auth); throw err('suspended', 'This account is suspended. Contact the fund admin.'); }
+    return { uid: cu.uid, role: u.role, username: u.username, fullName: u.fullName };
+  }
+
+  async function signInByIdentifier(identifier, password) {
+    var res = await resolveLogin(identifier);
+    if (res.kind === 'retired') throw err('retired', 'This address was replaced. Sign in with ' + (res.movedTo || 'your new address') + ' or with your username.');
+    var cands = res.candidates || [];
+    if (!cands.length) throw err('wrong-credentials', 'Wrong username or password.');
+    for (var i = 0; i < cands.length; i++) {
+      try {
+        await authMod.signInWithEmailAndPassword(auth, cands[i], password);
+        return await finishLogin();
+      } catch (eTry) { /* try the next candidate: only the last failure is reported */ }
+    }
+    throw err('wrong-credentials', 'Wrong username or password.');
+  }
+
+  /* Sends the confirmation link for an approved address from the member's own session, which is
+     the only place Firebase lets a login address change. Called automatically after sign-in. */
+  async function sendPendingEmailVerification() {
+    var uid = await myUid();
+    if (!uid) return { status: 'not-signed-in' };
+    var snap = await fsMod.getDoc(docIn('users', uid));
+    var u = snap && snap.exists() ? (snap.data() || {}) : {};
+    var target = String(u.emailChangePending || '').trim();
+    if (!target) return { status: 'nothing-pending' };
+    if (!validEmail(target)) return { status: 'bad-address', to: target };
+    var user = auth.currentUser;
+    if (!user) return { status: 'not-signed-in' };
+    if (!authMod.verifyBeforeUpdateEmail) return { status: 'unsupported' };
+    try {
+      await authMod.verifyBeforeUpdateEmail(user, target);
+    } catch (eSend) {
+      var code = String((eSend && eSend.code) || '');
+      var st = /requires-recent-login|wrong-password/.test(code) ? 'needs-password'
+        : /email-already-in-use/.test(code) ? 'held'
+        : /invalid-email/.test(code) ? 'bad-address' : 'failed';
+      try { await fsMod.updateDoc(docIn('users', uid), { emailVerification: { to: target, status: st, attemptedAt: new Date().toISOString(), code: code.slice(0, 60) } }); } catch (eW) { }
+      return { status: st, code: code, to: target };
+    }
+    try {
+      await fsMod.updateDoc(docIn('users', uid), { emailVerification: { to: target, status: 'sent', sentAt: new Date().toISOString(), requestedBy: 'member-session' } });
+    } catch (eW) { }
+    await writeAudit({ action: 'email.verify-sent', memberId: uid, detail: 'confirmation link mailed to the approved address' });
+    return { status: 'sent', to: target };
+  }
+
     var fb = {
 
       /* ---------- public ---------- */
@@ -682,43 +824,13 @@ async function listNomineeRequests(status) {
       },
 
       /* ---------- auth ---------- */
-      login: async function (identifier, password) {
-        var email = identifier.trim().toLowerCase();
-        if (email.indexOf('@') < 0) {
-          var map = await getDoc('usernames', email);
-          if (!map || !map.uid) throw err('wrong-credentials', 'Wrong username or password.');
-          /* the member record holds the address that is actually live in Authentication;
-             the registry copy can lag behind after an e-mail change, so it is only a fallback. */
-          var rec = null;
-          try { rec = await getDoc('users', map.uid); } catch (eRec) { rec = null; }   /* refused while signed out */
-          var recEmail = (rec && rec.email) ? String(rec.email).toLowerCase() : '';
-          email = recEmail || String(map.email || '').toLowerCase();
-          if (!email) throw err('wrong-credentials', 'This username has no email on file yet - log in with the email address instead.');
-          /* keep the registry in step when it was the stale side */
-          if (recEmail && String(map.email || '').toLowerCase() !== recEmail) {
-            try { await fsMod.setDoc(docIn('usernames', String(map.id || '')), { uid: map.uid, email: recEmail }); } catch (eSync) { }
-          }
-        }
-        try { await authMod.signInWithEmailAndPassword(auth, email, password); }
-        catch (e) { throw err('wrong-credentials', 'Wrong username or password.'); }
-        var cu = auth.currentUser;
-        var u = await userDoc(cu.uid);
-        if (!u) { await authMod.signOut(auth); throw err('wrong-credentials', 'Account not found.'); }
-        /* self-healing: the public username registry is what a signed-out login reads, so it is
-           kept in step with the address that just signed in. After an e-mail change this makes
-           username login work again without the member doing anything. */
-        try {
-          var uname = String(u.username || '').toLowerCase();
-          var live = String((cu && cu.email) || '').toLowerCase();
-          if (uname && live && String((await getDoc('usernames', uname) || {}).email || '').toLowerCase() !== live) {
-            await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid, email: live });
-          }
-        } catch (eHeal) { /* never block a login on this */ }
-        if (u.status === 'pending') { await authMod.signOut(auth); throw err('pending', 'Your registration is still awaiting admin approval.'); }
-        if (u.status === 'rejected') { await authMod.signOut(auth); throw err('rejected', 'Your registration was not approved. Contact the fund admin.'); }
-        if (u.status === 'suspended') { await authMod.signOut(auth); throw err('suspended', 'This account is suspended. Contact the fund admin.'); }
-        return { uid: cu.uid, role: u.role, username: u.username, fullName: u.fullName };
-      },
+      login: async function (identifier, password) { return signInByIdentifier(identifier, password); },
+
+      resolveLogin: resolveLogin,
+
+      signInByIdentifier: signInByIdentifier,
+
+      sendPendingEmailVerification: sendPendingEmailVerification,
 
       logout: async function () { await authMod.signOut(auth); },
 
@@ -815,8 +927,15 @@ async function listNomineeRequests(status) {
         var doc = await userDoc(uid);
         if (!doc) return null;
         var mine = String(doc.email || '');
-        if (mine.toLowerCase() === live.toLowerCase() && !doc.emailChangePending) return null;
-        var patch = { email: live, emailChangePending: null, emailChangedAt: new Date().toISOString() };
+        var pending = String(doc.emailChangePending || '').trim();
+        if (mine.toLowerCase() === live.toLowerCase() && !pending) return null;
+        /* An approved change reaches the record before Authentication switches over. Reverting it
+           here would silently undo the admin's approval, so while the new address is still waiting
+           for its confirmation link the record is left exactly as the approval wrote it. */
+        if (pending && pending.toLowerCase() !== live.toLowerCase()) {
+          return { from: mine, to: live, pending: pending, applied: false };
+        }
+        var patch = { email: live, authEmail: live, emailChangePending: null, emailVerification: null, emailChangedAt: new Date().toISOString() };
         await fsMod.updateDoc(docIn('users', uid), patch);
         try {
           var un = String(doc.username || '').toLowerCase();

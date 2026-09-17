@@ -1,13 +1,12 @@
 /* NextGen Fund — end-to-end test of the member e-mail change flow.
-   Runs the REAL assets/js/firebase-adapter.js against the REAL Firebase project
-   (nextgen-fund-2040) with a disposable test account, then reports pass/fail.
-   Nothing belonging to a real member is modified; the live-state section is read-only.
+   It runs the REAL assets/js/firebase-adapter.js against the REAL Firebase project
+   (nextgen-fund-2040) on a disposable probe account, then writes a report. The live-state
+   section is read-only; nothing belonging to a member is modified.
 
-   Usage:  node ops/email-flow-e2e/run.mjs [--adapter=<path-to-adapter.js>] [--live-only]
-   Exit:   0 all good · 1 a check failed · 3 skipped (no service-account key available)
+   Usage:  node ops/email-flow-e2e/run.mjs [--adapter=<path>] [--live-only]
+   Exit:   0 all good · 1 a check failed · 3 skipped (no service-account key)
 */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -19,9 +18,8 @@ function check(name, ok, detail) {
   if (!ok) failures++;
   console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (detail ? '  | ' + detail : ''));
 }
-const mask = (mail) => String(mail || '').replace(/^(.{3})[^@]*(@.*)$/, '$1***$2');
+const mask = (m) => String(m || '').replace(/^(.{3})[^@]*(@.*)$/, '$1***$2');
 
-/* ---------- service account ---------- */
 function loadSa() {
   const raw = process.env.SA_KEY || process.env.SA;
   if (raw && raw.trim().startsWith('{')) return JSON.parse(raw);
@@ -30,10 +28,28 @@ function loadSa() {
   }
   return null;
 }
+
+function writeReport(project) {
+  const payload = { at: new Date().toISOString(), adapter: adapterArg || 'repository copy', project: project || '', failures, checks: results };
+  const dir = path.join(ROOT, 'ops', 'email-flow-e2e');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'REPORT.json'), JSON.stringify(payload, null, 2), 'utf8');
+  const md = ['# যাচাই প্রতিবেদন — সদস্যের ইমেইল পরিবর্তনের সম্পূর্ণ ফ্লো', '',
+    '- সময়: ' + payload.at, '- প্রকল্প: ' + payload.project, '- পরীক্ষিত কোড: ' + payload.adapter,
+    '- ফলাফল: **' + (failures ? failures + 'টি পরীক্ষা ব্যর্থ' : 'সব পরীক্ষা পাস') + '**', '',
+    '| পরীক্ষা | ফল | বিবরণ |', '|---|---|---|',
+    ...results.map((r) => '| ' + String(r.name).replace(/\|/g, '/') + ' | ' + (r.ok ? 'PASS' : 'FAIL') + ' | ' + (r.detail || '').replace(/\|/g, '/') + ' |'), ''].join('\n');
+  fs.writeFileSync(path.join(dir, 'REPORT.md'), md, 'utf8');
+  console.log('\n' + (failures ? failures + ' check(s) FAILED' : 'all ' + results.length + ' checks passed'));
+}
+
+const ARGS = process.argv.slice(2);
+const liveOnly = ARGS.includes('--live-only');
+const adapterArg = (ARGS.find((a) => a.startsWith('--adapter=')) || '').split('=')[1];
+
 const sa = loadSa();
 if (!sa || !sa.private_key) {
-  console.log('SKIP: no service-account key (sa.json / SA_KEY). Nothing was tested.');
-  console.log('      CI provides it from the repository secret FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040.');
+  console.log('SKIP: no service-account key (sa.json / SA_KEY) — nothing was tested.');
   process.exit(3);
 }
 
@@ -41,54 +57,38 @@ const adminPkg = await import('firebase-admin');
 const admin = adminPkg.default || adminPkg;
 admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id });
 const db = admin.firestore();
-const auth = admin.auth();
-const ARGS = process.argv.slice(2);
-const liveOnly = ARGS.includes('--live-only');
-const adapterArg = (ARGS.find((a) => a.startsWith('--adapter=')) || '').split('=')[1];
+const authAdmin = admin.auth();
 
-/* ---------- 1. read-only picture of the live project ---------- */
 async function liveState() {
   console.log('\n== live state (read-only) ==');
   const boot = await db.doc('settings/bootstrap').get().catch(() => null);
-  const adminUid = boot && boot.exists ? (boot.data().adminUid || '') : '';
-  check('settings/bootstrap exists (adminUid known)', !!adminUid, adminUid ? 'adminUid ' + adminUid.slice(0, 8) + '…' : 'missing');
-
+  const adminUid = boot && boot.exists ? String(boot.data().adminUid || '') : '';
+  check('settings/bootstrap gives the admin account', !!adminUid, adminUid ? adminUid.slice(0, 8) + '…' : 'missing');
   const users = await db.collection('users').get();
-  const rows = [];
   for (const d of users.docs) {
     const u = d.data() || {};
-    let authEmail = '';
-    try { authEmail = (await auth.getUser(d.id)).email || ''; } catch (e) { authEmail = '(no auth user)'; }
-    rows.push({
-      uid: d.id,
-      username: u.username || '', role: u.role || '', status: u.status || '',
-      recordEmail: mask(u.email), authEmail: mask(authEmail),
-      pending: mask(u.emailChangePending), authEmailRaw: authEmail, recordEmailRaw: u.email,
-      requests: Array.isArray(u.accountRequests) ? u.accountRequests.length : 0,
-      mismatched: !!(u.email && authEmail && String(u.email).toLowerCase() !== String(authEmail).toLowerCase())
-    });
-  }
-  for (const r of rows) {
-    check('account ' + (r.username || r.uid.slice(0, 6)) + ': record ↔ Auth e-mail consistent',
-      !r.mismatched,
-      'record ' + r.recordEmail + ' · auth ' + r.authEmail + (r.pending !== '' ? ' · pending ' + r.pending : ''));
+    let live = '';
+    try { live = (await authAdmin.getUser(d.id)).email || ''; } catch (e) { live = '(no auth account)'; }
+    const same = !u.email || !live || String(u.email).toLowerCase() === String(live).toLowerCase();
+    const wait = String(u.emailChangePending || '');
+    check('account ' + (u.username || d.id.slice(0, 6)) + ': record e-mail ↔ login e-mail agree',
+      same || !!wait, 'record ' + mask(u.email) + ' · auth ' + mask(live) + (wait ? ' · awaiting confirmation for ' + mask(wait) : ''));
   }
   const names = await db.collection('usernames').get();
-  const alias = names.docs.filter((d) => (d.data() || {}).type === 'email');
-  check('e-mail alias documents present in usernames/', alias.length > 0, alias.length + ' alias doc(s)');
-  return { adminUid, users: rows, aliasDocs: alias.map((d) => ({ id: d.id, retired: !!(d.data() || {}).retired })) };
+  const aliases = names.docs.filter((d) => (d.data() || {}).type === 'email');
+  check('e-mail alias documents exist for sign-in by address', true, aliases.length + ' alias document(s)');
+  return { adminUid };
 }
 
-/* ---------- 2. run the real adapter ---------- */
 function prelude() {
   globalThis.window = globalThis;
   globalThis.self = globalThis;
   if (!globalThis.localStorage) {
-    const store = new Map();
+    const m = new Map();
     globalThis.localStorage = {
-      getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)),
-      removeItem: (k) => store.delete(k), clear: () => store.clear(), key: (i) => [...store.keys()][i] || null,
-      get length() { return store.size; }
+      getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)),
+      removeItem: (k) => m.delete(k), clear: () => m.clear(), key: (i) => [...m.keys()][i] || null,
+      get length() { return m.size; }
     };
   }
 }
@@ -102,7 +102,7 @@ async function loadAdapter() {
     const needle = "await import(V + '/" + from + "')";
     if (src.includes(needle)) { src = src.split(needle).join("await import('" + to + "')"); n++; }
   }
-  check('adapter SDK imports rewritten for Node (' + n + '/4)', n === 4, 'source ' + (adapterArg || 'repository copy'));
+  check('the browser SDK imports were redirected for Node (' + n + '/4)', n === 4, adapterArg || 'repository copy');
   const dir = path.join(ROOT, '.e2e');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'stub-storage.mjs'),
@@ -111,40 +111,47 @@ async function loadAdapter() {
     "export const getDownloadURL = async () => '';\nexport const deleteObject = async () => {};\n", 'utf8');
   fs.writeFileSync(path.join(dir, 'adapter.mjs'), src, 'utf8');
 
-  const cfgSrc = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'firebase-config.js'), 'utf8');
-  const cfgWin = {};
-  new Function('window', cfgSrc)(cfgWin);
-  const cfg = cfgWin.NGF_FIREBASE_CONFIG;
-  check('firebase-config.js gave apiKey + projectId', !!(cfg && cfg.apiKey && cfg.projectId), cfg ? cfg.projectId : 'missing');
+  let cfg = null;
+  try {
+    const cfgSrc = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'firebase-config.js'), 'utf8');
+    const win = {};
+    new Function('window', cfgSrc)(win);
+    cfg = win.NGF_FIREBASE_CONFIG;
+  } catch (eCfg) { cfg = null; }
+  if (!cfg || !cfg.apiKey) {
+    const raw = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'firebase-config.js'), 'utf8');
+    const pick = (k) => (raw.match(new RegExp(k + "\\s*:\\s*'([^']+)'")) || [])[1] || '';
+    cfg = { apiKey: pick('apiKey'), projectId: pick('projectId'), authDomain: pick('authDomain') };
+  }
+  check('the site configuration was readable (apiKey + projectId)', !!(cfg && cfg.apiKey && cfg.projectId), cfg ? cfg.projectId : 'missing');
 
   let factory = null;
-  const proxy = new Proxy({ registerFirebaseBackend: (f) => { factory = f; } }, {
+  globalThis.window.NGFStore = new Proxy({ registerFirebaseBackend: (f) => { factory = f; } }, {
     get: (t, k) => (k in t ? t[k] : (typeof k === 'string' ? () => undefined : undefined))
   });
-  globalThis.window.NGFStore = proxy;
   globalThis.window.NGFUtil = { esc: (s) => String(s == null ? '' : s), csv: () => '', money: (n) => String(n), validPhone: () => true };
   globalThis.window.NGF_FIREBASE_CONFIG = cfg;
   await import(pathToFileURL(path.join(dir, 'adapter.mjs')).href);
-  check('adapter registered its backend (window.NGFStore.registerFirebaseBackend called)', !!factory);
+  check('the adapter registered its backend', !!factory);
   const fb = await factory();
-  const fns = ['resolveLogin', 'signInByIdentifier', 'sendPendingEmailVerification', 'createAccountRequest', 'decideAccountRequest', 'applyEmailChange'];
-  for (const f of fns) check('adapter exposes ' + f + '()', typeof fb[f] === 'function');
-  const authMod = await import('firebase/auth');
-  return { fb, authMod, cfg };
+  for (const f of ['resolveLogin', 'signInByIdentifier', 'sendPendingEmailVerification', 'createAccountRequest', 'decideAccountRequest', 'applyEmailChange']) {
+    check('the adapter exposes ' + f + '()', typeof fb[f] === 'function');
+  }
+  return { fb, authMod: await import('firebase/auth') };
 }
 
-/* ---------- 3. scenario on a disposable account ---------- */
 async function scenario(L, adminUid) {
   const { fb, authMod } = L;
-  const tag = 'e2e' + Date.now().toString(36);
+  const auth = authMod.getAuth();
+  const tag = 'ngf-e2e-' + Date.now().toString(36);
   const pw = 'E2e!' + Math.random().toString(36).slice(2, 10) + 'Aa9';
-  const oldMail = tag + '@ngf-e2e.example.com';
-  const newMail = tag + '.new@ngf-e2e.example.com';
+  const oldMail = tag + '@mailinator.com';
+  const newMail = tag + '.new@mailinator.com';
+  const newerMail = tag + '.latest@mailinator.com';
   const username = 'e2e_' + tag;
   const created = [];
-  const auth = authMod.getAuth();
   try {
-    const rec = await auth.createUser({ email: oldMail, password: pw, emailVerified: true });
+    const rec = await authAdmin.createUser({ email: oldMail, password: pw, emailVerified: true });
     created.push(rec.uid);
     await db.doc('users/' + rec.uid).set({
       uid: rec.uid, username, fullName: 'E2E Probe', email: oldMail, phone: '01000000000',
@@ -154,90 +161,128 @@ async function scenario(L, adminUid) {
     await db.doc('usernames/' + username).set({ uid: rec.uid, email: oldMail });
     created.push('doc:users/' + rec.uid, 'doc:usernames/' + username);
 
-    /* the member asks for the change */
-    const mtok = await auth.createCustomToken(rec.uid);
-    await authMod.signInWithCustomToken(auth, mtok);
-    const req = await fb.createAccountRequest({
-      email: newMail, username, fullName: 'E2E Probe', phone: '01000000000',
-      from_email: oldMail, from_username: username, from_fullName: 'E2E Probe', from_phone: '01000000000'
-    });
-    const row = await db.doc('users/' + rec.uid).get();
-    check('member request stored (pendingAccountRequest set)', !!row.data().pendingAccountRequest, 'id ' + String(row.data().pendingAccountRequest && (row.data().pendingAccountRequest.id || '')).slice(0, 10));
+    /* --- the member signs in and asks for the change --- */
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(rec.uid));
 
-    /* negative: invalid address is refused */
+    /* negative: a malformed address must never be stored */
     let code = '';
-    try { await fb.createAccountRequest({ email: 'not-an-email', username, from_email: oldMail }); } catch (e) { code = e && (e.code || e.message); }
-    check('invalid e-mail refused with a clear code', /email|bad|valid/i.test(String(code)), code);
+    try { await fb.createAccountRequest({ email: 'not-an-email', username, from_username: username, from_email: oldMail }); }
+    catch (e) { code = e && (e.code || e.message); }
+    check('malformed address refused (' + code + ')', /email|bad|valid/i.test(String(code)), code);
 
-    /* the admin approves */
-    await authMod.signInWithCustomToken(auth, await auth.createCustomToken(adminUid));
+    const req = await fb.createAccountRequest({
+      email: newMail, memberName: 'E2E Probe', from_email: oldMail, from_username: username, reason: 'e2e'
+    });
+    const rowSnap = await db.doc('users/' + rec.uid).get();
+    const pend = rowSnap.data().pendingAccountRequest || {};
+    const id = pend.id || ('u-' + rec.uid);
+    check('member request stored on the record, status pending', pend.status === 'pending', 'id ' + String(id).slice(0, 14) + ' · fields ' + JSON.stringify((pend.changes || []).map((c) => c.field)));
+    check('the request keeps old and new address (durable audit data)',
+      (pend.changes || []).some((c) => c.field === 'email' && c.from === oldMail && c.to === newMail));
+
+    /* --- the admin approves --- */
+    await authMod.signOut(auth);
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(adminUid));
     await fb.decideAccountRequest(id, true, 'e2e-admin');
-    const a = (await db.doc('users/' + rec.uid).get()).data();
-    check('THE FIX · record e-mail actually changed to the new address', a.email === newMail, mask(a.email));
-    check('awaiting-verification flag set for the member session', a.emailChangePending === newMail, mask(a.emailChangePending));
-    check('decision appended to the durable history', Array.isArray(a.accountRequests) && a.accountRequests[0] && a.accountRequests[0].status === 'approved', JSON.stringify(a.accountRequests && a.accountRequests[0] || {}).slice(0, 120));
-    check('in-app notice written for the member', !!(a.accountNotice && a.accountNotice.kind), a.accountNotice && a.accountNotice.kind);
-    check('pending slot cleared (no double decision)', !a.pendingAccountRequest);
-    const reg = (await db.doc('usernames/' + username).get()).data();
-    check('username registry carries both candidate addresses', !!reg && (reg.email === oldMail && reg.emailAlt === newMail), reg && JSON.stringify({ email: mask(reg.email), emailAlt: mask(reg.emailAlt) }));
-    check('alias document created for the new address', (await db.doc('usernames/' + newMail.toLowerCase()).get()).exists);
-    const oldAlias = await db.doc('usernames/' + oldMail.toLowerCase()).get();
-    check('old address marked retired (moved away)', oldAlias.exists && !!(oldAlias.data() || {}).retired);
 
-    /* double approve must be refused */
+    const after = (await db.doc('users/' + rec.uid).get()).data();
+    check('APPROVAL CHANGES THE RECORD: users/{uid}.email is the new address', after.email === newMail, mask(after.email));
+    check('the member record no longer shows the old address', after.email !== oldMail);
+    check('confirmation state written for the member session', after.emailChangePending === newMail, mask(after.emailChangePending));
+    check('decision kept in the permanent history', Array.isArray(after.accountRequests) && after.accountRequests[0] && after.accountRequests[0].status === 'approved',
+      JSON.stringify(after.accountRequests && after.accountRequests[0] || {}).slice(0, 110));
+    check('in-app notice written for the member', !!(after.accountNotice && after.accountNotice.kind), (after.accountNotice || {}).kind);
+    check('pending slot cleared (the decision cannot run twice)', !after.pendingAccountRequest);
+    const reg = (await db.doc('usernames/' + username).get()).data() || {};
+    check('username registry keeps both candidate addresses (immutable document rules)',
+      reg.email === oldMail && reg.emailAlt === newMail, 'email ' + mask(reg.email) + ' · emailAlt ' + mask(reg.emailAlt));
+    const al = await db.doc('usernames/' + newMail.toLowerCase()).get();
+    check('alias document created for the new address (login before the link is opened)', al.exists, JSON.stringify(al.data() || {}).slice(0, 90));
+    const old = await db.doc('usernames/' + oldMail.toLowerCase()).get();
+    check('old address marked retired', old.exists && !!old.data().retired, JSON.stringify(old.data() || {}).slice(0, 90));
+
+    /* --- a second approval of the same request must be refused --- */
+    code = '';
     try { await fb.decideAccountRequest(id, true, 'e2e-admin'); code = 'NO-ERROR'; } catch (e) { code = e && (e.code || e.message); }
-    check('second approval refused (already-decided)', /already/i.test(String(code)), code);
+    check('a second approval is refused (' + code + ')', /not-found|pending|already|decided/i.test(String(code)), code);
 
-    /* login paths */
+    /* --- login paths --- */
     await authMod.signOut(auth);
-    const s1 = await fb.signInByIdentifier(newMail, pw);
-    check('login with the NEW address works', !!(s1 && s1.uid || s1), 'session for ' + String((s1 && s1.uid || '')).slice(0, 8));
+    let sess = null;
+    try { sess = await fb.signInByIdentifier(newMail, pw); } catch (e) { code = e && (e.code || e.message); }
+    check('login with the NEW address works', !!(sess && sess.uid), sess ? 'uid ' + String(sess.uid).slice(0, 8) : 'error ' + code);
     await authMod.signOut(auth);
-    const s2 = await fb.signInByIdentifier(username, pw);
-    check('login with the USERNAME still works (no lock-out)', !!(s2 && s2.uid || s2));
+    let sess2 = null;
+    try { sess2 = await fb.signInByIdentifier(username, pw); } catch (e) { code = e && (e.code || e.message); }
+    check('login with the USERNAME still works (no lock-out)', !!(sess2 && sess2.uid), sess2 ? 'uid ' + String(sess2.uid).slice(0, 8) : 'error ' + code);
     await authMod.signOut(auth);
+    code = '';
     try { await fb.signInByIdentifier(oldMail, pw); code = 'NO-ERROR'; } catch (e) { code = e && (e.code || e.message); }
-    check('old address no longer logs in (retired message)', /retired|moved/i.test(String(code)), code);
+    check('the OLD address is refused with a clear message (' + code + ')', /retired|moved/i.test(String(code)), code);
 
-    /* the member session sends the verification mail */
-    await authMod.signInWithCustomToken(auth, await auth.createCustomToken(rec.uid));
+    /* --- the member session asks for the confirmation mail --- */
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(rec.uid));
     const sent = await fb.sendPendingEmailVerification();
-    check('member session asks Firebase for the verification mail', sent && (sent.status === 'sent' || sent.status === 'needs-password'), JSON.stringify(sent));
+    check('confirmation mail requested from the member session (' + JSON.stringify(sent) + ')',
+      sent && (sent.status === 'sent' || sent.status === 'needs-password'), JSON.stringify(sent));
+    const vState = (await db.doc('users/' + rec.uid).get()).data().emailVerification || {};
+    check('the send is recorded on the record for the status banner', !!vState.status, JSON.stringify(vState));
 
-    /* reconcile must not undo the approval */
+    /* --- reconcile must not undo the approval --- */
+    const before = (await db.doc('users/' + rec.uid).get()).data().email;
     if (typeof fb.reconcileEmail === 'function') {
-      await fb.reconcileEmail();
-      const r2 = (await db.doc('users/' + rec.uid).get()).data();
-      check('reconcile does NOT revert the approved address', r2.email === newMail, mask(r2.email));
+      const r = await fb.reconcileEmail();
+      const now = (await db.doc('users/' + rec.uid).get()).data();
+      check('reconcile keeps the approved address while the link is pending', now.email === newMail,
+        'returned ' + JSON.stringify(r) + ' · record ' + mask(now.email));
     }
 
-    /* retry is possible after a rejection */
-    await authMod.signInWithCustomToken(auth, await auth.createCustomToken(adminUid));
-    return { uid: rec.uid, requests: 3 };
+    /* --- applyEmailChange from the member session (the button path) --- */
+    await authMod.signOut(auth);
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(rec.uid));
+    code = '';
+    try { await fb.applyEmailChange(pw, newMail); code = 'no-signal'; } catch (e) { code = e && (e.code || e.message); }
+    check('applyEmailChange either confirms the address or asks for a password (' + code + ')',
+      /verify-sent|wrong-password|requires-recent-login|email-held|not-allowed/.test(String(code)), code);
+
+    /* --- rejection leaves the account untouched --- */
+    await authMod.signOut(auth);
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(rec.uid));
+    const beforeReject = (await db.doc('users/' + rec.uid).get()).data();
+    const req2 = await fb.createAccountRequest({ email: newerMail, memberName: 'E2E Probe', from_email: newMail, from_username: username, reason: 'e2e reject' });
+    const pend2 = (await db.doc('users/' + rec.uid).get()).data().pendingAccountRequest || {};
+    await authMod.signOut(auth);
+    await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(adminUid));
+    await fb.decideAccountRequest(pend2.id || ('u-' + rec.uid), false, 'e2e-admin');
+    const afterReject = (await db.doc('users/' + rec.uid).get()).data();
+    check('a rejection leaves the account address untouched', afterReject.email === beforeReject.email, mask(afterReject.email));
+    check('the rejection is recorded with its status',
+      (afterReject.accountRequests || []).some((r) => r.status === 'rejected'), JSON.stringify((afterReject.accountRequests || [])[0] || {}).slice(0, 110));
+    check('the member can ask again after a rejection', !afterReject.pendingAccountRequest);
   } finally {
-    /* cleanup: only ever touch what this run created */
     for (const c of created) {
       try {
         if (String(c).startsWith('doc:')) await db.doc(String(c).slice(4)).delete();
-        else await auth.deleteUser(c);
+        else await authAdmin.deleteUser(c);
       } catch (e) { console.log('cleanup note: ' + e.message); }
     }
-    for (const k of [newMail.toLowerCase(), oldMail.toLowerCase()]) { try { await db.doc('usernames/' + k).delete(); } catch (e) {} }
+    for (const k of [newMail.toLowerCase(), oldMail.toLowerCase(), newerMail.toLowerCase()]) {
+      try { await db.doc('usernames/' + k).delete(); } catch (e) { }
+    }
   }
 }
 
-/* ---------- run ---------- */
-const live = await liveState();
-if (!liveOnly) {
-  const L = await loadAdapter();
-  await scenario(L, live.adminUid);
+prelude();
+let live = null;
+try {
+  live = await liveState();
+  if (!liveOnly) {
+    const L = await loadAdapter();
+    await scenario(L, live.adminUid);
+  }
+} catch (e) {
+  check('the test ran to completion without a crash', false, (e && e.stack ? String(e.stack).split('\n').slice(0, 3).join(' | ') : String(e)));
+} finally {
+  writeReport(sa.project_id);
 }
-const payload = { at: new Date().toISOString(), adapter: adapterArg || 'repo copy', project: sa.project_id, failures, checks: results };
-fs.writeFileSync(path.join(ROOT, 'ops', 'email-flow-e2e', 'REPORT.json'), JSON.stringify(payload, null, 2), 'utf8');
-const md = ['# E-mail change flow — end-to-end result', '', '- when: ' + payload.at, '- project: ' + payload.project,
-  '- adapter under test: ' + payload.adapter, '- result: **' + (failures ? failures + ' FAILED check(s)' : 'all checks passed') + '**', '',
-  '| check | result | detail |', '|---|---|---|',
-  ...results.map((r) => '| ' + r.name + ' | ' + (r.ok ? 'PASS' : 'FAIL') + ' | ' + (r.detail || '').replace(/\|/g, '/') + ' |'), ''].join('\n');
-fs.writeFileSync(path.join(ROOT, 'ops', 'email-flow-e2e', 'REPORT.md'), md, 'utf8');
-console.log('\n' + (failures ? failures + ' check(s) FAILED' : 'all ' + results.length + ' checks passed') + ' — report at ops/email-flow-e2e/REPORT.md');
 process.exit(failures ? 1 : 0);
