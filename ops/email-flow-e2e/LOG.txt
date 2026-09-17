@@ -1,0 +1,62 @@
+--- phase: import the admin SDK
+
+all 0 checks passed
+--- phase: read the live project state
+
+all 0 checks passed
+
+== live state (read-only) ==
+PASS  settings/bootstrap gives the admin account  | pvMeMRnI…
+PASS  account rocky: record e-mail ↔ login e-mail agree  | record vea***@gmail.com · auth vea***@gmail.com
+PASS  account admin: record e-mail ↔ login e-mail agree  | record iam***@gmail.com · auth iam***@gmail.com
+PASS  account rafiul: record e-mail ↔ login e-mail agree  | record tem***@gmail.com · auth tem***@gmail.com
+PASS  e-mail alias documents exist for sign-in by address  | 0 alias document(s)
+--- phase: load and prepare the real adapter
+
+all 5 checks passed
+PASS  the browser SDK imports were redirected for Node (4/4)  | assets/js/firebase-adapter.js
+PASS  the site configuration was readable (apiKey + projectId)  | nextgen-fund-2040
+PASS  the adapter registered its backend
+PASS  the adapter exposes resolveLogin()
+PASS  the adapter exposes signInByIdentifier()
+PASS  the adapter exposes sendPendingEmailVerification()
+PASS  the adapter exposes createAccountRequest()
+PASS  the adapter exposes decideAccountRequest()
+PASS  the adapter exposes applyEmailChange()
+--- phase: run the request -> approve -> login scenario
+
+all 14 checks passed
+PASS  malformed address refused (email-bad)  | email-bad
+PASS  member request stored on the record, status pending  | id u-uRPbBv0MLNg5 · fields ["email"]
+PASS  the request keeps old and new address (durable audit data)
+--- phase: admin approval
+
+all 17 checks passed
+PASS  APPROVAL CHANGES THE RECORD: users/{uid}.email is the new address  | ngf***@mailinator.com
+PASS  the member record no longer shows the old address
+PASS  confirmation state written for the member session  | ngf***@mailinator.com
+FAIL  decision kept in the permanent history  | {}
+FAIL  in-app notice written for the member
+PASS  pending slot cleared (the decision cannot run twice)
+PASS  username registry keeps both candidate addresses (immutable document rules)  | email ngf***@mailinator.com · emailAlt ngf***@mailinator.com
+PASS  alias document created for the new address (login before the link is opened)  | {"uid":"uRPbBv0MLNg5CsrM0fEVDkcaoW83","type":"email","login":"ngf-e2e-mu5596iq@mailinator.
+PASS  old address marked retired  | {"uid":"uRPbBv0MLNg5CsrM0fEVDkcaoW83","type":"email","retired":true,"movedTo":"ngf-e2e-mu5
+PASS  a second approval is refused (not-found)  | not-found
+--- phase: login paths
+
+2 check(s) FAILED
+FAIL  login with the NEW address works  | error wrong-credentials
+FAIL  login with the USERNAME still works (no lock-out)  | error wrong-credentials
+FAIL  the OLD address is refused with a clear message (NO-ERROR)  | NO-ERROR
+PASS  confirmation mail requested from the member session ({"status":"sent","to":"ngf-e2e-mu5596iq.new@mailinator.com"})  | {"status":"sent","to":"ngf-e2e-mu5596iq.new@mailinator.com"}
+PASS  the send is recorded on the record for the status banner  | {"to":"ngf-e2e-mu5596iq.new@mailinator.com","status":"sent","sentAt":"2026-09-17T06:24:09.156Z","requestedBy":"member-session"}
+PASS  reconcile keeps the approved address while the link is pending  | returned {"from":"ngf-e2e-mu5596iq.new@mailinator.com","to":"ngf-e2e-mu5596iq@mailinator.com","pending":"ngf-e2e-mu5596iq.new@mailinator.com","applied":false} · record ngf***@mailinator.com
+PASS  applyEmailChange either confirms the address or asks for a password (verify-sent)  | verify-sent
+PASS  a rejection leaves the account address untouched  | ngf***@mailinator.com
+FAIL  the rejection is recorded with its status  | {}
+PASS  the member can ask again after a rejection
+--- phase: finished
+
+6 check(s) FAILED
+
+6 check(s) FAILED

@@ -1,0 +1,194 @@
+{
+  "at": "2026-09-17T06:24:18.469Z",
+  "phase": "finished",
+  "adapter": "assets/js/firebase-adapter.js",
+  "project": "nextgen-fund-2040",
+  "failures": 6,
+  "checks": [
+    {
+      "name": "settings/bootstrap gives the admin account",
+      "ok": true,
+      "detail": "pvMeMRnI…"
+    },
+    {
+      "name": "account rocky: record e-mail ↔ login e-mail agree",
+      "ok": true,
+      "detail": "record vea***@gmail.com · auth vea***@gmail.com"
+    },
+    {
+      "name": "account admin: record e-mail ↔ login e-mail agree",
+      "ok": true,
+      "detail": "record iam***@gmail.com · auth iam***@gmail.com"
+    },
+    {
+      "name": "account rafiul: record e-mail ↔ login e-mail agree",
+      "ok": true,
+      "detail": "record tem***@gmail.com · auth tem***@gmail.com"
+    },
+    {
+      "name": "e-mail alias documents exist for sign-in by address",
+      "ok": true,
+      "detail": "0 alias document(s)"
+    },
+    {
+      "name": "the browser SDK imports were redirected for Node (4/4)",
+      "ok": true,
+      "detail": "assets/js/firebase-adapter.js"
+    },
+    {
+      "name": "the site configuration was readable (apiKey + projectId)",
+      "ok": true,
+      "detail": "nextgen-fund-2040"
+    },
+    {
+      "name": "the adapter registered its backend",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes resolveLogin()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes signInByIdentifier()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes sendPendingEmailVerification()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes createAccountRequest()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes decideAccountRequest()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the adapter exposes applyEmailChange()",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "malformed address refused (email-bad)",
+      "ok": true,
+      "detail": "email-bad"
+    },
+    {
+      "name": "member request stored on the record, status pending",
+      "ok": true,
+      "detail": "id u-uRPbBv0MLNg5 · fields [\"email\"]"
+    },
+    {
+      "name": "the request keeps old and new address (durable audit data)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "APPROVAL CHANGES THE RECORD: users/{uid}.email is the new address",
+      "ok": true,
+      "detail": "ngf***@mailinator.com"
+    },
+    {
+      "name": "the member record no longer shows the old address",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "confirmation state written for the member session",
+      "ok": true,
+      "detail": "ngf***@mailinator.com"
+    },
+    {
+      "name": "decision kept in the permanent history",
+      "ok": false,
+      "detail": "{}"
+    },
+    {
+      "name": "in-app notice written for the member",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "pending slot cleared (the decision cannot run twice)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "username registry keeps both candidate addresses (immutable document rules)",
+      "ok": true,
+      "detail": "email ngf***@mailinator.com · emailAlt ngf***@mailinator.com"
+    },
+    {
+      "name": "alias document created for the new address (login before the link is opened)",
+      "ok": true,
+      "detail": "{\"uid\":\"uRPbBv0MLNg5CsrM0fEVDkcaoW83\",\"type\":\"email\",\"login\":\"ngf-e2e-mu5596iq@mailinator."
+    },
+    {
+      "name": "old address marked retired",
+      "ok": true,
+      "detail": "{\"uid\":\"uRPbBv0MLNg5CsrM0fEVDkcaoW83\",\"type\":\"email\",\"retired\":true,\"movedTo\":\"ngf-e2e-mu5"
+    },
+    {
+      "name": "a second approval is refused (not-found)",
+      "ok": true,
+      "detail": "not-found"
+    },
+    {
+      "name": "login with the NEW address works",
+      "ok": false,
+      "detail": "error wrong-credentials"
+    },
+    {
+      "name": "login with the USERNAME still works (no lock-out)",
+      "ok": false,
+      "detail": "error wrong-credentials"
+    },
+    {
+      "name": "the OLD address is refused with a clear message (NO-ERROR)",
+      "ok": false,
+      "detail": "NO-ERROR"
+    },
+    {
+      "name": "confirmation mail requested from the member session ({\"status\":\"sent\",\"to\":\"ngf-e2e-mu5596iq.new@mailinator.com\"})",
+      "ok": true,
+      "detail": "{\"status\":\"sent\",\"to\":\"ngf-e2e-mu5596iq.new@mailinator.com\"}"
+    },
+    {
+      "name": "the send is recorded on the record for the status banner",
+      "ok": true,
+      "detail": "{\"to\":\"ngf-e2e-mu5596iq.new@mailinator.com\",\"status\":\"sent\",\"sentAt\":\"2026-09-17T06:24:09.156Z\",\"requestedBy\":\"member-session\"}"
+    },
+    {
+      "name": "reconcile keeps the approved address while the link is pending",
+      "ok": true,
+      "detail": "returned {\"from\":\"ngf-e2e-mu5596iq.new@mailinator.com\",\"to\":\"ngf-e2e-mu5596iq@mailinator.com\",\"pending\":\"ngf-e2e-mu5596iq.new@mailinator.com\",\"applied\":false} · record ngf***@mailinator.com"
+    },
+    {
+      "name": "applyEmailChange either confirms the address or asks for a password (verify-sent)",
+      "ok": true,
+      "detail": "verify-sent"
+    },
+    {
+      "name": "a rejection leaves the account address untouched",
+      "ok": true,
+      "detail": "ngf***@mailinator.com"
+    },
+    {
+      "name": "the rejection is recorded with its status",
+      "ok": false,
+      "detail": "{}"
+    },
+    {
+      "name": "the member can ask again after a rejection",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
