@@ -1,0 +1,6 @@
+usernames documents: 3
+FIXED  rafi | nr***@g*** -> te***@g***
+FIXED  raif | ra***@n*** -> ve***@g***
+
+result: 2 fixed, 1 already correct, 0 skipped
+mode: WRITE
