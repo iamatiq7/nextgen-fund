@@ -1,4 +1,4 @@
-== 2026-09-17T05:00:10Z rules release attempt for nextgen-fund-2040 ==
+== 2026-09-17T06:04:57Z rules release attempt for nextgen-fund-2040 ==
 -- release --
 0) access token minted, length 1024 for firebase-adminsdk-fbsvc@nextgen-fund-2040.iam.gserviceaccount.com
 1) ruleset upload -> http 200
@@ -6,7 +6,7 @@
    release create -> http 403
    {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"IAM_PERMISSION_DENIED","domain":"iam.googleapis.com","metadata":{"resource":"projects/nextgen-fund-2040","error_info_id":"CiQwMWE
 3) release read-back -> http 200
-   active ruleset: projects/nextgen-fund-2040/rulesets/7ca56345-eae1-49ca-88bb-7b17e64c8fad
+   active ruleset: projects/nextgen-fund-2040/rulesets/54758de9-e949-4f9a-aea3-d868532eb207
    matches the uploaded ruleset: NO
 
 RESULT: RELEASE NOT CONFIRMED
