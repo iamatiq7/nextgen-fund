@@ -690,7 +690,7 @@ async function listNomineeRequests(status) {
           /* the member record holds the address that is actually live in Authentication;
              the registry copy can lag behind after an e-mail change, so it is only a fallback. */
           var rec = null;
-          try { rec = await getDoc('users', map.uid); } catch (eRec) { rec = null; }
+          try { rec = await getDoc('users', map.uid); } catch (eRec) { rec = null; }   /* refused while signed out */
           var recEmail = (rec && rec.email) ? String(rec.email).toLowerCase() : '';
           email = recEmail || String(map.email || '').toLowerCase();
           if (!email) throw err('wrong-credentials', 'This username has no email on file yet - log in with the email address instead.');
@@ -704,6 +704,16 @@ async function listNomineeRequests(status) {
         var cu = auth.currentUser;
         var u = await userDoc(cu.uid);
         if (!u) { await authMod.signOut(auth); throw err('wrong-credentials', 'Account not found.'); }
+        /* self-healing: the public username registry is what a signed-out login reads, so it is
+           kept in step with the address that just signed in. After an e-mail change this makes
+           username login work again without the member doing anything. */
+        try {
+          var uname = String(u.username || '').toLowerCase();
+          var live = String((cu && cu.email) || '').toLowerCase();
+          if (uname && live && String((await getDoc('usernames', uname) || {}).email || '').toLowerCase() !== live) {
+            await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid, email: live });
+          }
+        } catch (eHeal) { /* never block a login on this */ }
         if (u.status === 'pending') { await authMod.signOut(auth); throw err('pending', 'Your registration is still awaiting admin approval.'); }
         if (u.status === 'rejected') { await authMod.signOut(auth); throw err('rejected', 'Your registration was not approved. Contact the fund admin.'); }
         if (u.status === 'suspended') { await authMod.signOut(auth); throw err('suspended', 'This account is suspended. Contact the fund admin.'); }
