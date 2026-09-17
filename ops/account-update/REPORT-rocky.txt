@@ -1,0 +1,28 @@
+stage: rocky | member: roky (ve***@g***)
+
+field            | before                -> after
+-----------------|-----------------------------------------------
+fullName         | Rafi                 -> Rocky
+username         | roky                 -> rocky
+email            | ve***@g***           -> nr***@g***
+phone            | 01235984656          -> 01329693997
+shares           | 1                    -> 3
+password         | (unchanged here)      -> (set)
+auth login email | ve***@g*** -> nr***@g***
+
+profile fields written: fullName, username, phone, shares
+auth e-mail updated
+old registry entry removed: roky
+registry now maps rocky -> nr***@g***
+password updated
+
+audit entry written
+
+read-back (what the app will show)
+  fullName  : Rocky  OK
+  username  : rocky  OK
+  phone     : 01329693997  OK
+  shares    : 3  OK
+  email     : nr***@g***  OK
+  auth email: nr***@g***  OK
+  registry  : {"uid":true,"email":"nr***@g***"}
