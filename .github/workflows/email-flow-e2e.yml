@@ -1,0 +1,62 @@
+name: E-mail change flow — live end-to-end test
+
+# Proof job. It answers two questions with live data:
+#   1. is every account's Firestore e-mail identical to its Firebase Auth e-mail (read-only), and
+#   2. does the whole request -> approve -> login flow work when the REAL assets/js/firebase-adapter.js
+#      is executed against the real project (on a disposable probe account that is deleted afterwards).
+#
+# Guard: the first line of ops/email-flow-e2e/TRIGGER must be exactly
+#   run 2026-09-17
+# Nothing runs otherwise. The probe account is created and removed inside this job; no member record
+# is modified. The service-account key is written to a temporary file and deleted before the job ends.
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ops/email-flow-e2e/TRIGGER', '.github/workflows/email-flow-e2e.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: write the service account key
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -e
+          printf '%s' "$SA" > sa.json
+          node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
+
+      - name: install the SDKs (browser SDK is what the site uses)
+        run: npm i --no-save --loglevel=error firebase-admin@12 firebase@10.12.2
+
+      - name: check the guard
+        id: guard
+        run: |
+          set -e
+          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+
+      - name: run the flow test
+        if: steps.guard.outputs.armed == 'yes'
+        env:
+          DRY_RUN: 'false'
+        run: node ops/email-flow-e2e/run.mjs --adapter=assets/js/firebase-adapter.js
+
+      - name: publish the report
+        if: always()
+        run: |
+          rm -rf .e2e sa.json
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add -f ops/email-flow-e2e/REPORT.md ops/email-flow-e2e/REPORT.json || true
+          git commit -m 'chore(email-flow-e2e): report' || true
+          git push || true
