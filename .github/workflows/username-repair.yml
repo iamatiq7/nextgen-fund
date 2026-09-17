@@ -1,0 +1,73 @@
+name: Repair the username registry
+
+# One-shot maintenance job.
+# Why: a member cannot write usernames/{name} under the published rules, so an outdated address
+# that was stored there at registration blocks username login. This job aligns every
+# usernames/{name} document with users/{uid}.email using the repository's service account.
+#
+# Guard: the first line of ops/username-repair/TRIGGER must be exactly
+#   sync 2026-09-17
+# Nothing runs otherwise. It only ever rewrites the two fields (uid, email) of the documents
+# that differ; it never deletes anything and never touches a password.
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ops/username-repair/TRIGGER', '.github/workflows/username-repair.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: write the service account key
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -e
+          printf '%s' "$SA" > sa.json
+          node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
+
+      - name: install the admin sdk
+        run: npm i --no-save firebase-admin@12
+
+      - name: check the guard
+        id: guard
+        run: |
+          set -e
+          head -n 1 ops/username-repair/TRIGGER | grep -qx 'sync 2026-09-17' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+
+      - name: dry run (nothing is written)
+        if: steps.guard.outputs.armed == 'yes'
+        env:
+          SA_KEY: ./sa.json
+          DRY_RUN: 'true'
+        run: node ops/username-repair/repair.mjs
+
+      - name: write the corrections
+        if: steps.guard.outputs.armed == 'yes'
+        env:
+          SA_KEY: ./sa.json
+          DRY_RUN: 'false'
+        run: node ops/username-repair/repair.mjs
+
+      - name: publish the report
+        if: always()
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add -f ops/username-repair/REPORT.txt || true
+          git commit -m 'chore(username-repair): report' || true
+          git push || true
+
+      - name: remove the key
+        if: always()
+        run: rm -f sa.json
