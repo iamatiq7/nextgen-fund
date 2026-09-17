@@ -1,0 +1,72 @@
+name: Apply approved e-mail changes
+
+# One-shot maintenance job.
+# Why: Firebase Authentication only lets the signed-in member change their own login address, so an
+# admin approval alone cannot complete it from the browser. This job does it with the service
+# account: Authentication e-mail + users/{uid}.email + usernames/{name} + an audit entry.
+#
+# Guard: the first line of ops/email-apply/TRIGGER must be exactly
+#   apply 2026-09-17
+# Nothing runs otherwise. It only touches records that carry emailChangePending.
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ops/email-apply/TRIGGER', '.github/workflows/email-apply.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: write the service account key
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -e
+          printf '%s' "$SA" > sa.json
+          node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
+
+      - name: install the admin sdk
+        run: npm i --no-save firebase-admin@12
+
+      - name: check the guard
+        id: guard
+        run: |
+          set -e
+          head -n 1 ops/email-apply/TRIGGER | grep -qx 'apply 2026-09-17' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+
+      - name: dry run first (nothing is written)
+        if: steps.guard.outputs.armed == 'yes'
+        env:
+          SA_KEY: sa.json
+          DRY_RUN: 'true'
+        run: node ops/email-apply/apply.mjs
+
+      - name: apply the approved changes
+        if: steps.guard.outputs.armed == 'yes'
+        env:
+          SA_KEY: sa.json
+          DRY_RUN: 'false'
+        run: node ops/email-apply/apply.mjs
+
+      - name: publish the report
+        if: always()
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add -f ops/email-apply/REPORT.txt || true
+          git commit -m 'chore(email-apply): report' || true
+          git push || true
+
+      - name: remove the key
+        if: always()
+        run: rm -f sa.json
