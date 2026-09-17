@@ -687,8 +687,17 @@ async function listNomineeRequests(status) {
         if (email.indexOf('@') < 0) {
           var map = await getDoc('usernames', email);
           if (!map || !map.uid) throw err('wrong-credentials', 'Wrong username or password.');
-          if (!map.email) throw err('wrong-credentials', 'This username has no email on file yet - log in with the email address instead.');
-          email = String(map.email).toLowerCase();
+          /* the member record holds the address that is actually live in Authentication;
+             the registry copy can lag behind after an e-mail change, so it is only a fallback. */
+          var rec = null;
+          try { rec = await getDoc('users', map.uid); } catch (eRec) { rec = null; }
+          var recEmail = (rec && rec.email) ? String(rec.email).toLowerCase() : '';
+          email = recEmail || String(map.email || '').toLowerCase();
+          if (!email) throw err('wrong-credentials', 'This username has no email on file yet - log in with the email address instead.');
+          /* keep the registry in step when it was the stale side */
+          if (recEmail && String(map.email || '').toLowerCase() !== recEmail) {
+            try { await fsMod.setDoc(docIn('usernames', String(map.id || '')), { uid: map.uid, email: recEmail }); } catch (eSync) { }
+          }
         }
         try { await authMod.signInWithEmailAndPassword(auth, email, password); }
         catch (e) { throw err('wrong-credentials', 'Wrong username or password.'); }
@@ -784,6 +793,29 @@ async function listNomineeRequests(status) {
       },
 
       /* ---------- member ---------- */
+      /* If an e-mail change was completed on Firebase's own verification page, Authentication
+         already has the new address while the record still shows the old one. Reading the account
+         reconciles the two, so the profile, the login and the registry always agree. */
+      reconcileEmail: async function () {
+        var user = auth.currentUser;
+        if (!user) return null;
+        var uid = user.uid;
+        var live = String(user.email || '').trim();
+        if (!live) return null;
+        var doc = await userDoc(uid);
+        if (!doc) return null;
+        var mine = String(doc.email || '');
+        if (mine.toLowerCase() === live.toLowerCase() && !doc.emailChangePending) return null;
+        var patch = { email: live, emailChangePending: null, emailChangedAt: new Date().toISOString() };
+        await fsMod.updateDoc(docIn('users', uid), patch);
+        try {
+          var un = String(doc.username || '').toLowerCase();
+          if (un) await fsMod.setDoc(docIn('usernames', un), { uid: uid, email: live });
+        } catch (eMap) { }
+        await writeAudit({ action: 'email.changed', memberId: uid, detail: mine + ' -> ' + live + ' (reconciled from the login account)' });
+        return { from: mine, to: live };
+      },
+
       getMyAccount: async function () {
         var uid = await myUid();
         var u = await userDoc(uid);

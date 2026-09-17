@@ -541,7 +541,7 @@
       tries++;
       var host = document.getElementById('portal-content');
       var ready = host && !host.classList.contains('hide') && !document.getElementById('sec-nominee');
-      if (ready) { try { await renderRequests(); } catch (e) { } try { setupSections(); } catch (e) { } }
+      if (ready) { try { await S.reconcileEmail(); } catch (e) { } try { await renderRequests(); } catch (e) { } try { setupSections(); } catch (e) { } }
       if (ready || tries > 40) clearInterval(timer);
     }, 250);
   })();

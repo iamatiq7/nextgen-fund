@@ -358,7 +358,11 @@
       return { fullName: clean };
     },
 
-    applyEmailChange: async function (password, correctedEmail) {
+    reconcileEmail: async function () {
+    if (Store.mode === 'firebase') return Store._fb.reconcileEmail();
+    return null;                                   /* demo mode has no separate auth record */
+  },
+  applyEmailChange: async function (password, correctedEmail) {
     if (Store.mode === 'firebase') return Store._fb.applyEmailChange(password, correctedEmail);
     var s2 = Store._requireLogin();
     var db = Store._d();
