@@ -1,4 +1,4 @@
-﻿name: E-mail change flow â€” live end-to-end test
+name: E-mail change flow — live end-to-end test
 
 # Proof job. It answers two questions with live data:
 #   1. is every account's Firestore e-mail identical to its Firebase Auth e-mail (read-only), and
@@ -6,9 +6,11 @@
 #      is executed against the real project (on a disposable probe account that is deleted afterwards).
 #
 # Guard: the first line of ops/email-flow-e2e/TRIGGER must be exactly
-#   run 2026-09-17
+#   run 2026-09-17c
 # Nothing runs otherwise. The probe account is created and removed inside this job; no member record
 # is modified. The service-account key is written to a temporary file and deleted before the job ends.
+# The report is published both on main (best effort) and on the branch ci-email-flow-report, because
+# several workflows push to main at the same time and a push can lose that race.
 
 on:
   push:
@@ -43,16 +45,14 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17b' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17c' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the flow test
         if: steps.guard.outputs.armed == 'yes'
-        env:
-          DRY_RUN: 'false'
         run: |
           set +e
           node ops/email-flow-e2e/run.mjs --adapter=assets/js/firebase-adapter.js 2>&1 | tee ops/email-flow-e2e/LOG.txt
-          echo "exit=$?"
+          echo "harness exit=$?"
           exit 0
 
       - name: publish the report
@@ -61,6 +61,16 @@ jobs:
           rm -rf .e2e sa.json
           git config user.name 'github-actions'
           git config user.email 'github-actions@users.noreply.github.com'
+          git checkout -B ci-email-flow-report
           git add -f ops/email-flow-e2e/REPORT.md ops/email-flow-e2e/REPORT.json ops/email-flow-e2e/LOG.txt || true
           git commit -m 'chore(email-flow-e2e): report' || true
-          git push || true
+          for i in 1 2 3 4 5; do
+            git push -f origin ci-email-flow-report && break
+            sleep 5
+          done
+          git checkout main || true
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main >/dev/null 2>&1 || true
+            git push origin main && break
+            sleep 5
+          done
