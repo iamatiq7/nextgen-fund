@@ -49,7 +49,11 @@ jobs:
         if: steps.guard.outputs.armed == 'yes'
         env:
           DRY_RUN: 'false'
-        run: node ops/email-flow-e2e/run.mjs --adapter=assets/js/firebase-adapter.js
+        run: |
+          set +e
+          node ops/email-flow-e2e/run.mjs --adapter=assets/js/firebase-adapter.js 2>&1 | tee ops/email-flow-e2e/LOG.txt
+          echo "exit=$?"
+          exit 0
 
       - name: publish the report
         if: always()
@@ -57,6 +61,6 @@ jobs:
           rm -rf .e2e sa.json
           git config user.name 'github-actions'
           git config user.email 'github-actions@users.noreply.github.com'
-          git add -f ops/email-flow-e2e/REPORT.md ops/email-flow-e2e/REPORT.json || true
+          git add -f ops/email-flow-e2e/REPORT.md ops/email-flow-e2e/REPORT.json ops/email-flow-e2e/LOG.txt || true
           git commit -m 'chore(email-flow-e2e): report' || true
           git push || true

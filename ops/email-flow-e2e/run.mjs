@@ -13,6 +13,13 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const results = [];
 let failures = 0;
+let phaseName = 'start';
+function phase(name) {
+  phaseName = name;
+  console.log('--- phase: ' + name);
+  try { writeReport(saRef && saRef.project_id); } catch (e) { }
+}
+let saRef = null;
 function check(name, ok, detail) {
   results.push({ name, ok: !!ok, detail: detail === undefined ? '' : String(detail) });
   if (!ok) failures++;
@@ -30,12 +37,12 @@ function loadSa() {
 }
 
 function writeReport(project) {
-  const payload = { at: new Date().toISOString(), adapter: adapterArg || 'repository copy', project: project || '', failures, checks: results };
+  const payload = { at: new Date().toISOString(), phase: phaseName, adapter: adapterArg || 'repository copy', project: project || '', failures, checks: results };
   const dir = path.join(ROOT, 'ops', 'email-flow-e2e');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'REPORT.json'), JSON.stringify(payload, null, 2), 'utf8');
   const md = ['# যাচাই প্রতিবেদন — সদস্যের ইমেইল পরিবর্তনের সম্পূর্ণ ফ্লো', '',
-    '- সময়: ' + payload.at, '- প্রকল্প: ' + payload.project, '- পরীক্ষিত কোড: ' + payload.adapter,
+    '- শেষ ধাপ: ' + payload.phase, '- সময়: ' + payload.at, '- প্রকল্প: ' + payload.project, '- পরীক্ষিত কোড: ' + payload.adapter,
     '- ফলাফল: **' + (failures ? failures + 'টি পরীক্ষা ব্যর্থ' : 'সব পরীক্ষা পাস') + '**', '',
     '| পরীক্ষা | ফল | বিবরণ |', '|---|---|---|',
     ...results.map((r) => '| ' + String(r.name).replace(/\|/g, '/') + ' | ' + (r.ok ? 'PASS' : 'FAIL') + ' | ' + (r.detail || '').replace(/\|/g, '/') + ' |'), ''].join('\n');
@@ -48,10 +55,20 @@ const liveOnly = ARGS.includes('--live-only');
 const adapterArg = (ARGS.find((a) => a.startsWith('--adapter=')) || '').split('=')[1];
 
 const sa = loadSa();
+saRef = sa;
 if (!sa || !sa.private_key) {
   console.log('SKIP: no service-account key (sa.json / SA_KEY) — nothing was tested.');
   process.exit(3);
 }
+
+function bail(e) {
+  try { check('the test stopped early: ' + (e && e.message ? e.message : String(e)), false, e && e.stack ? String(e.stack).split('\n').slice(1, 3).join(' | ') : ''); } catch (x) { }
+  try { writeReport(saRef && saRef.project_id); } catch (x) { }
+  process.exit(1);
+}
+process.on('uncaughtException', bail);
+process.on('unhandledRejection', bail);
+phase('import the admin SDK');
 
 const adminPkg = await import('firebase-admin');
 const admin = adminPkg.default || adminPkg;
@@ -60,6 +77,7 @@ const db = admin.firestore();
 const authAdmin = admin.auth();
 
 async function liveState() {
+  phase('read the live project state');
   console.log('\n== live state (read-only) ==');
   const boot = await db.doc('settings/bootstrap').get().catch(() => null);
   const adminUid = boot && boot.exists ? String(boot.data().adminUid || '') : '';
@@ -94,6 +112,7 @@ function prelude() {
 }
 
 async function loadAdapter() {
+  phase('load and prepare the real adapter');
   const src0 = fs.readFileSync(adapterArg || path.join(ROOT, 'assets', 'js', 'firebase-adapter.js'), 'utf8');
   const map = [['firebase-app.js', 'firebase/app'], ['firebase-auth.js', 'firebase/auth'],
                ['firebase-firestore.js', 'firebase/firestore'], ['firebase-storage.js', './stub-storage.mjs']];
@@ -141,6 +160,7 @@ async function loadAdapter() {
 }
 
 async function scenario(L, adminUid) {
+  phase('run the request -> approve -> login scenario');
   const { fb, authMod } = L;
   const auth = authMod.getAuth();
   const tag = 'ngf-e2e-' + Date.now().toString(36);
@@ -183,6 +203,7 @@ async function scenario(L, adminUid) {
     /* --- the admin approves --- */
     await authMod.signOut(auth);
     await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(adminUid));
+    phase('admin approval');
     await fb.decideAccountRequest(id, true, 'e2e-admin');
 
     const after = (await db.doc('users/' + rec.uid).get()).data();
@@ -207,6 +228,7 @@ async function scenario(L, adminUid) {
     check('a second approval is refused (' + code + ')', /not-found|pending|already|decided/i.test(String(code)), code);
 
     /* --- login paths --- */
+    phase('login paths');
     await authMod.signOut(auth);
     let sess = null;
     try { sess = await fb.signInByIdentifier(newMail, pw); } catch (e) { code = e && (e.code || e.message); }
@@ -283,6 +305,7 @@ try {
 } catch (e) {
   check('the test ran to completion without a crash', false, (e && e.stack ? String(e.stack).split('\n').slice(0, 3).join(' | ') : String(e)));
 } finally {
+  phase('finished');
   writeReport(sa.project_id);
 }
 process.exit(failures ? 1 : 0);
