@@ -6,7 +6,7 @@
 #      is executed against the real project (on a disposable probe account that is deleted afterwards).
 #
 # Guard: the first line of ops/email-flow-e2e/TRIGGER must be exactly
-#   run 2026-09-17d
+#   run 2026-09-17e
 # Nothing runs otherwise. The probe account is created and removed inside this job; no member record
 # is modified. The service-account key is written to a temporary file and deleted before the job ends.
 # The report is published both on main (best effort) and on the branch ci-email-flow-report, because
@@ -45,7 +45,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17d' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/email-flow-e2e/TRIGGER | grep -qx 'run 2026-09-17e' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the flow test
         if: steps.guard.outputs.armed == 'yes'

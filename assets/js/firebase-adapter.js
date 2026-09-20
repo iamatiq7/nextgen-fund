@@ -599,7 +599,8 @@ async function listNomineeRequests(status) {
       if (d) {
         if (d.retired === true) return { kind: 'retired', candidates: [], uid: d.uid || '', movedTo: d.movedTo || '' };
         var cands = [];
-        [d.email, d.emailAlt, key].forEach(function (v) {
+        /* the username registry carries email/emailAlt; an address alias carries login/loginAlt */
+        [d.email, d.emailAlt, d.login, d.loginAlt, key].forEach(function (v) {
           var s = String(v || '').trim();
           if (s && cands.indexOf(s.toLowerCase()) < 0) cands.push(s);
         });
