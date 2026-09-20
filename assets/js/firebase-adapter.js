@@ -233,8 +233,8 @@ function withTimeout(p, ms, tag) {
         else if (ch.field === 'email') {
           if (!validEmail(ch.to)) throw err('email-bad', 'email-bad');   /* never store an address that cannot be a login id */
           /* an address that already belongs to somebody else can never become a login id */
-          var takenBy = await fsMod.getDoc(docIn('usernames', String(ch.to).toLowerCase()));
-          if (takenBy && takenBy.exists() && String((takenBy.data() || {}).uid || '') !== String(row.memberId)) throw err('email-held', 'email-held');
+          var takenBy = await getDoc('usernames', String(ch.to).toLowerCase());
+          if (takenBy && String(takenBy.uid || '') && String(takenBy.uid) !== String(row.memberId)) throw err('email-held', 'email-held');
           patch.email = ch.to;                  /* the record carries the new address at once, so the member sees the change */
           patch.emailChangePending = ch.to;     /* Authentication switches over from the member's own session (confirmation link) */
           patch.emailVerification = { to: ch.to, status: 'awaiting-member', requestedAt: new Date().toISOString() };
@@ -271,16 +271,16 @@ function withTimeout(p, ms, tag) {
         var oldLow = String(cur.email || '').toLowerCase();
         /* the new address already resolves to this account for login, before the link is opened */
         try {
-          var aliasNew = await fsMod.getDoc(docIn('usernames', newLow));
-          if (!(aliasNew && aliasNew.exists())) {
+          var aliasNew = await getDoc('usernames', newLow);
+          if (!aliasNew) {
             await fsMod.setDoc(docIn('usernames', newLow), { uid: row.memberId, type: 'email', login: String(cur.email || ''), loginAlt: emailTarget, createdAt: new Date().toISOString() });
           }
         } catch (eAlias) { /* the record change is what matters; the alias only makes the new address usable straight away */ }
         /* the old address stops being a way in: it is marked as moved */
         try {
           if (oldLow && oldLow !== newLow) {
-            var aliasOld = await fsMod.getDoc(docIn('usernames', oldLow));
-            if (!(aliasOld && aliasOld.exists())) {
+            var aliasOld = await getDoc('usernames', oldLow);
+            if (!aliasOld) {
               await fsMod.setDoc(docIn('usernames', oldLow), { uid: row.memberId, type: 'email', retired: true, movedTo: emailTarget });
             }
           }
@@ -290,19 +290,58 @@ function withTimeout(p, ms, tag) {
           var unameNow = String(cur.username || '').toLowerCase();
           if (unameNow) {
             try {
-              var regNow = await fsMod.getDoc(docIn('usernames', unameNow));
+              var regNow = await getDoc('usernames', unameNow);
               var regLive2 = String(cur.email || '');
               var regPatch = { uid: row.memberId, email: regLive2 || emailTarget };
               if (newLow !== regLive2.toLowerCase()) regPatch.emailAlt = emailTarget;
-              if (regNow && regNow.exists()) await fsMod.deleteDoc(docIn('usernames', unameNow));
+              if (regNow) await fsMod.deleteDoc(docIn('usernames', unameNow));
               await fsMod.setDoc(docIn('usernames', unameNow), regPatch);
             } catch (eReg) { }
           }
         }
       }
+      /* a permanent record of the decision: what was changed, when, and by whom */
+      var decidedAt = new Date().toISOString();
+      var hist = (cur.accountRequests || []).slice(0, 19);
+      hist.unshift({
+        id: String(id || ''),
+        fields: (row.changes || []).map(function (c) { return c.field; }),
+        from: String(cur.email || ''), to: emailTarget || String(patch.email || ''),
+        status: 'approved', requestedAt: String(row.requestedAt || ''), decidedAt: decidedAt,
+        decidedBy: String(byName || ''), note: String(row.reason || ''),
+        changes: (row.changes || []).map(function (c) { return { field: c.field, from: c.from, to: c.to }; })
+      });
+      patch.accountRequests = hist;
+      patch.accountNotice = {
+        kind: 'approved', at: decidedAt, read: false, by: String(byName || ''),
+        text: emailTarget
+          ? 'Your e-mail change was approved. The account now shows ' + emailTarget + ' - open the confirmation link sent to that address to finish the switch.'
+          : 'Your change request was approved.'
+      };
       await fsMod.updateDoc(docIn('users', row.memberId), patch);
       await writeAudit({ action: 'account.approve', memberId: row.memberId, detail: JSON.stringify(patch).slice(0, 300) });
     } else {
+      var prevRec = null;
+      try { prevRec = await userDoc(row.memberId); } catch (ePrev) { prevRec = null; }
+      var rejAt = new Date().toISOString();
+      var histR = ((prevRec && prevRec.accountRequests) || []).slice(0, 19);
+      histR.unshift({
+        id: String(id || ''),
+        fields: (row.changes || []).map(function (c) { return c.field; }),
+        from: String((prevRec && prevRec.email) || ''), to: String(((row.changes || [])[0] || {}).to || ''),
+        status: 'rejected', requestedAt: String(row.requestedAt || ''), decidedAt: rejAt,
+        decidedBy: String(byName || ''), note: String(row.reason || ''),
+        changes: (row.changes || []).map(function (c) { return { field: c.field, from: c.from, to: c.to }; })
+      });
+      try {
+        await fsMod.updateDoc(docIn('users', row.memberId), {
+          accountRequests: histR,
+          accountNotice: {
+            kind: 'rejected', at: rejAt, read: false, by: String(byName || ''),
+            text: 'Your change request was not approved.' + (row.reason ? ' Reason: ' + row.reason : '') + ' You can send a new request from your account page.'
+          }
+        });
+      } catch (eRejWrite) { /* the audit below is the fallback record */ }
       await writeAudit({ action: 'account.reject', memberId: row.memberId, detail: (row.reason || '') + ' | ' + JSON.stringify(row.changes || []).slice(0, 200) });
     }
     var clear = {}; clear.pendingAccountRequest = null;
@@ -556,9 +595,8 @@ async function listNomineeRequests(status) {
     var key = raw.toLowerCase();
     if (!key) return { kind: 'unknown', candidates: [], typed: raw };
     try {
-      var map = await getDoc('usernames', key);            /* public: readable while signed out */
-      if (map && map.exists()) {
-        var d = map.data() || {};
+      var d = await getDoc('usernames', key);              /* public: readable while signed out */
+      if (d) {
         if (d.retired === true) return { kind: 'retired', candidates: [], uid: d.uid || '', movedTo: d.movedTo || '' };
         var cands = [];
         [d.email, d.emailAlt, key].forEach(function (v) {
@@ -584,7 +622,7 @@ async function listNomineeRequests(status) {
       var live = String((cu && cu.email) || '').toLowerCase();
       if (uname && live) {
         var snapU = await getDoc('usernames', uname);
-        var have = snapU && snapU.exists() ? String((snapU.data() || {}).email || '').toLowerCase() : '';
+        var have = snapU ? String(snapU.email || '').toLowerCase() : '';
         if (have && have !== live) await fsMod.setDoc(docIn('usernames', uname), { uid: cu.uid, email: live, emailAlt: u.emailChangePending || u.email || live });
       }
     } catch (eHeal) { /* never block a login on this */ }
