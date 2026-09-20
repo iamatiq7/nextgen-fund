@@ -48,7 +48,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20b' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20c' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the proof
         if: steps.guard.outputs.armed == 'yes'
@@ -58,37 +58,36 @@ jobs:
           echo "harness exit=$?"
           exit 0
 
-      - name: collect evidence (always, readable on main)
+      - name: publish an evidence file on its own branch (always)
         if: always()
         run: |
+          rm -rf .e2e sa.json
           {
             echo "# ops proof — evidence"
             echo "head: $GITHUB_SHA"
             echo "when: $(date -u +%FT%TZ)"
             echo
-            echo "## files the harness produced"
+            echo "## files produced by the harness"
             ls -l ops/admin-ops-e2e/ || true
             echo
-            echo "## first 60 lines of the harness output"
-            head -n 60 ops/admin-ops-e2e/LOG.txt 2>/dev/null || echo "(no LOG.txt)"
-            echo
             echo "## tail of the harness output"
-            tail -n 30 ops/admin-ops-e2e/LOG.txt 2>/dev/null || echo "(no LOG.txt)"
+            tail -n 90 ops/admin-ops-e2e/LOG.txt 2>/dev/null || echo "(no LOG.txt)"
             echo
             echo "## report"
-            head -n 80 ops/admin-ops-e2e/REPORT.md 2>/dev/null || echo "(no REPORT.md)"
-          } > ops/admin-ops-e2e/STATUS.txt
+            cat ops/admin-ops-e2e/REPORT.md 2>/dev/null || echo "(no REPORT.md)"
+            echo
+            echo "## retention job output"
+            cat ops/retention/REPORT.txt 2>/dev/null || echo "(no retention report)"
+          } > ops/admin-ops-e2e/EVIDENCE.txt
           git config user.name 'github-actions'
           git config user.email 'github-actions@users.noreply.github.com'
-          git add -f ops/admin-ops-e2e/STATUS.txt ops/admin-ops-e2e/REPORT.md ops/admin-ops-e2e/REPORT.json ops/admin-ops-e2e/LOG.txt ops/retention/REPORT.txt ops/email-apply/REPORT.txt || true
+          git checkout -B ci-admin-ops-report
+          git add -f ops/admin-ops-e2e/EVIDENCE.txt ops/admin-ops-e2e/REPORT.md ops/admin-ops-e2e/REPORT.json ops/admin-ops-e2e/LOG.txt ops/admin-ops-e2e/STATUS.txt ops/retention/REPORT.txt ops/retention/DRYRUN.txt ops/retention/RUN.txt ops/email-apply/REPORT.txt || true
           git commit -m 'chore(admin-ops-e2e): evidence' || true
-          for i in 1 2 3 4 5; do
-            git pull --rebase --autostash origin main >/dev/null 2>&1 || true
-            git push origin main && break
+          for i in 1 2 3; do
+            git push -f origin ci-admin-ops-report && break
             sleep 5
           done
-          echo "--- STATUS.txt committed (main) ---"
-
       - name: publish the report
         if: always()
         run: |
