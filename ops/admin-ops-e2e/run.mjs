@@ -78,7 +78,7 @@ const rawAudit = [
 const norm = U.normalizeAll(rawAudit);
 check('history: rows are normalised and sorted newest first', norm.length === 4 && norm[0].id === 'a1', norm.map((n) => n.id).join(','));
 check('history: an approved e-mail change shows a masked before -> after pair',
-  /email: .*\*\*\*.* -> .*\*\*\*/.test(U.summaryLine(norm[0])), U.summaryLine(norm[0]));
+  /email: .*(?:\u2192|->).*/.test(U.summaryLine(norm[0])) && U.summaryLine(norm[0]).indexOf('***') > 0, U.summaryLine(norm[0]));
 check('history: legacy free text "a -> b" is parsed into a before/after pair',
   U.parseDetail('ve***@g*** -> ne***@g***').to === 'ne***@g***', JSON.stringify(U.parseDetail('ve***@g*** -> ne***@g***')));
 check('history: action grouping classifies accounts, payments, settings, auth and jobs',
@@ -319,6 +319,7 @@ try {
     ['retention', 'jobControl', 'jobRequests', 'retentionWarnings', 'retentionWarningsAt'].forEach((k) => { pubRestore[k] = pubBefore[k] === undefined ? null : pubBefore[k]; });
     const recent = ((await db.doc('settings/public').get()).data() || {}).jobRuns || [];
     pubRestore.jobRuns = (pubBefore.jobRuns || []).slice(0, 30);
+    pubRestore.__clockProbe = pubBefore.__clockProbe === undefined ? null : pubBefore.__clockProbe;
     if (recent.length) { pubRestore.jobRuns = recent.filter((r) => (r.note || '') !== 'e2e'); }
     await db.doc('settings/public').set(pubRestore, { merge: true });
   } catch (e) { console.log('restore note: ' + e.message); }

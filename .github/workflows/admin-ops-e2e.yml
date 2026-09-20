@@ -48,7 +48,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20d' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20e' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the proof
         if: steps.guard.outputs.armed == 'yes'
