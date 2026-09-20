@@ -48,15 +48,13 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20c' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20d' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the proof
         if: steps.guard.outputs.armed == 'yes'
         run: |
-          set +e
+          set -o pipefail
           node ops/admin-ops-e2e/run.mjs 2>&1 | tee ops/admin-ops-e2e/LOG.txt
-          echo "harness exit=$?"
-          exit 0
 
       - name: publish an evidence file on its own branch (always)
         if: always()

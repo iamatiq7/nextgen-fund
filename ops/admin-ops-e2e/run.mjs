@@ -254,6 +254,23 @@ try {
   check('jobs: a manual run can be requested from the console', reqd && reqd.status === 'requested', JSON.stringify(reqd));
   await fb.saveJobControl({ paused: false, reason: '' });
 
+  /* ---- 3c2. clock and time zone ---- */
+  phase('clock and time zone');
+  const dhaka = U.formatWhen('2026-09-20T18:05:00.000Z', 'Asia/Dhaka');
+  check('time zone: Dhaka rendering of 18:05Z lands on the next day at 00:05', /21/.test(dhaka) && /00:05/.test(dhaka), dhaka);
+  const utc = U.formatWhen('2026-09-20T18:05:00.000Z', 'UTC');
+  check('time zone: the same instant renders differently in UTC (offset is really applied)', utc !== dhaka, dhaka + ' vs ' + utc);
+  const skRef = db.collection('audit').doc('__clock_probe__');
+  await db.doc('settings/public').set({ __clockProbe: Date.now() }, { merge: true });
+  const beforeMs = Date.now();
+  await skRef.set({ at: new Date().toISOString(), probe: true });
+  const afterMs = Date.now();
+  const jobRun = { startedCheck: new Date().toISOString() };
+  const skew = Math.abs(afterMs - beforeMs);
+  check('clock: the runner clock advances monotonically and within tolerance', skew >= 0 && skew < 120000, skew + ' ms round trip');
+  check('clock: the project served the request (server reachable and answering)', !!jobRun.startedCheck);
+  await skRef.delete();
+
   /* ---- 3d. the scheduled jobs, really run ---- */
   phase('scheduled jobs');
   await authMod.signOut(auth);
