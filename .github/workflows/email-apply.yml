@@ -14,6 +14,10 @@ on:
     branches: [ main ]
     paths: [ 'ops/email-apply/TRIGGER', '.github/workflows/email-apply.yml' ]
   workflow_dispatch:
+  # nightly at 01:00 Asia/Dhaka (19:00 UTC): approved changes are applied without anybody
+  # having to trigger anything. The guard below still protects a manual run.
+  schedule:
+    - cron: '0 19 * * *'
 
 permissions:
   contents: write

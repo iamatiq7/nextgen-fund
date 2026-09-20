@@ -456,7 +456,33 @@ async function listNomineeRequests(status) {
     function docIn(name, id) { return fsMod.doc(db, name, id); }
   /* wraps the modular helper so the request builders can stay short */
   function addDoc(name, data) { return fsMod.addDoc(col(name), data); }
-  async function writeAudit(o) { o = o || {}; return audit(o.actor || '', o.action || '', o.detail || ''); }
+  async function writeAudit(o) {
+      o = o || {};
+      /* structured rows let the admin history view render "before -> after" without guessing */
+      if (o.changes || o.before !== undefined || o.after !== undefined || o.objectType || o.objectId) {
+        return writeAuditEntry(o);
+      }
+      return audit(o.actor || '', o.action || '', o.detail || '');
+    }
+    async function writeAuditEntry(o) {
+      o = o || {};
+      var row = {
+        at: new Date().toISOString(),
+        actor: String(o.actor || ''),
+        action: String(o.action || ''),
+        detail: String(o.detail || ''),
+        objectType: String(o.objectType || ''),
+        objectId: String(o.objectId || o.memberId || ''),
+        memberId: String(o.memberId || ''),
+        changes: Array.isArray(o.changes) ? o.changes.slice(0, 20).map(function (c) {
+          return { field: String(c.field || ''), from: String(c.from == null ? '' : c.from), to: String(c.to == null ? '' : c.to) };
+        }) : [],
+        before: o.before === undefined ? '' : String(o.before),
+        after: o.after === undefined ? '' : String(o.after)
+      };
+      try { await addDoc('audit', row); } catch (eAudit) { /* a refused audit write must never break the action itself */ }
+      return row;
+    }
     async function getDoc(path, id) { var s = await fsMod.getDoc(docIn(path, id)); return s.exists() ? s.data() : null; }
     async function getAll(path, q) {
       var snap = q ? await fsMod.getDocs(q) : await fsMod.getDocs(col(path));
@@ -1330,6 +1356,122 @@ async function listNomineeRequests(status) {
       listAudit: async function () {
         await requireAdminUid();
         return (await getAll('audit')).sort(function (a, b) { return (b.at || '').localeCompare(a.at || ''); }).slice(0, 200);
+      },
+
+      /* ---------- action history (who / when / what / before -> after) ----------
+         The filtering, searching and paging run on the same pure helpers the automated
+         checks use (assets/js/ngf-audit.js), so a rule can never drift between view and test. */
+      listAuditPage: async function (opts) {
+        await requireAdminUid();
+        opts = opts || {};
+        var rows = await getAll('audit');
+        var A = window.NGFAudit;
+        var all = A ? A.normalizeAll(rows) : rows;
+        var filtered = A ? A.filter(all, opts) : all;
+        var page = A ? A.paginate(filtered, opts.page || 1, opts.size || 25)
+          : { rows: filtered.slice(0, 25), page: 1, size: 25, pages: 1, total: filtered.length, fromIndex: filtered.length ? 1 : 0, toIndex: Math.min(25, filtered.length), hasPrev: false, hasNext: false };
+        return Object.assign({}, page, { facets: A ? A.facets(all) : { actors: [], groups: [], objectTypes: [] } });
+      },
+
+      /* the admin was not allowed in: the attempt itself becomes part of the record */
+      logDeniedView: async function (what) {
+        try {
+          var u = null;
+          try { u = await userDoc(await myUid()); } catch (eU) { u = null; }
+          await writeAuditEntry({ actor: (u && u.username) || '(signed in, not admin)', action: 'ui.denied', objectType: 'security', detail: 'blocked: ' + String(what || 'admin view') });
+        } catch (eLog) { }
+        return { ok: false, denied: true };
+      },
+
+      /* ---------- retention policy for replaced login addresses ---------- */
+      loadRetentionPolicy: async function () {
+        var pub = (await getDoc('settings', 'public')) || {};
+        return window.NGFRetention ? window.NGFRetention.normalizePolicy(pub.retention) : (pub.retention || {});
+      },
+
+      saveRetentionPolicy: async function (patch) {
+        await requireAdminUid();
+        var me = await userDoc(await myUid());
+        var pub = (await getDoc('settings', 'public')) || {};
+        var merged = Object.assign({}, pub.retention || {}, patch || {}, { updatedAt: new Date().toISOString(), updatedBy: (me && me.username) || '' });
+        var next = window.NGFRetention ? window.NGFRetention.normalizePolicy(merged) : merged;
+        await fsMod.setDoc(docIn('settings', 'public'), { retention: next, updatedAt: new Date().toISOString() }, { merge: true });
+        await writeAuditEntry({
+          actor: (me && me.username) || '', action: 'settings.retention-saved', objectType: 'settings', objectId: 'retention',
+          changes: [
+            { field: 'defaultDays', from: String((pub.retention || {}).defaultDays == null ? '' : (pub.retention || {}).defaultDays), to: String(next.defaultDays) },
+            { field: 'warnDaysBefore', from: String((pub.retention || {}).warnDaysBefore == null ? '' : (pub.retention || {}).warnDaysBefore), to: String(next.warnDaysBefore) },
+            { field: 'behavior', from: String((pub.retention || {}).behavior || ''), to: String(next.behavior) }
+          ],
+          detail: 'retention policy updated'
+        });
+        try { await syncPublicTotals(); } catch (eSync) { }
+        return next;
+      },
+
+      /* every replaced address the fund still knows about, with its window and usage */
+      retainedAddressLedger: async function () {
+        await requireAdminUid();
+        var names = await getAll('usernames');
+        var users = await getAll('users');
+        var byUid = {};
+        users.forEach(function (u) { if (u && u.id) { byUid[u.id] = u; } });
+        return names.filter(function (d) { return d && d.retired === true; }).map(function (d) {
+          var u = byUid[d.uid] || {};
+          var hits = (u.retiredAddressHits || {})[d.id] || {};
+          return {
+            address: d.id, uid: d.uid || '', username: u.username || '', movedTo: d.movedTo || '',
+            anonymized: !!d.anonymized, retiredAt: d.retiredAt || d.createdAt || '',
+            hits: Number(hits.count) || 0, lastHitAt: hits.lastAt || ''
+          };
+        }).sort(function (a, b) { return String(b.retiredAt).localeCompare(String(a.retiredAt)); });
+      },
+
+      /* the sign-in page found a replaced address: the owner's own document records the attempt
+         (never the typed address, so nothing sensitive is copied around) */
+      recordRetiredAddressHit: async function (address) {
+        var uid = await myUid();
+        var key = String(address || '').toLowerCase();
+        if (!uid || !key) { return null; }
+        var u = await userDoc(uid);
+        var map = Object.assign({}, (u && u.retiredAddressHits) || {});
+        var cur = map[key] || { count: 0 };
+        map[key] = { count: (Number(cur.count) || 0) + 1, lastAt: new Date().toISOString() };
+        try { await fsMod.updateDoc(docIn('users', uid), { retiredAddressHits: map }); } catch (eHit) { }
+        await writeAuditEntry({
+          actor: (u && u.username) || '', action: 'login.retired-address-attempt', objectType: 'email', objectId: uid,
+          detail: 'sign-in attempted with an address that was replaced (attempt ' + map[key].count + ')'
+        });
+        return map[key];
+      },
+
+      /* ---------- scheduled-job surface ---------- */
+      loadJobRuns: async function () {
+        await requireAdminUid();
+        var pub = (await getDoc('settings', 'public')) || {};
+        return { runs: (pub.jobRuns || []).slice(0, 30), control: pub.jobControl || {}, requests: pub.jobRequests || {}, retention: window.NGFRetention ? window.NGFRetention.normalizePolicy(pub.retention) : (pub.retention || {}) };
+      },
+
+      saveJobControl: async function (patch) {
+        await requireAdminUid();
+        var me = await userDoc(await myUid());
+        var pub = (await getDoc('settings', 'public')) || {};
+        var next = Object.assign({}, pub.jobControl || {}, patch || {}, { updatedAt: new Date().toISOString(), updatedBy: (me && me.username) || '' });
+        await fsMod.setDoc(docIn('settings', 'public'), { jobControl: next, updatedAt: new Date().toISOString() }, { merge: true });
+        await writeAuditEntry({ actor: (me && me.username) || '', action: 'settings.job-control', objectType: 'job', objectId: 'control', detail: JSON.stringify(next).slice(0, 300) });
+        return next;
+      },
+
+      requestJobRun: async function (job) {
+        await requireAdminUid();
+        var me = await userDoc(await myUid());
+        var name = String(job || 'email-apply');
+        var pub = (await getDoc('settings', 'public')) || {};
+        var req = Object.assign({}, pub.jobRequests || {});
+        req[name] = { at: new Date().toISOString(), by: (me && me.username) || '', status: 'requested' };
+        await fsMod.setDoc(docIn('settings', 'public'), { jobRequests: req, updatedAt: new Date().toISOString() }, { merge: true });
+        await writeAuditEntry({ actor: (me && me.username) || '', action: 'job.requested', objectType: 'job', objectId: name, detail: 'manual run requested from the admin console' });
+        return req[name];
       },
 
       exportMembersCSV: async function () {

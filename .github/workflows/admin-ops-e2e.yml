@@ -1,0 +1,79 @@
+name: Admin console extras — live proof (history · retention · jobs)
+
+# Proves the three new pieces against the real project, on a disposable probe account that is
+# deleted again, and with the real job scripts executed as separate processes:
+#   · the action-history filters, search and paging (the very helpers the view uses)
+#   · the retention policy: window arithmetic, warnings, expiry behaviour
+#   · append-only: an audit row cannot be changed at the database level
+#   · access control: a member can neither read the history nor change the policy, and the
+#     refused attempt is written to the audit trail
+#   · both scheduled jobs: dry run, real run, idempotency, run log on the console dashboard, pause
+#
+# Guard: the first line of ops/admin-ops-e2e/TRIGGER must be exactly
+#   run 2026-09-20
+#
+# The report is published both on main (best effort) and on the branch ci-admin-ops-report, because
+# several workflows push to main at the same time and a push can lose that race.
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ops/admin-ops-e2e/TRIGGER', '.github/workflows/admin-ops-e2e.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: write the service account key
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -e
+          printf '%s' "$SA" > sa.json
+          node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
+
+      - name: install the SDKs
+        run: npm i --no-save --loglevel=error firebase-admin@12 firebase@10.12.2
+
+      - name: check the guard
+        id: guard
+        run: |
+          set -e
+          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-20' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+
+      - name: run the proof
+        if: steps.guard.outputs.armed == 'yes'
+        run: |
+          set +e
+          node ops/admin-ops-e2e/run.mjs 2>&1 | tee ops/admin-ops-e2e/LOG.txt
+          echo "harness exit=$?"
+          exit 0
+
+      - name: publish the report
+        if: always()
+        run: |
+          rm -rf .e2e sa.json
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git checkout -B ci-admin-ops-report
+          git add -f ops/admin-ops-e2e/REPORT.md ops/admin-ops-e2e/REPORT.json ops/admin-ops-e2e/LOG.txt ops/retention/REPORT.txt ops/email-apply/REPORT.txt || true
+          git commit -m 'chore(admin-ops-e2e): report' || true
+          for i in 1 2 3 4 5; do
+            git push -f origin ci-admin-ops-report && break
+            sleep 5
+          done
+          git checkout main || true
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main >/dev/null 2>&1 || true
+            git push origin main && break
+            sleep 5
+          done
