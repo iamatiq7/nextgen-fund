@@ -48,7 +48,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-21a' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/admin-ops-e2e/TRIGGER | grep -qx 'run 2026-09-21b' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: prove the history view filters, searches and paginates (checkout)
         run: |
@@ -62,6 +62,20 @@ jobs:
         run: |
           set -o pipefail
           node ops/admin-ops-e2e/run.mjs 2>&1 | tee ops/admin-ops-e2e/LOG.txt
+
+      - name: keep the raw logs as a downloadable artifact (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-ops-evidence
+          if-no-files-found: warn
+          path: |
+            ops/admin-ops-e2e/UI.txt
+            ops/admin-ops-e2e/LOG.txt
+            ops/admin-ops-e2e/REPORT.md
+            ops/admin-ops-e2e/REPORT.json
+            ops/retention/REPORT.txt
+            ops/email-apply/REPORT.txt
 
       - name: publish an evidence file on its own branch (always)
         if: always()
