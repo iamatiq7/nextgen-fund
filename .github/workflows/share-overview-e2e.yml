@@ -1,0 +1,68 @@
+name: Share increase — live proof (request → approval → My Fund overview)
+
+# Proves, against the real project (nextgen-fund-2040) and on a disposable probe member, that an
+# approved share increase reaches the member's "My Fund" overview without a reload:
+#   · the request is stored as pending and NOTHING is applied before approval
+#   · the approval writes the record, the permanent history and the in-app notice
+#   · a fresh member read matches the ledger exactly
+#   · the open member page updates by itself when the approval-shaped write lands  <- the bug
+#   · regression: a payment change still wakes the page; a rejection changes nothing
+#
+# The job goes red when a check fails, so the run conclusion itself is the verdict.
+# The harness also leaves a small evidence key in settings/public.e2eShareReport (admin-writable),
+# which can be read back without a service account.
+#
+# Guard: the first line of ops/share-overview-e2e/TRIGGER must be exactly
+#   run 2026-09-24a
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ops/share-overview-e2e/TRIGGER', '.github/workflows/share-overview-e2e.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  share:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: write the service account key
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NEXTGEN_FUND_2040 }}
+        run: |
+          set -e
+          printf '%s' "$SA" > sa.json
+          node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
+
+      - name: install the SDKs
+        run: npm i --no-save --loglevel=error firebase-admin@12 firebase@10.12.2
+
+      - name: check the guard
+        id: guard
+        run: |
+          set -e
+          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24a' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+
+      - name: run the share-increase proof (a failed check fails the job)
+        if: steps.guard.outputs.armed == 'yes'
+        run: |
+          set -o pipefail
+          node ops/share-overview-e2e/run.mjs 2>&1 | tee ops/share-overview-e2e/LOG.txt
+
+      - name: keep the log as a downloadable artifact (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: share-overview-evidence
+          if-no-files-found: warn
+          path: |
+            ops/share-overview-e2e/LOG.txt
+            ops/share-overview-e2e/REPORT.md
+            ops/share-overview-e2e/REPORT.json

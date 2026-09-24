@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NextGen Fund — অ্যাডমিন কনসোল · অ্যাকশন-ইতিহাস</title>
+<style>
+/* ============================================================
+   NextGen Fund — design system
+   Preset 04 · Fathom Information Design — scientific finance
+   Calm greys + navy, hairline rules, tabular numerals,
+   journal-grade charts, information density without clutter.
+   ============================================================ */
+
+:root {
+  --paper: #f6f6f3;
+  --surface: #ffffff;
+  --ink: #1c2b3a;
+  --navy: #1f3a5f;
+  --navy-deep: #16283f;
+  --steel: #5c6b7a;
+  --faint: #5c6b7a;
+  --hairline: #d9dcdf;
+  --hairline-soft: #e8eaec;
+  --wash: #eef0f2;
+  --revenue: #2e6b5b;
+  --loss: #a6452f;
+  --warn: #9a6b15;
+  --info-wash: #edf1f6;
+  --ok-wash: #eaf2ee;
+  --bad-wash: #f7ebe7;
+  --warn-wash: #f7f1e3;
+  --radius: 3px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+}
+main { display: block; }
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .4em; font-weight: 650; letter-spacing: -0.01em; }
+h1 { font-size: 26px; }
+h2 { font-size: 19px; }
+h3 { font-size: 15.5px; }
+p { margin: 0 0 1em; }
+a { color: var(--navy); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- small-caps label (Fathom signature) ---------- */
+.k {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.num { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1; }
+
+/* ---------- header / nav ---------- */
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+  position: sticky; top: 0; z-index: 40;
+}
+.site-header .bar {
+  max-width: 1120px; margin: 0 auto; padding: 12px 20px;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); font-size: 16px; }
+.brand:hover { text-decoration: none; }
+.brand .mark { width: 28px; height: 28px; display: block; }
+.brand small { color: var(--faint); font-weight: 500; }
+.nav { display: flex; gap: 4px; margin-left: auto; align-items: center; flex-wrap: wrap; }
+.nav a {
+  padding: 7px 12px; border-radius: var(--radius); color: var(--steel); font-weight: 550; font-size: 14px;
+}
+.nav a:hover { color: var(--navy); background: var(--wash); text-decoration: none; }
+.nav a.active { color: var(--navy); background: var(--info-wash); }
+.nav .who { color: var(--faint); font-size: 13px; padding: 0 6px; }
+
+/* ---------- layout ---------- */
+.container { max-width: 1120px; margin: 0 auto; padding: 26px 20px 60px; }
+.narrow { max-width: 660px; }
+.grid { display: grid; gap: 14px; }
+.grid.stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.grid.form2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) {
+  .grid.two, .grid.form2 { grid-template-columns: 1fr; }
+  .container { padding: 18px 14px 48px; }
+}
+
+/* ---------- cards / panels ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card.tight { padding: 14px; }
+.card h2 { margin-bottom: 10px; }
+.stat .k { display: block; margin-bottom: 6px; }
+.stat .v { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.stat .s { color: var(--faint); font-size: 12.5px; margin-top: 4px; }
+.stat.pos .v { color: var(--revenue); }
+.stat.neg .v { color: var(--loss); }
+.stat.navy .v { color: var(--navy); }
+
+/* ---------- tables ---------- */
+.tablewrap { overflow-x: auto; }
+table.data {
+  width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface);
+  border: 1px solid var(--hairline);
+}
+table.data th {
+  text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--steel); font-weight: 600; padding: 9px 12px; border-bottom: 1px solid var(--hairline);
+  background: #fbfbfa; white-space: nowrap;
+}
+table.data td { padding: 9px 12px; border-bottom: 1px solid var(--hairline-soft); vertical-align: top; }
+table.data tr:last-child td { border-bottom: none; }
+table.data td.n, table.data th.n { text-align: right; font-variant-numeric: tabular-nums; }
+table.data tr.total td { font-weight: 700; border-top: 1px solid var(--hairline); background: #fbfbfa; }
+table.data .sub { color: var(--faint); font-size: 12.5px; }
+
+/* ---------- chips (status) ---------- */
+.chip {
+  display: inline-block; font-size: 11.5px; font-weight: 650; letter-spacing: .06em;
+  padding: 2px 9px; border-radius: 20px; border: 1px solid transparent; white-space: nowrap;
+}
+.chip.pending { background: var(--warn-wash); color: var(--warn); border-color: #e7d9b8; }
+.chip.verified, .chip.active, .chip.approved { background: var(--ok-wash); color: var(--revenue); border-color: #cfe2d8; }
+.chip.rejected { background: var(--bad-wash); color: var(--loss); border-color: #e8cdc3; }
+.chip.due { background: var(--bad-wash); color: var(--loss); border-color: #e8cdc3; }
+.chip.clear { background: var(--ok-wash); color: var(--revenue); border-color: #cfe2d8; }
+.chip.demo { background: var(--info-wash); color: var(--navy); border-color: #d3dde9; }
+.chip.advance { background: var(--info-wash); color: var(--navy); border-color: #d3dde9; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-block; border: 1px solid var(--navy); background: var(--navy); color: #fff;
+  font: inherit; font-size: 14px; font-weight: 600; padding: 9px 16px; border-radius: var(--radius);
+  cursor: pointer; text-decoration: none; transition: background .12s ease, border-color .12s ease;
+}
+.btn:hover { background: var(--navy-deep); border-color: var(--navy-deep); text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn.ghost { background: transparent; color: var(--navy); }
+.btn.ghost:hover { background: var(--info-wash); }
+.btn.subtle { background: var(--surface); border-color: var(--hairline); color: var(--steel); }
+.btn.subtle:hover { color: var(--navy); border-color: var(--navy); background: var(--surface); }
+.btn.danger { background: var(--loss); border-color: var(--loss); }
+.btn.danger:hover { background: #8c3a27; }
+.btn.ok { background: var(--revenue); border-color: var(--revenue); }
+.btn.ok:hover { background: #27594c; }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- forms ---------- */
+label.f { display: block; margin-bottom: 12px; }
+label.f > span, .f .lbl {
+  display: block; font-size: 11px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--steel); margin-bottom: 5px;
+}
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date],
+input[type=tel], input[type=file], select, textarea {
+  width: 100%; padding: 9px 11px; font: inherit; font-size: 14.5px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius);
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, .btn:focus-visible, a:focus-visible {
+  outline: 2px solid var(--navy); outline-offset: 1px;
+}
+input:disabled, select:disabled, textarea:disabled { background: var(--wash); color: var(--faint); }
+input[type=file] { padding: 7px; }
+.hint { color: var(--faint); font-size: 12.5px; margin-top: 4px; }
+.err { color: var(--loss); font-size: 13.5px; margin: 8px 0; }
+.ok-msg { color: var(--revenue); font-size: 13.5px; margin: 8px 0; }
+
+/* ---------- notices ---------- */
+.notice {
+  border: 1px solid var(--hairline); border-left: 3px solid var(--navy);
+  background: var(--surface); padding: 12px 14px; border-radius: var(--radius); margin-bottom: 16px;
+  font-size: 14px;
+}
+.notice.warn { border-left-color: var(--warn); background: var(--warn-wash); }
+.notice.bad { border-left-color: var(--loss); background: var(--bad-wash); }
+.notice.ok { border-left-color: var(--revenue); background: var(--ok-wash); }
+
+/* ---------- footnote / asides (Fathom citation style) ---------- */
+.foot {
+  color: var(--faint); font-size: 12px; border-top: 1px solid var(--hairline-soft);
+  padding-top: 8px; margin-top: 14px;
+}
+.footnote { color: var(--faint); font-size: 12.5px; }
+
+/* ---------- tabs (admin) ---------- */
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; border-bottom: 1px solid var(--hairline); margin-bottom: 18px; }
+.tabs button {
+  border: 1px solid transparent; border-bottom: none; background: transparent; font: inherit; font-size: 14px;
+  font-weight: 600; color: var(--steel); padding: 9px 14px; cursor: pointer; border-radius: var(--radius) var(--radius) 0 0;
+}
+.tabs button:hover { color: var(--navy); background: var(--wash); }
+.tabs button[aria-selected="true"] {
+  color: var(--navy); background: var(--surface); border-color: var(--hairline);
+  position: relative; top: 1px;
+}
+
+/* ---------- modal / toast ---------- */
+.modal-back {
+  position: fixed; inset: 0; background: rgba(22, 35, 51, .45); z-index: 90;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius);
+  max-width: 560px; width: 100%; max-height: 86vh; overflow: auto; padding: 20px;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: var(--navy-deep); color: #fff; font-size: 14px; padding: 10px 18px;
+  border-radius: var(--radius); z-index: 99; max-width: 90vw; box-shadow: 0 4px 18px rgba(22,35,51,.25);
+}
+.toast.bad { background: var(--loss); }
+
+/* ---------- chart ---------- */
+.chart-wrap { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 16px; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--steel); }
+.legend i { width: 11px; height: 11px; display: inline-block; border-radius: 1px; }
+
+/* ---------- payment methods strip ---------- */
+.pay-methods { display: flex; gap: 10px; flex-wrap: wrap; }
+.pay-methods .pm {
+  border: 1px solid var(--hairline); background: var(--surface); border-radius: var(--radius);
+  padding: 10px 14px; font-weight: 650; font-size: 13.5px; color: var(--navy); min-width: 96px; text-align: center;
+}
+.pay-methods .pm small { display: block; font-weight: 500; color: var(--faint); font-size: 11.5px; }
+
+/* payment clarity: numbered steps + number panel */
+.pay-guide { border: 1px solid var(--hairline-soft); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; background: #fbfbfa; }
+.pay-guide h3 { font-size: 13px; margin: 0 0 8px; }
+.pay-guide ol.steps { list-style: none; counter-reset: pg; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pay-guide ol.steps li { counter-increment: pg; display: grid; grid-template-columns: 26px 1fr; gap: 4px 10px; align-items: baseline; padding: 4px 0; }
+.pay-guide ol.steps li::before {
+  content: counter(pg); grid-row: 1 / 3; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--navy); color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.pay-guide ol.steps strong { font-size: 13.5px; }
+.pay-guide ol.steps span { font-size: 12.5px; color: var(--steel); grid-column: 2; }
+#pay-numbers { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+#pay-numbers .num-inline { font-weight: 700; font-variant-numeric: tabular-nums; }
+#pay-numbers .btn-row { margin-left: auto; }
+.pay-legend { color: var(--faint); font-size: 12px; }
+
+/* ---------- misc ---------- */
+.hide { display: none !important; }
+.mono { font-family: var(--mono); font-size: 13px; }
+.row-flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.doc-view img { max-width: 100%; border: 1px solid var(--hairline); border-radius: var(--radius); }
+.divider { border: none; border-top: 1px solid var(--hairline-soft); margin: 18px 0; }
+.loading { color: var(--faint); padding: 30px 0; text-align: center; }
+.empty {
+  border: 1px dashed var(--hairline); border-radius: var(--radius); color: var(--faint);
+  padding: 26px 18px; text-align: center; font-size: 14px; background: #fbfbfa;
+}
+ul.clean { list-style: none; margin: 0; padding: 0; }
+ul.clean li { padding: 8px 0; border-bottom: 1px solid var(--hairline-soft); }
+ul.clean li:last-child { border-bottom: none; }
+.lang-btn { white-space: nowrap; }
+
+/* ---------- placeholder hints visible on empty fields ---------- */
+input::placeholder, textarea::placeholder {
+  color: #7d8894;
+  opacity: 1;
+  font-size: 14px;
+}
+input:focus::placeholder, textarea:focus::placeholder { color: #a6b0ba; }
+input[type="date"]:invalid::-webkit-datetime-edit { color: #7d8894; }
+
+/* ---------- Bangla typography (html lang=bn) ---------- */
+html[lang="bn"] body {
+  font-family: "Noto Sans Bengali", "Hind Siliguri", "Nirmala UI", "SolaimanLipi", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.75;
+}
+html[lang="bn"] h1, html[lang="bn"] h2, html[lang="bn"] h3 { line-height: 1.45; }
+html[lang="bn"] .k, html[lang="bn"] table.data th { letter-spacing: .04em; }
+html[lang="bn"] .brand .mark { height: 40px; width: auto; }
+.brand .mark { height: 28px; width: auto; display: block; }
+.site-footer { margin-top: 24px; }
+.site-footer {
+  border-top: 1px solid var(--hairline); background: var(--surface);
+  color: var(--faint); font-size: 12.5px;
+}
+.site-footer .bar { max-width: 1120px; margin: 0 auto; padding: 16px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+
+/* ============================================================
+   RECOLOR v2 � "??? ???? ????" (Experimental Jetset adaptation)
+   Every section/component gets its own bold, recognizable color.
+   Added 2026-09-09. Rollback: remove this block or
+   `git checkout backup/pre-jetset-2026-09-09 -- assets/css/style.css`
+   Contrast checked: white-on-blue 6.4:1, white-on-green 4.9:1,
+   white-on-red 5.9:1, black-on-yellow 12.6:1, white-on-black 17.9:1.
+   ============================================================ */
+
+:root {
+  --j-black: #16181d;
+  --j-blue: #1d4ed8;
+  --j-blue-soft: #e8eefc;
+  --j-green: #14713d;
+  --j-green-soft: #e5f4ea;
+  --j-red: #b91c1c;
+  --j-red-soft: #fdeaea;
+  --j-yellow: #facc15;
+  --j-yellow-soft: #fdf6d8;
+  --j-orange: #c2410c;
+  --j-orange-soft: #fdeee3;
+}
+
+/* ---------- header & nav: black bar, Jetset style ---------- */
+.site-header { background: var(--j-black); border-bottom: 4px solid var(--j-yellow); }
+.site-header .brand, .site-header .brand span { color: #fff; }
+.site-header .brand small { color: #b9bdc4; }
+.site-header .nav a { color: #d6d9de; }
+.site-header .nav a:hover { color: var(--j-black); background: var(--j-yellow); }
+.site-header .nav a.active { color: var(--j-black); background: var(--j-yellow); }
+.site-header .nav .who { color: #9aa0a8; }
+#lang-btn { border-color: #4b5058; background: transparent; color: #fff; }
+#lang-btn:hover { background: var(--j-yellow); color: var(--j-black); border-color: var(--j-yellow); }
+#nav-logout { border-color: #4b5058; background: transparent; color: #ff8a80; }
+
+/* ---------- section labels: colored underline chips ---------- */
+.k { border-left: 5px solid var(--j-blue); padding-left: 8px; }
+main .k { display: inline-block; }
+
+/* ---------- headings ---------- */
+h1 { font-size: 30px; letter-spacing: -0.02em; }
+h2 { font-size: 20px; }
+.card h2 { padding-bottom: 8px; border-bottom: 2px solid var(--hairline); margin-bottom: 14px; }
+
+/* ---------- dashboard stat cards: one bold color each ---------- */
+.card.stat { border: none; border-radius: 4px; }
+.card.stat:not(.tone-yellow) .k { border-left: none; padding-left: 0; color: #fff; }
+.card.stat:not(.tone-yellow) .s { color: #fff; }
+.card.stat:not(.tone-yellow) .v { color: #fff !important; }
+#card-meeting { background: var(--j-black); }
+#card-meeting .k { color: var(--j-yellow); }
+#card-meeting .s { color: #c9ccd2; }
+.tone-blue { background: var(--j-blue); }
+.tone-green { background: var(--j-green); }
+.tone-red { background: var(--j-red); }
+.tone-yellow { background: var(--j-yellow); }
+.tone-yellow .k, .tone-yellow .s { color: #5c4a00 !important; }
+.tone-yellow .v { color: var(--j-black) !important; }
+
+/* portal due card state colors keep meaning */
+#bal-due-card.tone-red .v, #bal-due-card.tone-green .v { color: #fff !important; }
+#bal-due-card.tone-green .k, #bal-due-card.tone-red .k { color: rgba(255,255,255,.85); }
+#bal-due-card.tone-green .s, #bal-due-card.tone-red .s { color: rgba(255,255,255,.8); }
+
+/* ---------- dashboard sections: distinct bands ---------- */
+.chart-wrap { border-top: 6px solid var(--j-blue); }
+#month-table thead th { background: var(--j-black); color: #fff; border-bottom: none; }
+table.data tr.total td { background: var(--j-yellow-soft); border-top: 2px solid var(--j-black); }
+
+/* member & channels cards */
+.sec-member { border-top: 6px solid var(--j-green); }
+.sec-methods { border-top: 6px solid var(--j-yellow); }
+.sec-how { border-top: 6px solid var(--j-red); }
+.sec-how .pay-guide ol.steps li::before, .pay-guide ol.steps li::before { background: var(--j-blue); }
+
+/* payment channels pills */
+.pay-methods .pm { border: 2px solid var(--j-black); color: var(--j-black); font-weight: 700; }
+.pay-methods .pm:nth-child(1) { background: var(--j-pink, #fdeaea); }
+.pay-methods .pm:nth-child(2) { background: var(--j-yellow-soft); }
+.pay-methods .pm:nth-child(3) { background: var(--j-blue-soft); }
+.pay-methods .pm:nth-child(4) { background: var(--j-green-soft); }
+.pay-methods .pm:nth-child(5) { background: var(--j-red-soft); }
+
+/* how-it-works step dots: 4 colors */
+.sec-how ol.steps li:nth-child(1)::before { background: var(--j-blue); }
+.sec-how ol.steps li:nth-child(2)::before { background: var(--j-red); }
+.sec-how ol.steps li:nth-child(3)::before { background: var(--j-green); }
+.sec-how ol.steps li:nth-child(4)::before { background: var(--j-orange); }
+ul.clean li strong { color: var(--j-black); }
+
+/* ---------- buttons ---------- */
+.btn { background: var(--j-black); border-color: var(--j-black); }
+.btn:hover { background: #000; border-color: #000; }
+.btn.ghost { background: transparent; color: var(--j-blue); border-color: var(--j-blue); }
+.btn.ghost:hover { background: var(--j-blue-soft); }
+.btn.ok { background: var(--j-green); border-color: var(--j-green); }
+.btn.ok:hover { background: #0d5c31; }
+.btn.danger { background: var(--j-red); border-color: var(--j-red); }
+.btn.danger:hover { background: #991515; }
+.btn.subtle { background: #fff; border-color: var(--hairline); color: var(--ink); }
+.btn.subtle:hover { border-color: var(--j-black); }
+
+/* ---------- chips: stronger, still meaningful ---------- */
+.chip.pending { background: var(--j-yellow); color: #5c4a00; border-color: var(--j-yellow); }
+.chip.verified, .chip.active, .chip.approved { background: var(--j-green); color: #fff; border-color: var(--j-green); }
+.chip.rejected { background: var(--j-red); color: #fff; border-color: var(--j-red); }
+.chip.due { background: var(--j-red-soft); color: var(--j-red); border-color: var(--j-red); }
+.chip.demo { background: #fff; color: var(--j-blue); border: 2px dashed var(--j-blue); }
+.chip.advance { background: var(--j-blue-soft); color: var(--j-blue); border-color: var(--j-blue); }
+
+/* ---------- links & notices ---------- */
+a { color: var(--j-blue); }
+.notice { border-left-width: 5px; }
+.notice.warn { border-left-color: var(--j-yellow); background: var(--j-yellow-soft); }
+.notice.bad { border-left-color: var(--j-red); background: var(--j-red-soft); }
+.notice.ok { border-left-color: var(--j-green); background: var(--j-green-soft); }
+
+/* ---------- admin tabs: colored active ---------- */
+.tabs button[aria-selected="true"] { border-bottom: 3px solid var(--j-blue); color: var(--j-black); font-weight: 700; }
+
+/* ---------- footer ---------- */
+.site-footer { background: var(--j-black); border-top: 4px solid var(--j-yellow); }
+.site-footer .bar { color: #b9bdc4; }
+.site-footer a { color: var(--j-yellow); }
+
+/* ---------- typography polish ---------- */
+body { font-size: 15.5px; line-height: 1.6; }
+.card { box-shadow: 0 1px 0 rgba(22,24,29,.04); }
+.stat .v { font-size: 28px; }
+table.data { font-size: 14.5px; }
+.hint, .footnote { font-size: 13px; color: var(--faint); }
+
+/* ---------- keep light on very small screens ---------- */
+@media (max-width: 480px) {
+  .card.stat .v { font-size: 24px; }
+  h1 { font-size: 26px; }
+}
+
+/* tone-black generic (used by monthly-due card etc.) */
+.tone-black { background: var(--j-black); }
+.tone-black .k { color: var(--j-yellow) !important; }
+.tone-black .s { color: #c9ccd2 !important; }
+.tone-black .v { color: #fff !important; }
+
+/* ---- avatars: the uploaded picture, with the initials of the name as the fallback ----
+   The initials are the element's own text and the picture is layered on top, so a missing or
+   broken picture simply leaves the initials visible instead of a broken-image icon. */
+.av {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; overflow: hidden; flex: 0 0 auto; margin-right: 8px;
+  background: var(--wash, #eef1f6); color: var(--ink-2, #3c4653);
+  font-weight: 700; letter-spacing: .02em; vertical-align: middle;
+}
+.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.doc-view .doc-row { display: flex; gap: 12px; align-items: flex-start; }
+.doc-view .doc-thumb { max-height: 120px; max-width: 180px; border-radius: 8px; border: 1px solid var(--line, #e2e6ee); }
+.doc-view .doc-ico { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 8px; background: var(--wash, #eef1f6); font-weight: 700; }
+.doc-view .doc-meta { display: flex; flex-direction: column; gap: 2px; }
+
+/* ---- the profile-picture view (admin + portal) ---- */
+.pf-view { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.pf-view .pf-big {
+  width: 168px; height: 168px; object-fit: cover; border-radius: 12px;
+  border: 1px solid var(--line, #e2e6ee); background: var(--wash, #eef1f6);
+}
+.pf-meta { flex: 1 1 240px; min-width: 220px; }
+.av[data-av-failed] { outline: 1px dashed var(--line, #cfd6e0); }
+@media (max-width: 520px) {
+  .pf-view .pf-big { width: 120px; height: 120px; }
+  .pf-view { gap: 12px; }
+}
+
+/* a field that failed validation keeps a visible red ring until it is corrected */
+.f input.bad, .f select.bad { border-color: var(--loss, #b4553f); box-shadow: 0 0 0 2px rgba(180,85,63,.12); }
+
+body{background:#f5f6f8;margin:0;padding:20px}
+.shotframe{max-width:1240px;margin:0 auto;background:#fff;border:1px solid #d9dcE1;border-radius:10px;padding:18px 22px}
+.shottabs{display:flex;gap:8px;border-bottom:1px solid #d9dcE1;margin:0 0 16px}
+.shottabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;font:inherit;color:#1a4f9c;cursor:pointer}
+.shottabs button[aria-selected="true"]{border-bottom-color:#1a4f9c;font-weight:700}
+</style></head><body>
+<div class="shotframe"><div class="shottabs"><button role="tab" data-tab="ইতিহাস" aria-selected="true">ইতিহাস</button><button role="tab" data-tab="রিটেনশন নীতি" aria-selected="false">রিটেনশন নীতি</button><button role="tab" data-tab="জব রান" aria-selected="false">জব রান</button></div>
+<div class="card" style="max-width:1180px"><h2>অ্যাকশন-ইতিহাস</h2><p class="footnote">প্রতিটি অ্যাডমিন-কাজ এখানে রেকর্ড হয় — কে, কখন, কোন রেকর্ডে, আগের ও পরের মানসহ। অডিট রেকর্ড অ্যাপ থেকে বদলানো সম্ভব নয় (ডেটাবেজ নিয়মে আপডেট নিষিদ্ধ)।</p><div id="ah-wrap"><form id="ah-filters" class="row-flex" style="flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 14px"><label class="f" style="min-width:200px"><span>অনুসন্ধান</span><input type="search" id="ah-q" value="email" placeholder="নাম, ইমেইল, অ্যাকশন, রেকর্ড…"></label><label class="f" style="min-width:150px"><span>অ্যাডমিন</span><select id="ah-actor"><option value="">সব অ্যাডমিন</option><option value="atiq">atiq (21)</option><option value="nusrat">nusrat (20)</option><option value="rafi">rafi (20)</option></select></label><label class="f" style="min-width:150px"><span>ধরন</span><select id="ah-group"><option value="">সব ধরন</option><option value="account" selected>অ্যাকাউন্ট / ইমেইল (23)</option><option value="member">সদস্য (24)</option><option value="payment">পেমেন্ট (0)</option><option value="settings">সেটিংস (0)</option><option value="auth">লগইন / নিরাপত্তা (14)</option><option value="job">সময়ভিত্তিক জব (0)</option><option value="db">ডেটাবেজ (0)</option></select></label><label class="f"><span>শুরু (তারিখ)</span><input type="date" id="ah-from" value=""></label><label class="f"><span>শেষ (তারিখ)</span><input type="date" id="ah-to" value=""></label><button class="btn" type="submit" id="ah-apply">ফিল্টার</button><a href="#" id="ah-reset">রিসেট</a><a href="#" id="ah-csv">CSV ডাউনলোড</a></form><table class="data" id="ah-table"><thead><tr><th style="width:132px">কখন (Asia/Dhaka)</th><th style="width:120px">কে</th><th style="width:180px">কী</th><th style="width:110px">ধরন</th><th>আগের মান → পরের মান</th><th style="width:120px">রেকর্ড</th></tr></thead><tbody><tr><td class="n" style="white-space:nowrap">20 Sept 2026, 16:00</td><td>atiq</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-900<br>user</td></tr><tr><td class="n" style="white-space:nowrap">15 Aug 2026, 06:00</td><td>nusrat</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-53<br>user</td></tr><tr><td class="n" style="white-space:nowrap">14 Aug 2026, 06:00</td><td>rafi</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-52<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">07 Aug 2026, 06:00</td><td>atiq</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-45<br>user</td></tr><tr><td class="n" style="white-space:nowrap">06 Aug 2026, 06:00</td><td>nusrat</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-44<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">30 Jul 2026, 06:00</td><td>rafi</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-37<br>user</td></tr><tr><td class="n" style="white-space:nowrap">29 Jul 2026, 06:00</td><td>atiq</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-36<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">22 Jul 2026, 06:00</td><td>nusrat</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-29<br>user</td></tr><tr><td class="n" style="white-space:nowrap">21 Jul 2026, 06:00</td><td>rafi</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-28<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">14 Jul 2026, 06:00</td><td>atiq</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-21<br>user</td></tr><tr><td class="n" style="white-space:nowrap">13 Jul 2026, 06:00</td><td>nusrat</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-20<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">06 Jul 2026, 06:00</td><td>rafi</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-13<br>user</td></tr><tr><td class="n" style="white-space:nowrap">05 Jul 2026, 06:00</td><td>atiq</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-12<br>accountRequest</td></tr><tr><td class="n" style="white-space:nowrap">28 Jun 2026, 06:00</td><td>nusrat</td><td>email.change</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">plan</span> bas*** → <strong>vip***</strong></div></td><td class="footnote">rec-5<br>user</td></tr><tr><td class="n" style="white-space:nowrap">27 Jun 2026, 06:00</td><td>rafi</td><td>account.reject</td><td>অ্যাকাউন্ট / ইমেইল</td><td><div><span class="k">status</span> pen*** → <strong>act***</strong></div><div><span class="k">email</span> ol***@x*** → <strong>ne***@x***</strong></div></td><td class="footnote">rec-4<br>accountRequest</td></tr></tbody></table><div class="row-flex" style="justify-content:space-between;align-items:center;margin-top:12px;gap:12px;flex-wrap:wrap"><span class="footnote">মোট 15 রেকর্ড · দেখানো হচ্ছে 1–15 · পৃষ্ঠা 1/1</span><span class="row-flex" style="gap:8px;align-items:center"><a href="#" id="ah-prev" aria-disabled="true" style="opacity:.45;pointer-events:none">← আগের</a><label class="f" style="margin:0"><span>প্রতি পৃষ্ঠা</span><select id="ah-size"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></label><a href="#" id="ah-next" aria-disabled="true" style="opacity:.45;pointer-events:none">পরের →</a></span></div></div></div>
+</div></body></html>
