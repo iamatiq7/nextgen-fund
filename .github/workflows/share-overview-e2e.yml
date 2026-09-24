@@ -48,13 +48,21 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24b' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24c' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
-      - name: run the share-increase proof (a failed check fails the job)
+      - name: run the share-increase proof on the repository copy (a failed check fails the job)
         if: steps.guard.outputs.armed == 'yes'
         run: |
           set -o pipefail
           node ops/share-overview-e2e/run.mjs 2>&1 | tee ops/share-overview-e2e/LOG.txt
+
+      # the same proof again, but driving the exact file the site serves - the operation runs on
+      # the live deployment, not on the checkout
+      - name: run the same proof against the live published file (a failed check fails the job)
+        if: steps.guard.outputs.armed == 'yes'
+        run: |
+          set -o pipefail
+          node ops/share-overview-e2e/run.mjs --adapter-url=https://nextgenfund.web.app/assets/js/firebase-adapter.js 2>&1 | tee ops/share-overview-e2e/LOG-LIVE.txt
 
       - name: keep the log as a downloadable artifact (always)
         if: always()
@@ -64,5 +72,6 @@ jobs:
           if-no-files-found: warn
           path: |
             ops/share-overview-e2e/LOG.txt
+            ops/share-overview-e2e/LOG-LIVE.txt
             ops/share-overview-e2e/REPORT.md
             ops/share-overview-e2e/REPORT.json

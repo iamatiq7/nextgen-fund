@@ -49,10 +49,12 @@ function loadSa() {
 
 function writeLocalReport() {
   fs.mkdirSync(OPS, { recursive: true });
-  const payload = { at: new Date().toISOString(), phase: phaseName, head: process.env.GITHUB_SHA || 'local', passed: results.filter((r) => r.ok).length, failed: failures, checks: results };
+  const payload = { at: new Date().toISOString(), phase: phaseName, head: process.env.GITHUB_SHA || 'local', adapter: ADAPTER_URL || 'repository copy', passed: results.filter((r) => r.ok).length, failed: failures, checks: results, timeline };
   fs.writeFileSync(path.join(OPS, 'REPORT.json'), JSON.stringify(payload, null, 2), 'utf8');
   const md = ['# Share increase -> My Fund overview - live proof', '',
     '- phase reached: ' + phaseName, '- at: ' + payload.at, '- head: ' + payload.head,
+    '- adapter under test: ' + payload.adapter,
+    '- operation timeline: ' + (timeline.length ? timeline.map((t) => t.what + '@' + t.at.slice(11, 23)).join(' -> ') : '(none)'),
     '- result: **' + payload.passed + ' passed / ' + failures + ' failed**', '',
     '| check | result | detail |', '|---|---|---|',
     ...results.map((r) => '| ' + String(r.name).replace(/\|/g, '/') + ' | ' + (r.ok ? 'PASS' : 'FAIL') + ' | ' + String(r.detail || '').replace(/\|/g, '/').replace(/\n/g, ' ') + ' |')].join('\n');
@@ -66,7 +68,8 @@ async function publishEvidence(db, sa) {
     await db.doc('settings/public').set({
       e2eShareReport: {
         at: new Date().toISOString(), head: process.env.GITHUB_SHA || 'local',
-        project: sa && sa.project_id, phase: phaseName,
+        project: sa && sa.project_id, phase: phaseName, adapter: ADAPTER_URL || 'repository copy',
+        timeline: timeline.slice(0, 12).map((t) => ({ what: String(t.what).slice(0, 80), at: t.at, ms: t.ms })),
         passed: results.filter((r) => r.ok).length, failed: failures,
         checks: results.map((r) => ({ n: String(r.name).slice(0, 120), ok: !!r.ok, d: String(r.detail || '').slice(0, 200) }))
       }
@@ -74,6 +77,11 @@ async function publishEvidence(db, sa) {
     console.log('evidence published to settings/public.e2eShareReport');
   } catch (e) { console.log('could not publish the evidence key: ' + (e && e.message)); }
 }
+
+const ARGS = process.argv.slice(2);
+const ADAPTER_URL = (ARGS.find((a) => a.startsWith('--adapter-url=')) || '').split('=').slice(1).join('=');
+const timeline = [];
+const stamp = (what, extra) => { timeline.push(Object.assign({ what, at: new Date().toISOString(), ms: Date.now() }, extra || {})); console.log('  timeline: ' + what + (extra ? ' ' + JSON.stringify(extra) : '')); };
 
 const sa = loadSa();
 saRef = sa;
@@ -114,7 +122,18 @@ function prelude() {
 async function loadAdapter() {
   phase('load and prepare the real adapter');
   prelude();
-  const src0 = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'firebase-adapter.js'), 'utf8');
+  let src0;
+  if (ADAPTER_URL) {
+    const res = await fetch(ADAPTER_URL + (ADAPTER_URL.indexOf('?') < 0 ? '?v=e2e' : ''));
+    if (!res.ok) throw new Error('could not fetch the live adapter (' + res.status + ')');
+    src0 = await res.text();
+    check('the adapter under test came from the live deployment', src0.length > 10000 && /onMyData\s*:/.test(src0),
+      ADAPTER_URL + ' (' + src0.length + ' chars)');
+    check('the live copy carries the fix (listens to the member record as well)',
+      /onSnapshot\(docIn\('users', uid\), emit/.test(src0));
+  } else {
+    src0 = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'firebase-adapter.js'), 'utf8');
+  }
   const map = [['firebase-app.js', 'firebase/app'], ['firebase-auth.js', 'firebase/auth'],
                ['firebase-firestore.js', 'firebase/firestore'], ['firebase-storage.js', './stub-storage.mjs']];
   let src = src0, n = 0;
@@ -195,7 +214,9 @@ try {
   /* ---- 2. the member asks for 6 shares ---- */
   phase('the member asks for a share increase');
   await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(rec.uid));
+  stamp('member signed in and opened the portal view');
   await fb.createAccountRequest({ shares: '6', memberName: 'Share Probe', from_username: username, from_email: mail, reason: 'share increase (e2e)' });
+  stamp('the member requested a share increase through the account-request path', { from: 2, to: 6 });
   const pendRow = (await db.doc('users/' + rec.uid).get()).data();
   const pend = pendRow.pendingAccountRequest || {};
   const reqId = pend.id || ('u-' + rec.uid);
@@ -209,7 +230,9 @@ try {
   phase('the admin approves the request');
   await authMod.signOut(auth);
   await authMod.signInWithCustomToken(auth, await authAdmin.createCustomToken(String((await db.doc('settings/bootstrap').get()).data().adminUid)));
+  const approvedMs = Date.now();
   await fb.decideAccountRequest(reqId, true, 'e2e-admin');
+  stamp('the admin approved the request', { requestId: String(reqId).slice(0, 16), approvedAt: new Date(approvedMs).toISOString() });
   const afterDoc = (await db.doc('users/' + rec.uid).get()).data();
   check('APPROVAL WRITES THE RECORD: users/{uid}.shares is 6', afterDoc.shares === 6, 'shares ' + afterDoc.shares);
   check('the decision is kept in the permanent history (who, when, what)',
@@ -245,6 +268,7 @@ try {
   phase('the open page must refresh by itself (the bug)');
   const live = [];
   const unsub = fb.onMyData(function (fresh) { if (fresh && fresh.profile) live.push({ at: Date.now(), shares: fresh.profile.shares }); });
+  stamp('the member page started listening (the session stays open)');
   check('the live subscription was set up on the member session', typeof unsub === 'function');
   await sleep(1200);
 
@@ -263,6 +287,7 @@ try {
     await sleep(500);
     seen = live.find((e) => e.shares === 9) || null;
   }
+  stamp('the approval-shaped write landed on users/{uid}', seen ? { shares: 9, eventAfterMs: seen.at - liveAt } : { shares: 9, event: 'none within 12 s' });
   check('THE OPEN PAGE UPDATES BY ITSELF: the live event carried the new share count', !!seen,
     seen ? 'event after ' + (seen.at - liveAt) + ' ms with shares=' + seen.shares : 'no event within 12 s (events seen: ' + JSON.stringify(live) + ')');
   const freshNow = (await db.doc('users/' + rec.uid).get()).data();
