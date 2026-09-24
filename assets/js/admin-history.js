@@ -65,8 +65,15 @@
   /* A non-admin who deep-links here is refused and the attempt is written to the audit trail. */
   async function guard() {
     var s = null;
-    try { s = await S.getSession(); } catch (e) { s = null; }
-    if (s && s.role === 'admin') { return true; }
+    /* The panel paints before the session has settled: on a fast click the first read can still
+       come back empty and an admin would be refused wrongly. Give the session a moment (about
+       2.5 s) before deciding, but never keep a plain member waiting. */
+    for (var attempt = 0; attempt < 6; attempt++) {
+      try { s = await S.getSession(); } catch (e) { s = null; }
+      if (s && s.role === 'admin') { return true; }
+      if (s && s.role) { break; }
+      await new Promise(function (r) { setTimeout(r, 400); });
+    }
     try { await S.logDeniedView('admin console · ' + (location.hash || '').replace('#', '')); } catch (e) { }
     var b = body();
     if (b) {

@@ -106,11 +106,20 @@ try {
       b.click(); return true;
     }, t.id);
     if (!clicked) { check('the "' + t.name + '" tab can be opened', false, 'tab button not found'); continue; }
-    await sleep(2200);
-    const state = await page.evaluate((sel) => {
-      const body = document.getElementById('tab-body') || {};
-      return { text: (body.textContent || '').replace(/\s+/g, ' ').trim(), has: !!document.querySelector(sel) || !!document.querySelector('#tab-body ' + sel), html: (body.innerHTML || '').length };
-    }, t.marker);
+    /* give the tab up to 20 s: the retention view has to fetch the policy and the whole ledger */
+    let state = { text: '', has: false, html: 0 };
+    for (let i = 0; i < 40; i++) {
+      await sleep(500);
+      state = await page.evaluate((sel) => {
+        const body = document.getElementById('tab-body') || {};
+        return { text: (body.textContent || '').replace(/\s+/g, ' ').trim(), has: !!document.querySelector(sel) || !!document.querySelector('#tab-body ' + sel), html: (body.innerHTML || '').length };
+      }, t.marker);
+      const settled = !/লোড হচ্ছে/.test(state.text);
+      if (state.has && settled && state.html > 400) break;
+      if (/is not a function|প্রবেশ নিষিদ্ধ|আনা যায়নি|পাওয়া যায়নি/.test(state.text)) {
+        if (i >= 4) break;      /* give the guard retries a chance before failing */
+      }
+    }
     const errLike = /is not a function|undefined is not|cannot read propert/i.test(state.text);
     check('"' + t.name + '" tab draws its own content', !errLike && state.has, (errLike ? 'ERROR TEXT: ' : '') + state.text.slice(0, 120));
     check('"' + t.name + '" — ' + t.extra, !errLike && state.html > 400, state.html + ' chars of markup');
