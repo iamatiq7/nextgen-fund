@@ -42,13 +42,13 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('sa.json','utf8')); console.log('service account key parsed')"
 
       - name: install the SDKs
-        run: npm i --no-save --loglevel=error firebase-admin@12 firebase@10.12.2
+        run: npm i --no-save --loglevel=error firebase-admin@12 firebase@10.12.2 puppeteer@22
 
       - name: check the guard
         id: guard
         run: |
           set -e
-          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24c' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24d' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the share-increase proof on the repository copy (a failed check fails the job)
         if: steps.guard.outputs.armed == 'yes'
@@ -64,6 +64,14 @@ jobs:
           set -o pipefail
           node ops/share-overview-e2e/run.mjs --adapter-url=https://nextgenfund.web.app/assets/js/firebase-adapter.js 2>&1 | tee ops/share-overview-e2e/LOG-LIVE.txt
 
+      # the same thing again in a REAL BROWSER on the live site: the member's page is open while the
+      # approval lands, and the screen must change without any reload (a page marker proves it)
+      - name: prove it in a real browser on the live site (a failed check fails the job)
+        if: steps.guard.outputs.armed == 'yes'
+        run: |
+          set -o pipefail
+          node ops/share-overview-e2e/ui-live.mjs 2>&1 | tee ops/share-overview-e2e/LOG-UI.txt
+
       - name: keep the log as a downloadable artifact (always)
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,5 +81,8 @@ jobs:
           path: |
             ops/share-overview-e2e/LOG.txt
             ops/share-overview-e2e/LOG-LIVE.txt
+            ops/share-overview-e2e/LOG-UI.txt
+            ops/share-overview-e2e/UI-REPORT.md
+            ops/share-overview-e2e/shots/*.png
             ops/share-overview-e2e/REPORT.md
             ops/share-overview-e2e/REPORT.json
