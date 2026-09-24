@@ -121,6 +121,19 @@ try {
   }));
   fs.mkdirSync(SHOTS, { recursive: true });
   await page.screenshot({ path: path.join(SHOTS, 'myfund-before.png') });
+  const clipOf = async () => {
+    const box = await page.evaluate(() => {
+      const el = document.querySelector('section.grid.stats') || document.querySelector('#portal-content') || document.body;
+      const r = el.getBoundingClientRect();
+      return { x: Math.max(0, r.x - 8), y: Math.max(0, r.y - 8), width: Math.min(1200, r.width + 16), height: Math.min(700, r.height + 16) };
+    }).catch(() => null);
+    return box && box.width > 40 && box.height > 30 ? box : null;
+  };
+  const shotBefore = async () => {
+    const clip = await clipOf();
+    return await page.screenshot(Object.assign({ type: 'jpeg', quality: 72 }, clip ? { clip } : {}));
+  };
+  const beforeShot = await shotBefore();
   check('the live My Fund page shows the old share count', /(^|\D)2(\D|$)/.test(before.shares), JSON.stringify(before).slice(0, 160));
   const marker = await page.evaluate(() => { window.__ngfMarker = 'kept-' + Date.now(); return window.__ngfMarker; });
   stamp('a page marker was planted (proves the page is never reloaded)');
@@ -144,6 +157,8 @@ try {
     if (/(^|\D)9(\D|$)/.test(after.shares)) seen = { at: Date.now(), state: after };
   }
   await page.screenshot({ path: path.join(SHOTS, 'myfund-after.png') });
+  let afterShot = null;
+  try { afterShot = await shotBefore(); } catch (e) { }
   check('THE SCREEN CHANGED BY ITSELF: the open page now shows the new share count', !!seen,
     seen ? 'after ' + (seen.at - writeAt) + ' ms -> "' + seen.state.shares.trim().replace(/\s+/g, ' ') + '"' : 'still "' + String((after || {}).shares || '').trim().replace(/\s+/g, ' ') + '"');
   check('the page was never reloaded (the marker survived)', !!seen && seen.state.marker === marker,
@@ -151,7 +166,25 @@ try {
   const recNow = (await db.doc('users/' + uid).get()).data();
   check('the number on screen equals the stored value', !!seen && /(^|\D)9(\D|$)/.test(String(recNow.shares)), 'record shares ' + recNow.shares);
   check('the browser reported no page errors while updating', errors.length === 0, errors.slice(0, 2).join(' | '));
-  await publish({ ui: true, before: before.shares.trim().replace(/\s+/g, ' '), afterSeen: seen ? seen.state.shares.trim().replace(/\s+/g, ' ') : '', eventAfterMs: seen ? seen.at - writeAt : null, markerKept: !!(seen && seen.state.marker === marker) });
+  /* hand the two pictures back through the project so they can be read without the CI artifact */
+  let shotsStored = 'skipped';
+  try {
+    if (beforeShot && afterShot && beforeShot.length < 900000 && afterShot.length < 900000) {
+      await db.doc('settings/public').set({
+        e2eShareShots: {
+          at: new Date().toISOString(), site: SITE, kind: 'jpeg',
+          before: Buffer.from(beforeShot).toString('base64'),
+          after: Buffer.from(afterShot).toString('base64'),
+          beforeText: before.shares.trim().replace(/\s+/g, ' '),
+          afterText: seen ? seen.state.shares.trim().replace(/\s+/g, ' ') : ''
+        }
+      }, { merge: true });
+      shotsStored = beforeShot.length + '+' + afterShot.length + ' bytes';
+      console.log('the two screenshots were published for reading: ' + shotsStored);
+    } else { shotsStored = 'too large or missing'; }
+  } catch (e) { shotsStored = 'failed: ' + (e && e.message); }
+  check('the before/after screenshots were captured for the record', !!(beforeShot && afterShot), shotsStored);
+  await publish({ ui: true, shots: shotsStored, before: before.shares.trim().replace(/\s+/g, ' '), afterSeen: seen ? seen.state.shares.trim().replace(/\s+/g, ' ') : '', eventAfterMs: seen ? seen.at - writeAt : null, markerKept: !!(seen && seen.state.marker === marker) });
   writeReport();
 } catch (e) {
   check('the browser scenario ran to the end: ' + (e && e.message ? e.message : String(e)), false, e && e.stack ? String(e.stack).split('\n')[1] : '');

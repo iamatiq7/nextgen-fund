@@ -48,7 +48,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24d' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24e' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the share-increase proof on the repository copy (a failed check fails the job)
         if: steps.guard.outputs.armed == 'yes'
