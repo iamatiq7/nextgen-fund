@@ -149,7 +149,13 @@ async function loadAdapter() {
   globalThis.window.NGFStore = new Proxy({ registerFirebaseBackend: (f) => { factory = f; } }, {
     get: (t, k) => (k in t ? t[k] : (typeof k === 'string' ? () => undefined : undefined))
   });
-  globalThis.window.NGFUtil = { esc: (s) => String(s == null ? '' : s), csv: () => '', money: (n) => String(n), validPhone: () => true, phoneKey: (p) => String(p || '').replace(/[^0-9]/g, '') };
+  /* the adapter is plain JavaScript: give it the site's own helpers, not a hand-made imitation */
+  const utilSrc = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'util.js'), 'utf8');
+  new Function('window', utilSrc)(globalThis.window);
+  check('the site helper module loaded (currentMonth, monthsInclusive, esc, csv)',
+    !!(globalThis.window.NGFUtil && typeof globalThis.window.NGFUtil.currentMonth === 'function' &&
+       typeof globalThis.window.NGFUtil.monthsInclusive === 'function' && typeof globalThis.window.NGFUtil.esc === 'function'),
+    Object.keys(globalThis.window.NGFUtil || {}).slice(0, 12).join(','));
   globalThis.window.NGF_FIREBASE_CONFIG = cfg;
   await import(pathToFileURL(path.join(dir, 'adapter.mjs')).href);
   check('the adapter registered its backend', !!factory);

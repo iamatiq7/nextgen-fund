@@ -215,9 +215,12 @@
     /* live updates in Firebase mode: balance + history refresh automatically */
     try {
       if (S.onMyData) S.onMyData(function (fresh) {
-        if (!fresh || !fresh.balance) return;
-        balance = fresh.balance; payments = fresh.payments;
-        renderBalances(); renderHistory();
+        if (!fresh) return;
+        /* an approved change request rewrites the record: the overview reads the share count and
+           the monthly figure from the profile, so it has to be replaced before re-rendering. */
+        if (fresh.profile) profile = fresh.profile;
+        if (fresh.balance) { balance = fresh.balance; renderBalances(); }
+        if (fresh.payments) { payments = fresh.payments; renderHistory(); }
       });
     } catch (e) { /* live off */ }
   }

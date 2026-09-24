@@ -184,10 +184,16 @@ function withTimeout(p, ms, tag) {
   async function createAccountRequest(data) {
     var uid = await myUid();
     if (!uid) throw new Error('not-signed-in');
+    /* the record is the truth for "before": if the caller does not send from_<field> (the share
+       form never did) we read the current value, so the request and the approval history always
+       carry a real before -> after pair instead of an empty "before". */
+    var curRec = null;
+    try { curRec = await userDoc(uid); } catch (eCur) { curRec = null; }
     var changes = [];
     ACC_FIELDS.forEach(function (f) {
       var to = (data && data[f] !== undefined) ? String(data[f]).trim() : '';
       var from = (data && data['from_' + f] !== undefined) ? String(data['from_' + f]).trim() : '';
+      if (!from && curRec && curRec[f] !== undefined && curRec[f] !== null) from = String(curRec[f]).trim();
       if (to !== '' && to !== from) {
         if (f === 'email' && !/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(to)) throw err('email-bad', 'email-bad');
         changes.push({ field: f, from: from, to: to });
@@ -793,17 +799,34 @@ async function listNomineeRequests(status) {
 
       onMyData: function (cb) {
         var active = true;
-        var unsub = null;
+        var unsubs = [];
+        var timer = null;
+        /* one refresh per burst: both listeners fire on the same page, we ask for the account once */
+        function emit() {
+          if (!active) return;
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function () {
+            if (!active) return;
+            fb.getMyAccount().then(function (acc) { if (active) cb(acc); }).catch(function () {});
+          }, 200);
+        }
         myUid().then(function (uid) {
           if (!active) return;
           try {
-            unsub = fsMod.onSnapshot(fsMod.query(col('payments'), fsMod.where('memberId', '==', uid)), function () {
-              if (!active) return;
-              fb.getMyAccount().then(function (acc) { if (active) cb(acc); }).catch(function () {});
-            }, function (e) { console.warn('live listener error:', e && e.message); });
+            unsubs.push(fsMod.onSnapshot(fsMod.query(col('payments'), fsMod.where('memberId', '==', uid)), emit,
+              function (e) { console.warn('live listener error:', e && e.message); }));
+            /* An approved request writes the member's own record (shares, monthly due, name, ...).
+               Without this listener the open page never wakes and the overview keeps the old
+               numbers until a manual reload - the bug this fix is about. */
+            unsubs.push(fsMod.onSnapshot(docIn('users', uid), emit,
+              function (e) { console.warn('live listener error:', e && e.message); }));
           } catch (e) { /* ignore */ }
         }).catch(function () {});
-        return function () { active = false; try { if (unsub) unsub(); } catch (e) {} };
+        return function () {
+          active = false;
+          if (timer) clearTimeout(timer);
+          unsubs.forEach(function (u) { try { u(); } catch (e) {} });
+        };
       },
 
       /* ---------- registration (creates Auth account immediately) ---------- */
