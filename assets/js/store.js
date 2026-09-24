@@ -246,6 +246,49 @@
       return null;
     },
 
+    /* ---------- admin console extras: history, retention policy, jobs ----------
+       The view calls these through NGFStore, so the facade has to pass them on to the Firebase
+       backend. Without these lines the three tabs failed with "S.xxx is not a function".
+       In demo mode each one answers with an empty but well-formed result, so the tabs show an
+       empty state instead of breaking. */
+    listAuditPage: async function (opts) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.listAuditPage) return Store._fb.listAuditPage(opts);
+      return { rows: [], page: 1, size: (opts && opts.size) || 25, pages: 1, total: 0, fromIndex: 0, toIndex: 0,
+        hasPrev: false, hasNext: false, facets: { actors: [], actions: [], objectTypes: [], groups: [] } };
+    },
+    logDeniedView: async function (what) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.logDeniedView) return Store._fb.logDeniedView(what);
+      return { ok: false };
+    },
+    loadRetentionPolicy: async function () {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.loadRetentionPolicy) return Store._fb.loadRetentionPolicy();
+      return null;
+    },
+    saveRetentionPolicy: async function (patch) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.saveRetentionPolicy) return Store._fb.saveRetentionPolicy(patch);
+      return patch || null;
+    },
+    retainedAddressLedger: async function () {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.retainedAddressLedger) return Store._fb.retainedAddressLedger();
+      return [];
+    },
+    recordRetiredAddressHit: async function (address) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.recordRetiredAddressHit) return Store._fb.recordRetiredAddressHit(address);
+      return { ok: false };
+    },
+    loadJobRuns: async function () {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.loadJobRuns) return Store._fb.loadJobRuns();
+      return { runs: [], control: {} };
+    },
+    saveJobControl: async function (patch) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.saveJobControl) return Store._fb.saveJobControl(patch);
+      return { paused: !!(patch && patch.paused) };
+    },
+    requestJobRun: async function (job) {
+      if (Store.mode === 'firebase' && Store._fb && Store._fb.requestJobRun) return Store._fb.requestJobRun(job);
+      return { requested: false, job: job || '' };
+    },
+
     /* ---------- registration ---------- */
     register: async function (data) {
       var mode = Store.mode;

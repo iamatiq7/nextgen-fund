@@ -48,7 +48,7 @@ jobs:
         id: guard
         run: |
           set -e
-          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24e' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
+          head -n 1 ops/share-overview-e2e/TRIGGER | grep -qx 'run 2026-09-24f' && echo "armed=yes" >> "$GITHUB_OUTPUT" || echo "armed=no" >> "$GITHUB_OUTPUT"
 
       - name: run the share-increase proof on the repository copy (a failed check fails the job)
         if: steps.guard.outputs.armed == 'yes'
@@ -72,6 +72,14 @@ jobs:
           set -o pipefail
           node ops/share-overview-e2e/ui-live.mjs 2>&1 | tee ops/share-overview-e2e/LOG-UI.txt
 
+      # the three admin tabs (history, retention policy, jobs) must open and draw, not answer with
+      # "S.xxx is not a function" - checked in a real browser on the live site
+      - name: prove the three admin tabs open on the live site (a failed check fails the job)
+        if: steps.guard.outputs.armed == 'yes'
+        run: |
+          set -o pipefail
+          node ops/share-overview-e2e/admin-tabs-live.mjs 2>&1 | tee ops/share-overview-e2e/LOG-TABS.txt
+
       - name: keep the log as a downloadable artifact (always)
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,6 +91,9 @@ jobs:
             ops/share-overview-e2e/LOG-LIVE.txt
             ops/share-overview-e2e/LOG-UI.txt
             ops/share-overview-e2e/UI-REPORT.md
+            ops/share-overview-e2e/LOG-TABS.txt
+            ops/share-overview-e2e/TABS-REPORT.md
+            ops/share-overview-e2e/shots/tabs-*.jpg
             ops/share-overview-e2e/shots/*.png
             ops/share-overview-e2e/REPORT.md
             ops/share-overview-e2e/REPORT.json
