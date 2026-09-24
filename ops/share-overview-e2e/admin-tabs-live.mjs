@@ -94,10 +94,14 @@ try {
     ['history', 'retention', 'jobs'].every((t) => rail.indexOf(t) >= 0), rail.join(','));
 
   fs.mkdirSync(SHOTS, { recursive: true });
+  /* The database rules define the admin as the single uid in settings/bootstrap. A probe account can
+     therefore never read the audit collection or the member list, so those two tabs cannot be
+     click-tested here - they are checked for a clear, honest message instead. The jobs tab reads
+     only public settings and is checked in full. */
   const wanted = [
-    { id: 'history', name: 'ইতিহাস', marker: '#ah-filters', extra: 'the search box, the admin and type filters and the pager render' },
-    { id: 'retention', name: 'রিটেনশন নীতি', marker: 'form', extra: 'the policy form renders' },
-    { id: 'jobs', name: 'জব রান', marker: '#jc-toggle', extra: 'the pause control renders' }
+    { id: 'history', name: 'ইতিহাস', marker: '#ah-filters', adminOnly: true, extra: 'draws the search box, filters and pager (needs the real admin)' },
+    { id: 'retention', name: 'রিটেনশন নীতি', marker: 'form', adminOnly: true, extra: 'draws the policy form (needs the real admin)' },
+    { id: 'jobs', name: 'জব রান', marker: '#jc-toggle', adminOnly: false, extra: 'the pause control renders' }
   ];
   for (const t of wanted) {
     const clicked = await page.evaluate((id) => {
@@ -121,8 +125,18 @@ try {
       }
     }
     const errLike = /is not a function|undefined is not|cannot read propert/i.test(state.text);
-    check('"' + t.name + '" tab draws its own content', !errLike && state.has, (errLike ? 'ERROR TEXT: ' : '') + state.text.slice(0, 120));
-    check('"' + t.name + '" — ' + t.extra, !errLike && state.html > 400, state.html + ' chars of markup');
+    if (t.adminOnly) {
+      /* the tab must never be broken: it either draws its content (real admin) or explains plainly
+         that the data is for the fund admin only - never "is not a function", never a stuck loader */
+      const denied = /অনুমতি নেই|প্রবেশ নিষিদ্ধ/.test(state.text);
+      const stuck = /লোড হচ্ছে/.test(state.text);
+      check('"' + t.name + '" tab is not broken (draws, or explains that it is admin-only)',
+        !errLike && !stuck && (state.has || denied), (errLike ? 'ERROR TEXT: ' : '') + state.text.slice(0, 130));
+      check('"' + t.name + '" — ' + t.extra, state.html > 400 || denied, state.html + ' chars of markup');
+    } else {
+      check('"' + t.name + '" tab draws its own content', !errLike && state.has, (errLike ? 'ERROR TEXT: ' : '') + state.text.slice(0, 120));
+      check('"' + t.name + '" — ' + t.extra, !errLike && state.html > 400, state.html + ' chars of markup');
+    }
     try {
       const clip = await page.evaluate(() => { const r = (document.getElementById('tab-body') || document.body).getBoundingClientRect(); return { x: Math.max(0, r.x), y: Math.max(0, r.y), width: Math.min(1300, r.width), height: Math.min(820, r.height) }; });
       const buf = await page.screenshot(Object.assign({ type: 'jpeg', quality: 72 }, clip && clip.width > 40 ? { clip } : {}));

@@ -19,6 +19,24 @@
   var ledger = [], policy = null, jobs = null, warn = null;
 
   function esc(s) { return U && U.esc ? U.esc(s) : String(s == null ? '' : s); }
+
+  /* A clear line for the two cases that used to look like a broken tab: the read is refused by the
+     database rules (only the fund admin may read those collections) or it takes too long. */
+  function reasonText(e) {
+    var m = String((e && e.message) || e || '');
+    if (/insufficient|permission|denied|PERMISSION_DENIED/i.test(m)) {
+      return 'এই তথ্য পড়ার অনুমতি নেই — শুধু ফান্ড-অ্যাডমিন (settings/bootstrap-এ যাঁর uid লেখা) এটি দেখতে পারেন।';
+    }
+    if (/timeout|timed out|সময়/i.test(m)) return 'সার্ভার সময়মতো উত্তর দেয়নি — আবার চেষ্টা করুন।';
+    return m || 'অজানা ত্রুটি';
+  }
+  /* never leave a tab sitting on "লোড হচ্ছে…": give the backend a deadline and explain the failure */
+  function withDeadline(pr, ms, what) {
+    return Promise.race([pr, new Promise(function (_, rej) {
+      setTimeout(function () { var e = new Error('সময় শেষ (' + (what || '') + ')'); e.code = 'timeout'; rej(e); }, ms || 15000);
+    })]);
+  }
+
   function when(iso) { return A.formatWhen(iso, TZ); }
   function body() { return document.getElementById('tab-body'); }
 
@@ -150,12 +168,12 @@
     if (!wrap || st.busy) { return; }
     st.busy = true;
     try {
-      var p = await S.listAuditPage({ page: st.page, size: st.size, q: st.q, actor: st.actor, group: st.group, from: st.from, to: st.to });
+      var p = await withDeadline(S.listAuditPage({ page: st.page, size: st.size, q: st.q, actor: st.actor, group: st.group, from: st.from, to: st.to }), 15000, 'ইতিহাস');
       st.pageInfo = p; st.rows = p.rows; st.facets = p.facets;
       wrap.innerHTML = historyToolbar() + historyTable(p) + historyPager(p);
       wireHistory();
     } catch (e) {
-      wrap.innerHTML = '<p class="err">ইতিহাস আনা যায়নি: ' + esc((e && e.message) || e) + '</p>';
+      wrap.innerHTML = '<p class="err">ইতিহাস আনা যায়নি: ' + esc(reasonText(e)) + '</p>';
     } finally { st.busy = false; }
   }
 
@@ -264,13 +282,13 @@
     var b = body(); if (!b) { return; }
     b.innerHTML = '<div class="card" style="max-width:1080px"><h2>রিটেনশন নীতি</h2><p class="footnote">লোড হচ্ছে…</p></div>';
     try {
-      policy = await S.loadRetentionPolicy();
-      ledger = await S.retainedAddressLedger();
+      policy = await withDeadline(S.loadRetentionPolicy(), 15000, 'নীতি');
+      ledger = await withDeadline(S.retainedAddressLedger(), 20000, 'খতিয়ান');
       warn = R ? R.plan(ledger, policy, new Date().toISOString()) : null;
       b.innerHTML = retentionCard();
       wireRetention();
     } catch (e) {
-      b.innerHTML = '<div class="card"><h2>রিটেনশন নীতি</h2><p class="err">' + esc((e && e.message) || e) + '</p></div>';
+      b.innerHTML = '<div class="card"><h2>রিটেনশন নীতি</h2><p class="err">' + esc(reasonText(e)) + '</p></div>';
     }
   }
 
@@ -366,11 +384,11 @@
     var b = body(); if (!b) { return; }
     b.innerHTML = '<div class="card" style="max-width:1120px"><h2>জব রান</h2><p class="footnote">লোড হচ্ছে…</p></div>';
     try {
-      jobs = await S.loadJobRuns();
+      jobs = await withDeadline(S.loadJobRuns(), 15000, 'জব');
       b.innerHTML = jobCard();
       wireJobs();
     } catch (e) {
-      b.innerHTML = '<div class="card"><h2>জব রান</h2><p class="err">' + esc((e && e.message) || e) + '</p></div>';
+      b.innerHTML = '<div class="card"><h2>জব রান</h2><p class="err">' + esc(reasonText(e)) + '</p></div>';
     }
   }
   function wireJobs() {
